@@ -14,6 +14,281 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          pinned: boolean
+          society_id: string
+          title: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          society_id: string
+          title: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          society_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      channels: {
+        Row: {
+          description: string
+          id: string
+          name: string
+          slug: string
+          society_id: string
+        }
+        Insert: {
+          description?: string
+          id?: string
+          name: string
+          slug: string
+          society_id: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+          society_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      collaboration_proposals: {
+        Row: {
+          contributions: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          next_steps: string[]
+          rationale: string
+          shared_interests: string[]
+          society_a: string
+          society_b: string
+          source: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          contributions?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          next_steps?: string[]
+          rationale?: string
+          shared_interests?: string[]
+          society_a: string
+          society_b: string
+          source?: string
+          summary?: string
+          title: string
+        }
+        Update: {
+          contributions?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          next_steps?: string[]
+          rationale?: string
+          shared_interests?: string[]
+          society_a?: string
+          society_b?: string
+          source?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_proposals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_society_a_fkey"
+            columns: ["society_a"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_society_a_fkey"
+            columns: ["society_a"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_society_b_fkey"
+            columns: ["society_b"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_society_b_fkey"
+            columns: ["society_b"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          created_at: string
+          event_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          capacity: number | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          ends_at: string | null
+          featured: boolean
+          id: string
+          society_id: string
+          starts_at: string
+          tags: string[]
+          title: string
+          venue: string
+        }
+        Insert: {
+          capacity?: number | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          ends_at?: string | null
+          featured?: boolean
+          id?: string
+          society_id: string
+          starts_at: string
+          tags?: string[]
+          title: string
+          venue: string
+        }
+        Update: {
+          capacity?: number | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          ends_at?: string | null
+          featured?: boolean
+          id?: string
+          society_id?: string
+          starts_at?: string
+          tags?: string[]
+          title?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
       interests: {
         Row: {
           id: string
@@ -28,6 +303,45 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          author_id: string
+          body: string
+          channel_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          channel_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          channel_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_prefs: {
         Row: {
@@ -56,6 +370,50 @@ export type Database = {
             foreignKeyName: "notification_prefs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          kind: string
+          link: Json | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind: string
+          link?: Json | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind?: string
+          link?: Json | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -215,6 +573,36 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "society_member_counts"
             referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      saved_proposals: {
+        Row: {
+          proposal_id: string
+          user_id: string
+        }
+        Insert: {
+          proposal_id: string
+          user_id: string
+        }
+        Update: {
+          proposal_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_proposals_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "collaboration_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_proposals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -411,6 +799,122 @@ export type Database = {
           },
         ]
       }
+      support_request_activity: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          request_id: string
+          text: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          request_id: string
+          text: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          request_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_request_activity_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_request_activity_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "support_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_requests: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          resolution: string | null
+          society_id: string
+          status: string
+          submitted_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          resolution?: string | null
+          society_id: string
+          status?: string
+          submitted_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          resolution?: string | null
+          society_id?: string
+          status?: string
+          submitted_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_requests_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_requests_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+          {
+            foreignKeyName: "support_requests_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           role: Database["public"]["Enums"]["app_role"]
@@ -445,11 +949,49 @@ export type Database = {
       }
     }
     Functions: {
+      assign_support_request: {
+        Args: { _assignee: string; _id: string }
+        Returns: undefined
+      }
+      cancel_membership_request: {
+        Args: { _society_id: string }
+        Returns: undefined
+      }
+      cancel_registration: { Args: { _event_id: string }; Returns: undefined }
       claim_invites: {
         Args: { _email: string; _uid: string }
         Returns: undefined
       }
+      comment_on_support_request: {
+        Args: { _id: string; _text: string }
+        Returns: undefined
+      }
+      create_event: {
+        Args: {
+          _capacity: number
+          _category: string
+          _date: string
+          _description: string
+          _end: string
+          _society_id: string
+          _start: string
+          _title: string
+          _venue: string
+        }
+        Returns: string
+      }
+      decide_membership: {
+        Args: { _decision: string; _membership_id: string }
+        Returns: undefined
+      }
       email_domain_allowed: { Args: { _email: string }; Returns: boolean }
+      event_attendee_counts: {
+        Args: never
+        Returns: {
+          attendees: number
+          event_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -465,8 +1007,68 @@ export type Database = {
         Args: { _society_id: string; _uid: string }
         Returns: boolean
       }
+      join_society: { Args: { _society_id: string }; Returns: string }
+      leave_society: { Args: { _society_id: string }; Returns: undefined }
       my_access: { Args: never; Returns: Json }
+      notify_members: {
+        Args: {
+          _body: string
+          _dedupe: string
+          _except: string
+          _kind: string
+          _link: Json
+          _society_id: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      notify_user: {
+        Args: {
+          _body: string
+          _dedupe?: string
+          _kind: string
+          _link: Json
+          _title: string
+          _uid: string
+        }
+        Returns: undefined
+      }
+      register_for_event: { Args: { _event_id: string }; Returns: undefined }
+      set_support_request_status: {
+        Args: { _id: string; _resolution: string; _to: string }
+        Returns: undefined
+      }
       society_member_count: { Args: { _society_id: string }; Returns: number }
+      society_member_counts: {
+        Args: never
+        Returns: {
+          members: number
+          society_id: string
+        }[]
+      }
+      society_members: {
+        Args: { _society_id: string }
+        Returns: {
+          course: string
+          decided_at: string
+          display_name: string
+          membership_id: string
+          message: string
+          requested_at: string
+          status: string
+          user_id: string
+        }[]
+      }
+      submit_support_request: {
+        Args: {
+          _category: string
+          _description: string
+          _priority: string
+          _society_id: string
+          _title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "platform_admin"
