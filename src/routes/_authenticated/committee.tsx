@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { eventCategories, type EventInput } from "@/lib/demo-rules";
 
-export const Route = createFileRoute("/committee")({
+export const Route = createFileRoute("/_authenticated/committee")({
   head: () => pageHead("Committee Dashboard", "Manage your society: announcements, events, members and profile."),
   component: Committee,
 });

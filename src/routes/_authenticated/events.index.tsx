@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/events/")({
+export const Route = createFileRoute("/_authenticated/events/")({
   head: () => pageHead("Events", "Workshops, socials, talks and trips from every society on campus."),
   component: EventsPage,
 });

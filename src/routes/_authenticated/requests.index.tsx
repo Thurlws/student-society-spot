@@ -9,7 +9,7 @@ import { EmptyState, PageHeader } from "@/components/cards";
 import { NewRequestDialog, RequestRow } from "@/components/support-requests";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/requests/")({
+export const Route = createFileRoute("/_authenticated/requests/")({
   head: () => pageHead("My Requests", "Questions and requests you've sent to society committees."),
   component: MyRequests,
 });

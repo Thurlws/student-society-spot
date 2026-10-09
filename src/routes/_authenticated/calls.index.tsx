@@ -9,7 +9,7 @@ import { DemoBadge, EmptyState } from "@/components/cards";
 import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/components/calls";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/calls/")({
+export const Route = createFileRoute("/_authenticated/calls/")({
   head: () => pageHead("Calls", "Drop-in voice and video rooms, scheduled society calls and AI call recaps — all in one place."),
   component: CallsPage,
 });

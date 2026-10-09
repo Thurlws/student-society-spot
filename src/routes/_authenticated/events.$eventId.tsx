@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/events/$eventId")({
+export const Route = createFileRoute("/_authenticated/events/$eventId")({
   loader: ({ params }) => {
     const e = baseEvents.find((x) => x.id === params.eventId);
     return e ? { title: e.title, description: e.description } : null;

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/societies/")({
+export const Route = createFileRoute("/_authenticated/societies/")({
   head: () => pageHead("Discover Societies", "Browse every society on campus by interest, category and size."),
   component: Discover,
 });
