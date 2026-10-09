@@ -319,7 +319,7 @@ export function CallExperience({
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 pb-3 md:flex-row">
         <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">
-          {lk ? <LiveTiles accentSolid={a.solid} room={{ id: room.id, name: room.name }} societyName={society.name} /> : tiles.map((n) => {
+          {lk ? <LiveTiles accentSolid={a.solid} roomId={room.id} roomName={room.name} societyName={society.name} /> : tiles.map((n) => {
             const isMe = n === me;
             return (
               <div key={n} className={cn("relative flex items-center justify-center overflow-hidden rounded-2xl bg-ink-foreground/5 ring-2 ring-transparent transition", speaking === n && "ring-success")}>
