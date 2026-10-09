@@ -1,15 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { initialsOf, useAuth } from "@/lib/auth";
 import { loadAppData, type AppData } from "@/lib/api/fetch";
-import { initialMeetings, initialRecaps, roomsFor } from "@/data/calls";
 import { todayIso } from "@/lib/format";
 import {
   announcementInput, eventInput, firstIssue, messageInput, societyEditInput, supportRequestInput,
   type AnnouncementInput, type EventAvailability, type EventInput, type NotificationPrefs, type Outcome, type SupportRequestInput,
 } from "@/lib/validation";
-import type { CallRecap, CallRoom, Event, MembershipStatus, SupportRequest, SupportRequestStatus, User } from "@/lib/types";
+import type { CallRecap, Event, MembershipStatus, SupportRequest, SupportRequestStatus, User } from "@/lib/types";
 
 /**
  * The app's data layer. Reads come from the database through one TanStack Query
@@ -19,7 +18,7 @@ import type { CallRecap, CallRoom, Event, MembershipStatus, SupportRequest, Supp
 const EMPTY: AppData = {
   societies: [], societyUuid: {}, slugOf: {}, committeeIds: {}, events: [], registrations: [], memberships: {}, announcements: [],
   channels: [], messages: [], resources: [], notifications: [], prefs: { announcements: true, events: true, discussions: false, email: false },
-  allInterests: [], requests: [], resolvedRequests: [], supportRequests: [], proposals: [], savedProposals: [],
+  allInterests: [], requests: [], resolvedRequests: [], supportRequests: [], proposals: [], savedProposals: [], rooms: [], recaps: [],
 };
 
 const fail = (error: string): Outcome => ({ ok: false, error });
@@ -78,11 +77,8 @@ function useDataValue() {
     return "open";
   };
 
-  // Calls stay in memory until Phase 3 moves rooms, meetings and recaps into the database.
-  const [meetings, setMeetings] = useState<CallRoom[]>(initialMeetings);
-  const [recaps, setRecaps] = useState<CallRecap[]>(initialRecaps);
-  const rooms = useMemo(() => roomsFor(data.societies), [data.societies]);
-  const newId = (p: string) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const rooms = data.rooms.filter((r) => r.kind === "room");
+  const meetings = data.rooms.filter((r) => r.kind === "meeting");
 
   const notifications = data.notifications;
   const joinedSocieties = data.societies.filter((s) => membership(s.id) === "member");
@@ -189,30 +185,16 @@ function useDataValue() {
     },
     setPref: (k: keyof NotificationPrefs, v: boolean) => act(() => supabase.from("notification_prefs").update({ [k]: v } as Partial<NotificationPrefs>).eq("user_id", user.id)),
 
-    // ---- Calls (in memory until Phase 3) ----
+    // ---- Calls ----
     rooms,
     meetings,
-    recaps,
-    getRoom: (id: string) => rooms.find((r) => r.id === id) ?? meetings.find((m) => m.id === id),
-    scheduleMeeting: (m: Omit<CallRoom, "id" | "kind">) => {
-      const id = newId("mt");
-      setMeetings((xs) => [...xs, { ...m, id, kind: "meeting" }]);
-      return id;
-    },
-    saveRecap: (r: Omit<CallRecap, "id" | "qa" | "shared">) => {
-      const id = newId("rc");
-      setRecaps((xs) => [{ ...r, id, qa: [], shared: false }, ...xs]);
-      return id;
-    },
-    updateRecapQa: (id: string, qa: CallRecap["qa"]) => setRecaps((xs) => xs.map((r) => (r.id === id ? { ...r, qa } : r))),
-    shareRecap: async (id: string) => {
-      const r = recaps.find((x) => x.id === id);
-      if (!r || r.shared) return;
-      const channel = data.channels.find((c) => c.societyId === r.societyId && c.name === "general");
-      const body = `📋 Call recap — ${r.title}\n${r.summary.overview}${r.summary.actionItems.length ? `\nAction items: ${r.summary.actionItems.map((a) => `${a.owner}: ${a.task}`).join("; ")}` : ""}`.slice(0, 1000);
-      if (channel) await act(() => supabase.from("messages").insert({ channel_id: channel.id, author_id: user.id, body }));
-      setRecaps((xs) => xs.map((x) => (x.id === id ? { ...x, shared: true } : x)));
-    },
+    recaps: data.recaps,
+    refresh,
+    getRoom: (id: string) => data.rooms.find((r) => r.id === id),
+    canShareRecap: (r: CallRecap) => canManage(r.societyId) || data.rooms.find((x) => x.id === r.roomId)?.hostId === user.id,
+    scheduleMeeting: (m: { societyId: string; name: string; description: string; date: string; start: string }) =>
+      act(() => supabase.rpc("schedule_meeting", { _society_id: sid(m.societyId)!, _name: m.name, _description: m.description, _date: m.date, _start: m.start })),
+    shareRecap: (id: string) => act(() => supabase.rpc("share_recap", { _recap_id: id })),
   };
 }
 

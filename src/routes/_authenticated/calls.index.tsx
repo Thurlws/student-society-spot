@@ -4,7 +4,7 @@ import { useData } from "@/lib/api/store";
 import { todayIso } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { useCallMode } from "@/lib/use-call-mode";
-import { DemoBadge, EmptyState } from "@/components/cards";
+import { EmptyState } from "@/components/cards";
 import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/components/calls";
 import { Button } from "@/components/ui/button";
 
@@ -28,7 +28,7 @@ function CallsPage() {
           <h1 className="font-display text-3xl font-semibold tracking-tight">Calls</h1>
           <p className="mt-1 text-muted-foreground">Hop into a room, join a scheduled call, and catch up with AI recaps — no Zoom links needed.</p>
           {callMode === "live" && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><Radio className="size-3.5 text-success" />Live calls are on: members who open the same room on different devices see and hear each other.</p>}
-          {callMode === "simulated" && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><DemoBadge />Your camera and mic are real, but everyone else in a room is simulated. Real calls between members need LiveKit to be configured (see README).</p>}
+          {callMode === "simulated" && <p className="mt-2 text-xs text-muted-foreground">Calls aren't available yet. A platform admin needs to set up the call service.</p>}
         </div>
         {joinedSocieties.length > 0 && <ScheduleCallDialog />}
       </div>

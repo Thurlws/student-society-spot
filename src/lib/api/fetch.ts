@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type {
+  CallRecap, CallRoom, CallSummary, TranscriptLine,
   Announcement, CollaborationProposal, DiscussionChannel, DiscussionMessage, Event, MembershipRequest,
   Notification, ResolvedRequest, Resource, Society, SocietyAccent, SupportRequest,
 } from "@/lib/types";
@@ -28,6 +29,8 @@ export type AppData = {
   supportRequests: SupportRequest[];
   proposals: CollaborationProposal[];
   savedProposals: string[];
+  rooms: CallRoom[];
+  recaps: CallRecap[];
 };
 
 const must = <T,>(r: { data: T | null; error: { message: string } | null }): T => {
@@ -56,6 +59,10 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     supabase.from("support_request_activity").select("*, profiles(display_name)").order("created_at"),
     supabase.from("collaboration_proposals").select("*").order("created_at", { ascending: false }),
     supabase.from("saved_proposals").select("proposal_id").eq("user_id", uid),
+  ]);
+  const [roomRes, recapRes] = await Promise.all([
+    supabase.from("call_rooms").select("*, profiles!call_rooms_host_id_fkey(display_name)").order("starts_at", { nullsFirst: true }),
+    supabase.from("call_recaps").select("*").order("created_at", { ascending: false }).limit(100),
   ]);
 
   const socRows = must(soc);
@@ -143,5 +150,16 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
       rationale: x.rationale, contributions: x.contributions as Record<string, string>, nextSteps: x.next_steps,
     })),
     savedProposals: must(saved).map((s) => s.proposal_id),
+    rooms: (must(roomRes) as unknown as { id: string; society_id: string; name: string; kind: "room" | "meeting"; description: string; starts_at: string | null; event_id: string | null; host_id: string | null; profiles: { display_name: string } | null }[])
+      .filter((r) => slugOf[r.society_id])
+      .map((r) => {
+        const t = r.starts_at ? toDublin(r.starts_at) : null;
+        return { id: r.id, societyId: slugOf[r.society_id]!, name: r.name, kind: r.kind, description: r.description, date: t?.date, start: t?.time, eventId: r.event_id ?? undefined, host: r.profiles?.display_name ?? undefined, hostId: r.host_id ?? undefined };
+      }),
+    recaps: must(recapRes).filter((r) => slugOf[r.society_id]).map((r) => ({
+      id: r.id, roomId: r.room_id, societyId: slugOf[r.society_id]!, title: r.title, date: r.started_at, durationSec: r.duration_sec,
+      participants: r.participants, transcript: (r.transcript ?? []) as unknown as TranscriptLine[], transcriptDeleted: r.transcript === null,
+      summary: r.summary as unknown as CallSummary, qa: (r.qa ?? []) as unknown as CallRecap["qa"], shared: r.shared, createdBy: r.created_by ?? undefined,
+    })),
   };
 }
