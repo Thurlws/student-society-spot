@@ -104,7 +104,7 @@ function CallPage() {
       setSpeaking(l.speaker);
       addLine(l.speaker, l.text);
       setTimeout(() => setSpeaking((s) => (s === l.speaker ? null : s)), 3000);
-    }, 6500);
+    }, 5000);
     return () => clearInterval(i);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, society?.id]);
