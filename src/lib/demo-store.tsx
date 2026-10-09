@@ -13,7 +13,7 @@ import {
   initialSupportRequests,
   societies as baseSocieties,
 } from "@/data/mock";
-import type { User, CallRecap, CallRoom, Event, MembershipStatus, Role, SupportRequest, SupportRequestStatus } from "@/lib/types";
+import type { User, CallRecap, CallRoom, Event, MembershipStatus, SupportRequest, SupportRequestStatus } from "@/lib/types";
 import { demoNowIso } from "@/lib/format";
 import { callRooms, initialMeetings, initialRecaps } from "@/data/calls";
 import * as rules from "@/lib/demo-rules";
