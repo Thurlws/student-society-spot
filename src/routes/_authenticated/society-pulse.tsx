@@ -1,4 +1,3 @@
-import type { CollaborationProposal } from "@/lib/types";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Bookmark, BookmarkCheck, Lightbulb, Sparkles, X, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
