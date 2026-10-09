@@ -40,7 +40,7 @@ export const demoUsers: Record<"student" | "committee", User> = {
     course: "BSc Software Engineering",
     year: "Third year",
     interests: ["Technology", "Learning", "Career", "Social"],
-    committeeSocietyId: "compsoc",
+    committeeSocietyIds: ["compsoc"],
   },
 };
 
