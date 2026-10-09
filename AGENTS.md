@@ -21,3 +21,5 @@
 - Identity comes from Lovable Cloud auth via `src/lib/auth.tsx` (session, profile, `my_access()` roles); app pages live under `src/routes/_authenticated/` so signed-out visitors go to `/welcome` — never trust the browser for roles.
 - Sign-up domains and admin grants are enforced by database triggers on auth.users (`enforce_email_domain`, `handle_new_user`); committee seats come from `role_invites` claimed on sign-in — keep these rules in the database, not the UI.
 - Platform admins manage societies and committees at `/admin`; RLS policies (has_role / is_society_committee) are the security boundary.
+- Read policies never use `USING (true)`: profiles go through `can_see_profile` (self, admins, committee, shared society), society-scoped rows through `society_visible`, resources/proposals to members/committees — keeps personal data to the people who need it.
+- `.env` (public backend URL/key only) is committed; real secrets live in Cloud secrets — published builds read `.env` from the repo and break without it.
