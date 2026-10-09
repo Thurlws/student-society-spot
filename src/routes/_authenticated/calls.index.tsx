@@ -14,10 +14,10 @@ export const Route = createFileRoute("/_authenticated/calls/")({
 });
 
 function CallsPage() {
-  const { joinedSocieties, meetings, recaps, rooms } = useData();
+  const { joinedSocieties, meetings, recaps, rooms: allRooms } = useData();
   const callMode = useCallMode();
   const joined = new Set(joinedSocieties.map((s) => s.id));
-  const rooms = rooms.filter((r) => joined.has(r.societyId));
+  const rooms = allRooms.filter((r) => joined.has(r.societyId));
   const upcoming = meetings.filter((m) => joined.has(m.societyId) && (m.date ?? "") >= todayIso()).sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
   const myRecaps = recaps.filter((r) => joined.has(r.societyId));
 
