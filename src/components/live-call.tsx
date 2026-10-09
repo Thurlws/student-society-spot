@@ -202,7 +202,7 @@ function InviteTile({ roomId, roomName, societyName }: { roomId: string; roomNam
       <p className="max-w-xs text-xs opacity-70">
         Point a phone camera at the code, or send the link — it opens this call straight away.
       </p>
-      <InviteDialog roomId={room.id} roomName={room.name} societyName={societyName}>
+      <InviteDialog roomId={roomId} roomName={roomName} societyName={societyName}>
         <Button size="sm" variant="secondary"><QrCode />Show QR & link</Button>
       </InviteDialog>
     </div>
