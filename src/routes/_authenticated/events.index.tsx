@@ -92,19 +92,21 @@ function EventsPage() {
 
 function CalendarView({ ids }: { ids: Set<string> }) {
   const { events, getSociety, isRegistered } = useData();
-  const [month, setMonth] = useState(9); // October (0-indexed)
-  const first = new Date(2026, month, 1);
+  const [cursor, setCursor] = useState(() => { const [y, m] = todayIso().split("-").map(Number); return { y: y!, m: m! - 1 }; });
+  const month = cursor.m, year = cursor.y;
+  const shift = (n: number) => setCursor(({ y, m }) => { const t = y * 12 + m + n; return { y: Math.floor(t / 12), m: t % 12 }; });
+  const first = new Date(year, month, 1);
   const offset = (first.getDay() + 6) % 7;
-  const days = new Date(2026, month + 1, 0).getDate();
+  const days = new Date(year, month + 1, 0).getDate();
   const cells = Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, i) => i - offset + 1);
-  const iso = (d: number) => `2026-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const iso = (d: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   return (
     <div className="rounded-xl border bg-card p-4 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
-        <p className="flex items-center gap-2 font-display font-semibold">{monthLabel(2026, month)} <DemoBadge /></p>
+        <p className="flex items-center gap-2 font-display font-semibold">{monthLabel(year, month)}</p>
         <div className="flex gap-1">
-          <Button size="sm" variant="outline" disabled={month === 9} onClick={() => setMonth(9)}>Oct</Button>
-          <Button size="sm" variant="outline" disabled={month === 10} onClick={() => setMonth(10)}>Nov</Button>
+          <Button size="sm" variant="outline" aria-label="Previous month" onClick={() => shift(-1)}>‹</Button>
+          <Button size="sm" variant="outline" aria-label="Next month" onClick={() => shift(1)}>›</Button>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-border text-xs">
