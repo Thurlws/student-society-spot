@@ -29,6 +29,13 @@
       "when": 1791585867006,
       "tag": "0003_calls_and_recaps",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791586799748,
+      "tag": "0004_tighten_read_policies",
+      "breakpoints": true
     }
   ]
 }
