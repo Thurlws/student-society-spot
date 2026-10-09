@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Society } from "@/lib/types";
 
-const report = (o: Outcome, message: string, success = false) => {
+const report = async (p: Promise<Outcome>, message: string, success = false) => {
+  const o = await p;
   if (!o.ok) toast.error(o.error);
   else if (success) toast.success(message);
   else toast(message);
