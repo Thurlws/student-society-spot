@@ -128,7 +128,7 @@ describe("membership request review", () => {
     expect(err(rules.resolveRequest(fresh(), alex, "req1", "approve", ctx))).toMatch(
       /Only the CompSoc committee/,
     );
-    const otherCommittee = { ...jordan, committeeSocietyId: "music" };
+    const otherCommittee = { ...jordan, committeeSocietyIds: ["music"] };
     expect(err(rules.resolveRequest(fresh(), otherCommittee, "req1", "approve", ctx))).toMatch(
       /Only the CompSoc committee/,
     );

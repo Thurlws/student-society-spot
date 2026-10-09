@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { cn } from "@/lib/utils";
 import type { CollaborationProposal, Society } from "@/lib/types";
 
-export const Route = createFileRoute("/society-pulse")({
+export const Route = createFileRoute("/_authenticated/society-pulse")({
   head: () => pageHead("Society Pulse", "Discover collaboration opportunities between societies through shared interests."),
   component: Pulse,
 });

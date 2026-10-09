@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-export const Route = createFileRoute("/recaps/$recapId")({
+export const Route = createFileRoute("/_authenticated/recaps/$recapId")({
   head: () => ({
     meta: [
       { title: "Call recap · SocConnect" },
