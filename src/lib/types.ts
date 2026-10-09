@@ -174,6 +174,7 @@ export interface CallRoom {
   start?: string | undefined;
   eventId?: string | undefined;
   host?: string | undefined;
+  hostId?: string | undefined;
 }
 
 export interface TranscriptLine {
@@ -203,4 +204,7 @@ export interface CallRecap {
   summary: CallSummary;
   qa: { role: "user" | "assistant"; content: string }[];
   shared: boolean;
+  /** Transcript removed after the retention period; the summary is kept. */
+  transcriptDeleted?: boolean;
+  createdBy?: string | undefined;
 }
