@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCommitteeRouteImport } from './routes/_authenticated/committee'
 import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedMySocietiesRouteImport } from './routes/_authenticated/my-societies'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocietyPulseRouteImport } from './routes/_authenticated/society-pulse'
 import { Route as JoinRoomIdRouteImport } from './routes/join.$roomId'
@@ -43,6 +45,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCommitteeRoute = AuthenticatedCommitteeRouteImport.update({
   id: '/committee',
   path: '/committee',
@@ -65,6 +72,11 @@ const AuthenticatedMySocietiesRoute =
     path: '/my-societies',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -137,10 +149,12 @@ const AuthenticatedSocietiesSocietyIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/welcome': typeof WelcomeRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/my-societies': typeof AuthenticatedMySocietiesRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
   '/join/$roomId': typeof JoinRoomIdRoute
@@ -156,10 +170,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/my-societies': typeof AuthenticatedMySocietiesRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
   '/join/$roomId': typeof JoinRoomIdRoute
@@ -178,10 +194,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/welcome': typeof WelcomeRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/committee': typeof AuthenticatedCommitteeRoute
   '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/my-societies': typeof AuthenticatedMySocietiesRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/society-pulse': typeof AuthenticatedSocietyPulseRoute
   '/join/$roomId': typeof JoinRoomIdRoute
@@ -201,10 +219,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/welcome'
+    | '/admin'
     | '/committee'
     | '/communications'
     | '/inbox'
     | '/my-societies'
+    | '/onboarding'
     | '/settings'
     | '/society-pulse'
     | '/join/$roomId'
@@ -220,10 +240,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/welcome'
+    | '/admin'
     | '/committee'
     | '/communications'
     | '/inbox'
     | '/my-societies'
+    | '/onboarding'
     | '/settings'
     | '/society-pulse'
     | '/join/$roomId'
@@ -241,10 +263,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/welcome'
+    | '/_authenticated/admin'
     | '/_authenticated/committee'
     | '/_authenticated/communications'
     | '/_authenticated/inbox'
     | '/_authenticated/my-societies'
+    | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/_authenticated/society-pulse'
     | '/join/$roomId'
@@ -289,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/committee': {
       id: '/_authenticated/committee'
       path: '/committee'
@@ -315,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/my-societies'
       fullPath: '/my-societies'
       preLoaderRoute: typeof AuthenticatedMySocietiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -405,10 +443,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedCommitteeRoute: typeof AuthenticatedCommitteeRoute
   AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedMySocietiesRoute: typeof AuthenticatedMySocietiesRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSocietyPulseRoute: typeof AuthenticatedSocietyPulseRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -424,10 +464,12 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedCommitteeRoute: AuthenticatedCommitteeRoute,
   AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedMySocietiesRoute: AuthenticatedMySocietiesRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSocietyPulseRoute: AuthenticatedSocietyPulseRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
