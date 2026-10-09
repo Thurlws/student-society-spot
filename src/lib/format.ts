@@ -1,17 +1,29 @@
 import { DEMO_TODAY } from "@/data/mock";
 
+// Manual formatting (not toLocaleDateString) so server and browser render identical text.
 const NOW = new Date(`${DEMO_TODAY}T12:00:00`);
+const WD = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MO = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-export function formatDate(iso: string, opts: Intl.DateTimeFormatOptions = { weekday: "short", day: "numeric", month: "short" }) {
-  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB", opts);
+type Opts = { weekday?: "short" | "long"; day?: string; month?: "short" | "long"; year?: string };
+
+export function formatDate(iso: string, opts: Opts = { weekday: "short", month: "short" }) {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  const parts: string[] = [];
+  if (opts.weekday) parts.push(opts.weekday === "long" ? `${WD[d.getDay()]},` : `${WD[d.getDay()]!.slice(0, 3)},`);
+  parts.push(String(d.getDate()));
+  parts.push(opts.month === "long" ? MO[d.getMonth()]! : MO[d.getMonth()]!.slice(0, 3));
+  if (opts.year) parts.push(String(d.getFullYear()));
+  return parts.join(" ");
+}
+
+export function monthLabel(year: number, month: number) {
+  return `${MO[month]} ${year}`;
 }
 
 export function dayParts(iso: string) {
   const d = new Date(`${iso}T12:00:00`);
-  return {
-    day: d.toLocaleDateString("en-GB", { day: "2-digit" }),
-    month: d.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
-  };
+  return { day: String(d.getDate()).padStart(2, "0"), month: MO[d.getMonth()]!.slice(0, 3).toUpperCase() };
 }
 
 export function timeAgo(iso: string) {
@@ -24,8 +36,7 @@ export function timeAgo(iso: string) {
 }
 
 export function daysUntil(iso: string) {
-  const d = new Date(`${iso}T12:00:00`).getTime();
-  return Math.round((d - NOW.getTime()) / 86400000);
+  return Math.round((new Date(`${iso}T12:00:00`).getTime() - NOW.getTime()) / 86400000);
 }
 
 export function demoNowIso() {
