@@ -217,7 +217,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
   const [resolution, setResolution] = useState("");
   const committee = getSociety(r.societyId)?.committee ?? [];
 
-  const move = (to: SupportRequest["status"], note?: string) => {
+  const move = async (to: SupportRequest["status"], note?: string) => {
     const o = await setSupportRequestStatus(r.id, to, note);
     if (!o.ok) {
       toast.error(o.error);
@@ -238,7 +238,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
         <Label>Assigned to</Label>
         <Select
           value={r.assignedTo ?? UNASSIGNED}
-          onValueChange={(v) => {
+          onValueChange={async (v) => {
             const who = v === UNASSIGNED ? undefined : v;
             const o = await assignSupportRequest(r.id, who);
             if (!o.ok) toast.error(o.error);
