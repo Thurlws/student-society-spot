@@ -104,6 +104,7 @@ function Welcome() {
             Stop chasing group chats, spreadsheets and Instagram stories. SocConnect is the home for society life — discovery, membership, events and conversation in one place.
           </p>
           <div className="mt-8 max-w-md"><SignInCard /></div>
+        </div>
         <div className="relative">
           <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-hero" />
           <img src={hero} alt="Students enjoying society activities on campus" width={1536} height={1024} className="aspect-[3/2] w-full rounded-2xl border object-cover shadow-lift" />
