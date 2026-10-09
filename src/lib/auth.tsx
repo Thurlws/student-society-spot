@@ -23,6 +23,10 @@ type AuthValue = {
 
 const NO_ACCESS: Access = { is_admin: false, committee: [] };
 const Ctx = createContext<AuthValue | null>(null);
+const SIGNED_OUT: AuthValue = {
+  ready: false, session: null, email: "", profile: null, access: NO_ACCESS, interests: [],
+  refresh: async () => {}, signOut: async () => {},
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -75,9 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("useAuth must be used inside AuthProvider");
-  return v;
+  // Outside the provider (e.g. mid hot-reload or in isolated tests) behave as signed out instead of crashing.
+  return useContext(Ctx) ?? SIGNED_OUT;
 }
 
 export const initialsOf = (name: string) =>
