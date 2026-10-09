@@ -1,3 +1,4 @@
+import type { CollaborationProposal } from "@/lib/types";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Bookmark, BookmarkCheck, Lightbulb, Sparkles, X, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -19,12 +20,13 @@ export const Route = createFileRoute("/_authenticated/society-pulse")({
 
 const W = 640, H = 520, CX = W / 2, CY = H / 2;
 
-function findProposal(a: string, b: string) {
+function findIn(proposals: CollaborationProposal[], a: string, b: string) {
   return proposals.find((p) => p.societyIds.includes(a) && p.societyIds.includes(b));
 }
 
 function Pulse() {
   const { societies, role, savedProposals, toggleProposal, proposals } = useData();
+  const findProposal = (a: string, b: string) => findIn(proposals, a, b);
   const [a, setA] = useState<string | null>("compsoc");
   const [b, setB] = useState<string | null>(null);
   const [open, setOpen] = useState<CollaborationProposal | null>(null);
