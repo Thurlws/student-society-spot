@@ -1,20 +1,4 @@
-import type { CallRecap, CallRoom } from "@/lib/types";
-
-/** Always-open drop-in rooms (Discord-style) for every society. Moves to the database in Phase 3. */
-export const roomsFor = (societies: { id: string }[]): CallRoom[] =>
-  societies.flatMap((s) => [
-    { id: `${s.id}-lounge`, societyId: s.id, name: "Lounge", kind: "room" as const, description: "Drop in, say hi, hang out" },
-    { id: `${s.id}-huddle`, societyId: s.id, name: "Planning huddle", kind: "room" as const, description: "Quick catch-ups about upcoming plans" },
-  ]);
-
-/** Real presence arrives with Phase 3; never invent people. */
-export function roomPresence(_roomId: string): string[] {
-  return [];
-}
-
-export const initialMeetings: CallRoom[] = [];
-export const initialRecaps: CallRecap[] = [];
-
+/** Scripted lines used only by tests. */
 export function callScript(societyName: string, others: string[]): { speaker: string; text: string }[] {
   const [a = "Priya Nair", b = "Sam Okafor", c = a] = others;
   return [
