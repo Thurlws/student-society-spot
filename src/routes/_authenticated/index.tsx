@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Compass, Megaphone, Pin, Search, Sparkles } from "lucide-react";
 import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
-import { DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { greeting, timeAgo, formatDate } from "@/lib/format";
 import { EventCard, SectionHeader, SocietyCard, EmptyState, DemoBadge } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -29,7 +29,7 @@ function recommend(societies: Society[], interests: string[], member: (id: strin
 
 function Home() {
   const { user, events, joinedSocieties, announcements, membership, societies, isRegistered, getSociety, interests } = useData();
-  const upcoming = events.filter((e) => e.date >= DEMO_TODAY);
+  const upcoming = events.filter((e) => e.date >= todayIso());
   const mine = upcoming.filter((e) => isRegistered(e.id) || joinedSocieties.some((s) => s.id === e.societyId)).slice(0, 4);
   const joinedIds = new Set(joinedSocieties.map((s) => s.id));
   const recent = announcements.filter((a) => joinedIds.has(a.societyId)).slice(0, 4);
@@ -39,7 +39,7 @@ function Home() {
     <div className="space-y-12">
       <section className="relative overflow-hidden rounded-2xl border bg-hero p-8 shadow-soft sm:p-10">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatDate(DEMO_TODAY, { weekday: "long", day: "numeric", month: "long" })}</span>
+          <span>{formatDate(todayIso(), { weekday: "long", day: "numeric", month: "long" })}</span>
           <DemoBadge />
         </div>
         <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{greeting()}, {user.name.split(" ")[0]}.</h1>
@@ -102,7 +102,7 @@ function Home() {
                 <SocietyAvatar society={s} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.category} · {announcements.filter((a) => a.societyId === s.id).length} posts · {events.filter((e) => e.societyId === s.id && e.date >= DEMO_TODAY).length} upcoming</p>
+                  <p className="text-xs text-muted-foreground">{s.category} · {announcements.filter((a) => a.societyId === s.id).length} posts · {events.filter((e) => e.societyId === s.id && e.date >= todayIso()).length} upcoming</p>
                 </div>
                 <ArrowRight className="size-4 text-muted-foreground" />
               </Link>
