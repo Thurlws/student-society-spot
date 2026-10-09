@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcw } from "lucide-react";
-import { toast } from "sonner";
 import { useDemo } from "@/lib/demo-store";
 import { allInterests } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
-import { PageHeader, DemoBadge } from "@/components/cards";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/cards";
+import { ProfileForm } from "@/components/profile-form";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -26,7 +24,7 @@ function Card({ title, desc, children }: { title: string; desc?: string; childre
 }
 
 function SettingsPage() {
-  const { user, role, interests, toggleInterest, prefs, setPref, reset } = useDemo();
+  const { user, role, interests, toggleInterest, prefs, setPref } = useDemo();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader title="Settings" subtitle="Manage your profile and how SocConnect keeps you informed." />
@@ -45,11 +43,10 @@ function SettingsPage() {
           {allInterests.map((i) => {
             const on = interests.includes(i);
             return (
-              <button key={i} disabled={role === "committee"} onClick={() => toggleInterest(i)} className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60", on ? "border-primary bg-primary-soft text-primary" : "bg-card hover:border-primary/40")}>{i}</button>
+              <button key={i} onClick={() => toggleInterest(i)} className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60", on ? "border-primary bg-primary-soft text-primary" : "bg-card hover:border-primary/40")}>{i}</button>
             );
           })}
         </div>
-        {role === "committee" && <p className="mt-3 text-xs text-muted-foreground">Interests are editable on the student demo account.</p>}
       </Card>
       <Card title="Notifications" desc="In-app notifications only. Membership decisions are always shown.">
         <div className="space-y-4">
@@ -69,17 +66,8 @@ function SettingsPage() {
           </div>
         </div>
       </Card>
-      <Card title="Account" desc="University sign-in will be connected in the next phase.">
-        <Button variant="outline" disabled className="w-full sm:w-auto">
-          <svg viewBox="0 0 21 21" className="size-4" aria-hidden><path className="fill-soc-coral" d="M0 0h10v10H0z" /><path className="fill-soc-emerald" d="M11 0h10v10H11z" /><path className="fill-soc-sky" d="M0 11h10v10H0z" /><path className="fill-soc-amber" d="M11 11h10v10H11z" /></svg>
-          Sign in with Microsoft — coming soon
-        </Button>
-      </Card>
-      <Card title="Demo controls">
-        <div className="flex items-center justify-between gap-4">
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">Restore all societies, events and messages to their starting state. <DemoBadge /></p>
-          <Button variant="outline" onClick={() => { reset(); toast.success("Demo data reset"); }}><RotateCcw />Reset</Button>
-        </div>
+      <Card title="Account" desc="You're signed in with your university email.">
+        <ProfileForm />
       </Card>
     </div>
   );

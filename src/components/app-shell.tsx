@@ -4,12 +4,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import { useDemo } from "@/lib/demo-store";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { SocietyAvatar } from "@/components/society-avatar";
-import { DemoBadge } from "@/components/cards";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
