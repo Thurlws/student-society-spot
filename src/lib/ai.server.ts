@@ -72,7 +72,7 @@ export async function aiTranscribe(audio: Uint8Array, mime: string): Promise<str
   const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
   const form = new FormData();
   form.append("model", STT_MODEL);
-  form.append("file", new File([audio], `clip.${ext}`, { type }));
+  form.append("file", new File([audio as Uint8Array<ArrayBuffer>], `clip.${ext}`, { type }));
   form.append("response_format", "json");
   form.append("stream", "true");
   const res = await fetch(`${BASE}/audio/transcriptions`, {

@@ -206,7 +206,7 @@ export function CallExperience({
       rec = r;
       r.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
       r.onstop = () => {
-        const blob = new Blob(chunks, { type: (r.mimeType || mime || "audio/webm").split(";")[0] });
+        const blob = new Blob(chunks, { type: (r.mimeType || mime || "audio/webm").split(";")[0] ?? "audio/webm" });
         if (heard && blob.size > 2000) void upload(blob);
         if (!stopped) startClip();
       };
