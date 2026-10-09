@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, SearchX } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { allInterests } from "@/data/mock";
 import { PageHeader, SocietyCard, EmptyState } from "@/components/cards";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/societies/")({
 });
 
 function Discover() {
-  const { societies, membership } = useDemo();
+  const { societies, membership } = useData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [tags, setTags] = useState<string[]>([]);

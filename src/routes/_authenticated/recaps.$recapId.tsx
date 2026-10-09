@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { formatDate } from "@/lib/format";
 import { askAboutCall } from "@/lib/calls.functions";
 import { fallbackAnswer } from "@/lib/call-recap-fallback";
@@ -33,7 +33,7 @@ const suggestions = ["What did we decide?", "What do I need to do?", "Summarise 
 
 function RecapPage() {
   const { recapId } = Route.useParams();
-  const { recaps, getSociety, shareRecap, updateRecapQa, loaded } = useDemo();
+  const { recaps, getSociety, shareRecap, updateRecapQa, loaded } = useData();
   const ask = useServerFn(askAboutCall);
   const recap = recaps.find((r) => r.id === recapId);
   const [q, setQ] = useState("");

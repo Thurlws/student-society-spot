@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Bookmark, BookmarkCheck, Lightbulb, Sparkles, X, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { proposals } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
@@ -25,7 +25,7 @@ function findProposal(a: string, b: string) {
 }
 
 function Pulse() {
-  const { societies, role, savedProposals, toggleProposal } = useDemo();
+  const { societies, role, savedProposals, toggleProposal } = useData();
   const [a, setA] = useState<string | null>("compsoc");
   const [b, setB] = useState<string | null>(null);
   const [open, setOpen] = useState<CollaborationProposal | null>(null);

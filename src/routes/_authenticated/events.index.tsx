@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, LayoutGrid, MapPin, Search, SearchX, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { DEMO_TODAY } from "@/data/mock";
 import { formatDate, monthLabel } from "@/lib/format";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/events/")({
 });
 
 function EventsPage() {
-  const { events, getSociety, isRegistered, joinedSocieties } = useDemo();
+  const { events, getSociety, isRegistered, joinedSocieties } = useData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [scope, setScope] = useState<"all" | "mine" | "registered">("all");
@@ -91,7 +91,7 @@ function EventsPage() {
 }
 
 function CalendarView({ ids }: { ids: Set<string> }) {
-  const { events, getSociety, isRegistered } = useDemo();
+  const { events, getSociety, isRegistered } = useData();
   const [month, setMonth] = useState(9); // October (0-indexed)
   const first = new Date(2026, month, 1);
   const offset = (first.getDay() + 6) % 7;

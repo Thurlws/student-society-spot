@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { formatDate, timeAgo } from "@/lib/format";
 import { categoryLabel, priorityLabel, statusLabel } from "@/lib/support-requests";
 import type { SupportRequest, SupportRequestActivity } from "@/lib/types";
@@ -53,7 +53,7 @@ const activityIcon: Record<SupportRequestActivity["kind"], typeof Send> = {
 
 function RequestPage() {
   const { requestId } = Route.useParams();
-  const { getSupportRequest, canViewRequest, canManageRequest, getSociety, loaded } = useDemo();
+  const { getSupportRequest, canViewRequest, canManageRequest, getSociety, loaded } = useData();
   const r = getSupportRequest(requestId);
 
   if (!r || !canViewRequest(r)) {
@@ -149,7 +149,7 @@ function RequestPage() {
 }
 
 function Activity({ request: r, manage }: { request: SupportRequest; manage: boolean }) {
-  const { commentOnSupportRequest } = useDemo();
+  const { commentOnSupportRequest } = useData();
   const [text, setText] = useState("");
   return (
     <section className="rounded-xl border bg-card p-6 shadow-soft">
@@ -213,7 +213,7 @@ function Activity({ request: r, manage }: { request: SupportRequest; manage: boo
 }
 
 function ManagePanel({ request: r }: { request: SupportRequest }) {
-  const { getSociety, assignSupportRequest, setSupportRequestStatus } = useDemo();
+  const { getSociety, assignSupportRequest, setSupportRequestStatus } = useData();
   const [resolution, setResolution] = useState("");
   const committee = getSociety(r.societyId)?.committee ?? [];
 

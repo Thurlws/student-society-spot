@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, FileText, Hash, Lock, Megaphone, MessageSquarePlus, Pin, Send, CalendarClock, Users, Link2, ClipboardList, BookOpen } from "lucide-react";
 import { useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { societies as baseSocieties, channels, resources, DEMO_TODAY } from "@/data/mock";
 import { timeAgo } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
@@ -32,7 +32,7 @@ const resIcon = { Guide: BookOpen, Link: Link2, Document: FileText, Form: Clipbo
 
 function SocietyPage() {
   const { societyId } = Route.useParams();
-  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, approvedMembers } = useDemo();
+  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, approvedMembers } = useData();
   const s = getSociety(societyId)!;
   const isMember = membership(s.id) === "member";
   const a = accentClasses[s.accent];

@@ -4,7 +4,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { SocietyAvatar } from "@/components/society-avatar";
@@ -46,7 +46,7 @@ function Logo({ collapsed }: { collapsed?: boolean }) {
 }
 
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { joinedSocieties, user, role, committeeSeats } = useDemo();
+  const { joinedSocieties, user, role, committeeSeats } = useData();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
   return (
@@ -106,7 +106,7 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
 
 function GlobalSearch() {
   const [open, setOpen] = useState(false);
-  const { societies, events } = useDemo();
+  const { societies, events } = useData();
   const navigate = useNavigate();
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -154,7 +154,7 @@ function GlobalSearch() {
 }
 
 function Notifications() {
-  const { notifications, unreadCount, markRead, markAllRead } = useDemo();
+  const { notifications, unreadCount, markRead, markAllRead } = useData();
   const navigate = useNavigate();
   return (
     <Popover>
@@ -195,7 +195,7 @@ function Notifications() {
 }
 
 function UserMenu() {
-  const { user } = useDemo();
+  const { user } = useData();
   const { email, signOut, access } = useAuth();
   const navigate = useNavigate();
   return (
@@ -224,7 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const title = titles[pathname] ?? (pathname.startsWith("/societies") ? "Society" : pathname.startsWith("/events") ? "Event" : pathname.startsWith("/requests") ? "Request" : "SocConnect");
-  const { role } = useDemo();
+  const { role } = useData();
 
   return (
     <div className="flex min-h-screen">

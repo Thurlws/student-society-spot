@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { CallExperience } from "@/components/call-experience";
 import { EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/call/$roomId")({
 
 function CallPage() {
   const { roomId } = Route.useParams();
-  const { getRoom, getSociety, membership, user } = useDemo();
+  const { getRoom, getSociety, membership, user } = useData();
   const room = getRoom(roomId);
   const society = room ? getSociety(room.societyId) : undefined;
 

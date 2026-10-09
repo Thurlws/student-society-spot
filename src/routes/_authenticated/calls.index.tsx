@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarClock, FileText, Headphones, Radio } from "lucide-react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { callRooms } from "@/data/calls";
 import { DEMO_TODAY } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/calls/")({
 });
 
 function CallsPage() {
-  const { joinedSocieties, meetings, recaps } = useDemo();
+  const { joinedSocieties, meetings, recaps } = useData();
   const callMode = useCallMode();
   const joined = new Set(joinedSocieties.map((s) => s.id));
   const rooms = callRooms.filter((r) => joined.has(r.societyId));
