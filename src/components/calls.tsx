@@ -2,10 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { CalendarClock, FileText, Headphones, Plus, QrCode, Radio, Share2, Video } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { useCallMode } from "@/lib/use-call-mode";
 import { roomPresence } from "@/data/calls";
-import { DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { formatDate } from "@/lib/format";
 import type { CallRecap, CallRoom } from "@/lib/types";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -21,7 +21,7 @@ import { InviteDialog } from "@/components/invite-dialog";
 const initials = (n: string) => n.split(" ").map((p) => p[0]).join("");
 
 export function RoomCard({ room, showSociety }: { room: CallRoom; showSociety?: boolean }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(room.societyId);
   const mode = useCallMode();
   // Scripted presence only makes sense in simulated mode; live rooms hold whoever actually joins.
@@ -56,17 +56,17 @@ export function RoomCard({ room, showSociety }: { room: CallRoom; showSociety?: 
 }
 
 export function MeetingCard({ meeting }: { meeting: CallRoom }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(meeting.societyId);
   if (!s) return null;
-  const today = meeting.date === DEMO_TODAY;
+  const today = meeting.date === todayIso();
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-soft">
       <SocietyAvatar society={s} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{meeting.name}</p>
         <p className="truncate text-xs text-muted-foreground">
-          <CalendarClock className="mr-1 inline size-3" />{today ? "Today" : formatDate(meeting.date ?? DEMO_TODAY)} · {meeting.start} · {s.shortName}{meeting.host ? ` · hosted by ${meeting.host}` : ""}
+          <CalendarClock className="mr-1 inline size-3" />{today ? "Today" : formatDate(meeting.date ?? todayIso())} · {meeting.start} · {s.shortName}{meeting.host ? ` · hosted by ${meeting.host}` : ""}
         </p>
       </div>
       <div className="flex items-center gap-1">
@@ -80,7 +80,7 @@ export function MeetingCard({ meeting }: { meeting: CallRoom }) {
 }
 
 export function RecapCard({ recap }: { recap: CallRecap }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(recap.societyId);
   return (
     <Link to="/recaps/$recapId" params={{ recapId: recap.id }} className="card-interactive block rounded-xl border bg-card p-4 shadow-soft">
@@ -96,11 +96,11 @@ export function RecapCard({ recap }: { recap: CallRecap }) {
 }
 
 export function ScheduleCallDialog({ defaultSocietyId }: { defaultSocietyId?: string }) {
-  const { joinedSocieties, scheduleMeeting, user } = useDemo();
+  const { joinedSocieties, scheduleMeeting, user } = useData();
   const [open, setOpen] = useState(false);
   const [societyId, setSocietyId] = useState(defaultSocietyId ?? joinedSocieties[0]?.id ?? "");
   const [name, setName] = useState("");
-  const [date, setDate] = useState(DEMO_TODAY);
+  const [date, setDate] = useState(() => todayIso());
   const [start, setStart] = useState("18:00");
   const [description, setDescription] = useState("");
   return (

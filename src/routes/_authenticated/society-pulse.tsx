@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Bookmark, BookmarkCheck, Lightbulb, Sparkles, X, CheckCircle2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
-import { proposals } from "@/data/mock";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
 import { SocietyAvatar, accentClasses, societyIcon } from "@/components/society-avatar";
@@ -20,12 +19,13 @@ export const Route = createFileRoute("/_authenticated/society-pulse")({
 
 const W = 640, H = 520, CX = W / 2, CY = H / 2;
 
-function findProposal(a: string, b: string) {
+function findIn(proposals: CollaborationProposal[], a: string, b: string) {
   return proposals.find((p) => p.societyIds.includes(a) && p.societyIds.includes(b));
 }
 
 function Pulse() {
-  const { societies, role, savedProposals, toggleProposal } = useDemo();
+  const { societies, role, savedProposals, toggleProposal, proposals } = useData();
+  const findProposal = (a: string, b: string) => findIn(proposals, a, b);
   const [a, setA] = useState<string | null>("compsoc");
   const [b, setB] = useState<string | null>(null);
   const [open, setOpen] = useState<CollaborationProposal | null>(null);
@@ -61,7 +61,7 @@ function Pulse() {
       />
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-dashed bg-card px-4 py-2.5 text-xs text-muted-foreground">
         <Lightbulb className="size-4 text-warning" />
-        Connections are drawn from shared interest tags. Highlighted links are curated demo ideas — <b className="text-foreground">proposals, not confirmed partnerships or scheduled events.</b>
+        Connections are drawn from shared interest tags. Highlighted links are collaboration ideas — <b className="text-foreground">proposals, not confirmed partnerships or scheduled events.</b>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">

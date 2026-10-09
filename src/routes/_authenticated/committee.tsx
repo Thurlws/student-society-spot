@@ -2,11 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CalendarPlus, Check, Megaphone, PencilLine, ShieldCheck, UserPlus, Users, X, CalendarDays, BookmarkCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
-import { DEMO_TODAY, proposals } from "@/data/mock";
+import { useData } from "@/lib/api/store";
+import { todayIso } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { timeAgo } from "@/lib/format";
-import { PageHeader, EmptyState, DemoBadge } from "@/components/cards";
+import { PageHeader, EmptyState } from "@/components/cards";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { CommitteeRequestsSummary } from "@/components/support-requests";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { eventCategories, type EventInput } from "@/lib/demo-rules";
+import { eventCategories, type EventInput } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/committee")({
   head: () => pageHead("Committee Dashboard", "Manage your society: announcements, events, members and profile."),
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/committee")({
 });
 
 function Committee() {
-  const d = useDemo();
+  const d = useData();
   const [modal, setModal] = useState<null | "ann" | "event" | "edit">(null);
   const seats = d.committeeSeats;
   const [picked, setPicked] = useState<string | null>(null);
@@ -46,9 +46,9 @@ function Committee() {
   const s = found;
   const reqs = d.requests.filter((r) => r.societyId === s.id);
   const resolved = d.resolvedRequests.filter((r) => r.societyId === s.id);
-  const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= DEMO_TODAY);
+  const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= todayIso());
   const anns = d.announcements.filter((a) => a.societyId === s.id);
-  const saved = proposals.filter((p) => d.savedProposals.includes(p.id));
+  const saved = d.proposals.filter((p) => d.savedProposals.includes(p.id));
 
   return (
     <div className="space-y-8">
@@ -99,8 +99,8 @@ function Committee() {
                   <p className="text-[11px] text-muted-foreground">{timeAgo(r.requestedAt)}</p>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="icon" variant="outline" aria-label={`Decline ${r.name}`} onClick={() => { const o = d.resolveRequest(r.id, "decline"); if (o.ok) toast(`Declined ${r.name} — they were not added as a member`); else toast.error(o.error); }}><X /></Button>
-                  <Button size="icon" aria-label={`Approve ${r.name}`} onClick={() => { const o = d.resolveRequest(r.id, "approve"); if (o.ok) toast.success(`${r.name} is now a member of ${s.shortName}`); else toast.error(o.error); }}><Check /></Button>
+                  <Button size="icon" variant="outline" aria-label={`Decline ${r.name}`} onClick={async () => { const o = await d.resolveRequest(r.id, "decline"); if (o.ok) toast(`Declined ${r.name} — they were not added as a member`); else toast.error(o.error); }}><X /></Button>
+                  <Button size="icon" aria-label={`Approve ${r.name}`} onClick={async () => { const o = await d.resolveRequest(r.id, "approve"); if (o.ok) toast.success(`${r.name} is now a member of ${s.shortName}`); else toast.error(o.error); }}><Check /></Button>
                 </div>
               </div>
             ))}
@@ -148,7 +148,7 @@ function Committee() {
 }
 
 function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { postAnnouncement } = useDemo();
+  const { postAnnouncement } = useData();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
@@ -156,10 +156,10 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications. <DemoBadge /> Saved in this browser only.</DialogDescription></DialogHeader>
-        <form className="space-y-4" onSubmit={(e) => {
+        <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications.</DialogDescription></DialogHeader>
+        <form className="space-y-4" onSubmit={async (e) => {
           e.preventDefault();
-          const o = postAnnouncement(societyId, { title, body, pinned });
+          const o = await postAnnouncement(societyId, { title, body, pinned });
           if (!o.ok) { setErr(o.error); return; }
           toast.success("Announcement published");
           setTitle(""); setBody(""); setPinned(false); setErr(""); onClose();
@@ -176,18 +176,18 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
 }
 
 function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { createEvent } = useDemo();
+  const { createEvent } = useData();
   const navigate = useNavigate();
-  const [f, setF] = useState({ title: "", description: "", date: "2026-11-12", start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
+  const [f, setF] = useState({ title: "", description: "", date: todayIso(), start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
   const [err, setErr] = useState("");
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page. <DemoBadge /></DialogDescription></DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => {
+        <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page.</DialogDescription></DialogHeader>
+        <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
-          const o = createEvent(societyId, {
+          const o = await createEvent(societyId, {
             title: f.title, description: f.description, date: f.date, start: f.start, end: f.end || undefined, venue: f.venue,
             category: f.category as EventInput["category"],
             capacity: f.capacity.trim() === "" ? undefined : Number(f.capacity),
@@ -224,14 +224,14 @@ function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () 
 }
 
 function EditDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { getSociety, editSociety } = useDemo();
+  const { getSociety, editSociety } = useData();
   const s = getSociety(societyId)!;
   const [f, setF] = useState({ tagline: s.tagline, description: s.description, meets: s.meets });
   return (
     <Dialog open={open} onOpenChange={(o) => { if (o) setF({ tagline: s.tagline, description: s.description, meets: s.meets }); else onClose(); }}>
       <DialogContent>
         <DialogHeader><DialogTitle className="flex items-center gap-2"><SocietyAvatar society={s} size="sm" />Edit {s.shortName}</DialogTitle></DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); const o = editSociety(societyId, f); if (!o.ok) { toast.error(o.error); return; } toast.success("Society profile updated"); onClose(); }}>
+        <form className="space-y-3" onSubmit={async (e) => { e.preventDefault(); const o = await editSociety(societyId, f); if (!o.ok) { toast.error(o.error); return; } toast.success("Society profile updated"); onClose(); }}>
           <div className="space-y-1.5"><Label>Tagline</Label><Input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} maxLength={80} /></div>
           <div className="space-y-1.5"><Label>Description</Label><Textarea rows={5} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} maxLength={800} /></div>
           <div className="space-y-1.5"><Label>When & where you meet</Label><Input value={f.meets} onChange={(e) => setF({ ...f, meets: e.target.value })} maxLength={80} /></div>

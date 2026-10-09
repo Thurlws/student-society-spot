@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Inbox, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { REQUEST_STATUSES, inboxOrder, statusLabel } from "@/lib/support-requests";
 import type { SupportRequestStatus } from "@/lib/types";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/inbox")({
 });
 
 function InboxPage() {
-  const { user, committeeSeats, getSociety, supportRequests } = useDemo();
+  const { user, committeeSeats, getSociety, supportRequests } = useData();
   const [tab, setTab] = useState<"all" | SupportRequestStatus>("all");
   const [mineOnly, setMineOnly] = useState(false);
 
