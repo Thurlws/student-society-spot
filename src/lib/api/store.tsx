@@ -93,7 +93,6 @@ function useDataValue() {
     societies: data.societies,
     recommendations: data.recommendations,
     societyUuid: data.societyUuid,
-    refresh,
     events: data.events,
     announcements: data.announcements,
     channels: data.channels,

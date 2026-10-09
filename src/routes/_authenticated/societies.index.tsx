@@ -79,7 +79,7 @@ function Discover() {
       <p className="mb-4 text-sm text-muted-foreground">{list.length} result{list.length === 1 ? "" : "s"}</p>
       {list.length ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {list.map((s) => <SocietyCard key={s.id} society={s} reason={fits.data?.reasons[s.id]} action={<JoinButton society={s} full />} />)}
+          {list.map((s) => <SocietyCard key={s.id} society={s} reason={fits.data?.reasons[s.id] ?? ""} action={<JoinButton society={s} full />} />)}
         </div>
       ) : (
         <EmptyState icon={SearchX} title="No societies match" body="Try fewer filters or a different search term." action={<Button size="sm" variant="outline" onClick={clear}>Clear filters</Button>} />
