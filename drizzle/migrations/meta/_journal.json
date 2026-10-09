@@ -15,6 +15,13 @@
       "when": 1791584729692,
       "tag": "0001_communication_events_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791585031899,
+      "tag": "0002_restrict_function_execute",
+      "breakpoints": true
     }
   ]
 }
