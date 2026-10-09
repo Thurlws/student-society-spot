@@ -99,8 +99,8 @@ function Committee() {
                   <p className="text-[11px] text-muted-foreground">{timeAgo(r.requestedAt)}</p>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="icon" variant="outline" aria-label={`Decline ${r.name}`} onClick={() => { const o = d.resolveRequest(r.id, "decline"); if (o.ok) toast(`Declined ${r.name} — they were not added as a member`); else toast.error(o.error); }}><X /></Button>
-                  <Button size="icon" aria-label={`Approve ${r.name}`} onClick={() => { const o = d.resolveRequest(r.id, "approve"); if (o.ok) toast.success(`${r.name} is now a member of ${s.shortName}`); else toast.error(o.error); }}><Check /></Button>
+                  <Button size="icon" variant="outline" aria-label={`Decline ${r.name}`} onClick={async () => { const o = await d.resolveRequest(r.id, "decline"); if (o.ok) toast(`Declined ${r.name} — they were not added as a member`); else toast.error(o.error); }}><X /></Button>
+                  <Button size="icon" aria-label={`Approve ${r.name}`} onClick={async () => { const o = await d.resolveRequest(r.id, "approve"); if (o.ok) toast.success(`${r.name} is now a member of ${s.shortName}`); else toast.error(o.error); }}><Check /></Button>
                 </div>
               </div>
             ))}
@@ -157,9 +157,9 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications. <DemoBadge /> Saved in this browser only.</DialogDescription></DialogHeader>
-        <form className="space-y-4" onSubmit={(e) => {
+        <form className="space-y-4" onSubmit={async (e) => {
           e.preventDefault();
-          const o = postAnnouncement(societyId, { title, body, pinned });
+          const o = await postAnnouncement(societyId, { title, body, pinned });
           if (!o.ok) { setErr(o.error); return; }
           toast.success("Announcement published");
           setTitle(""); setBody(""); setPinned(false); setErr(""); onClose();
@@ -185,9 +185,9 @@ function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () 
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page. <DemoBadge /></DialogDescription></DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => {
+        <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
-          const o = createEvent(societyId, {
+          const o = await createEvent(societyId, {
             title: f.title, description: f.description, date: f.date, start: f.start, end: f.end || undefined, venue: f.venue,
             category: f.category as EventInput["category"],
             capacity: f.capacity.trim() === "" ? undefined : Number(f.capacity),
@@ -231,7 +231,7 @@ function EditDialog({ open, onClose, societyId }: { open: boolean; onClose: () =
     <Dialog open={open} onOpenChange={(o) => { if (o) setF({ tagline: s.tagline, description: s.description, meets: s.meets }); else onClose(); }}>
       <DialogContent>
         <DialogHeader><DialogTitle className="flex items-center gap-2"><SocietyAvatar society={s} size="sm" />Edit {s.shortName}</DialogTitle></DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); const o = editSociety(societyId, f); if (!o.ok) { toast.error(o.error); return; } toast.success("Society profile updated"); onClose(); }}>
+        <form className="space-y-3" onSubmit={async (e) => { e.preventDefault(); const o = await editSociety(societyId, f); if (!o.ok) { toast.error(o.error); return; } toast.success("Society profile updated"); onClose(); }}>
           <div className="space-y-1.5"><Label>Tagline</Label><Input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} maxLength={80} /></div>
           <div className="space-y-1.5"><Label>Description</Label><Textarea rows={5} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} maxLength={800} /></div>
           <div className="space-y-1.5"><Label>When & where you meet</Label><Input value={f.meets} onChange={(e) => setF({ ...f, meets: e.target.value })} maxLength={80} /></div>
