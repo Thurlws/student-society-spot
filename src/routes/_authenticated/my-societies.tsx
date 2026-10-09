@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Users } from "lucide-react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { PageHeader, SocietyCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/my-societies")({
 });
 
 function MySocieties() {
-  const { societies, membership } = useDemo();
+  const { societies, membership } = useData();
   const joined = societies.filter((s) => membership(s.id) === "member");
   const pending = societies.filter((s) => membership(s.id) === "pending");
   return (

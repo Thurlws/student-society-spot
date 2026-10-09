@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Compass, Megaphone, Pin, Search, Sparkles } from "lucide-react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { DEMO_TODAY } from "@/data/mock";
 import { greeting, timeAgo, formatDate } from "@/lib/format";
@@ -28,7 +28,7 @@ function recommend(societies: Society[], interests: string[], member: (id: strin
 }
 
 function Home() {
-  const { user, events, joinedSocieties, announcements, membership, societies, isRegistered, getSociety, interests } = useDemo();
+  const { user, events, joinedSocieties, announcements, membership, societies, isRegistered, getSociety, interests } = useData();
   const upcoming = events.filter((e) => e.date >= DEMO_TODAY);
   const mine = upcoming.filter((e) => isRegistered(e.id) || joinedSocieties.some((s) => s.id === e.societyId)).slice(0, 4);
   const joinedIds = new Set(joinedSocieties.map((s) => s.id));

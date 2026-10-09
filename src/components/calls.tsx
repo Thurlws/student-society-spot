@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarClock, FileText, Headphones, Plus, QrCode, Radio, Share2, Video } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { useCallMode } from "@/lib/use-call-mode";
 import { roomPresence } from "@/data/calls";
 import { DEMO_TODAY } from "@/data/mock";
@@ -21,7 +21,7 @@ import { InviteDialog } from "@/components/invite-dialog";
 const initials = (n: string) => n.split(" ").map((p) => p[0]).join("");
 
 export function RoomCard({ room, showSociety }: { room: CallRoom; showSociety?: boolean }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(room.societyId);
   const mode = useCallMode();
   // Scripted presence only makes sense in simulated mode; live rooms hold whoever actually joins.
@@ -56,7 +56,7 @@ export function RoomCard({ room, showSociety }: { room: CallRoom; showSociety?: 
 }
 
 export function MeetingCard({ meeting }: { meeting: CallRoom }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(meeting.societyId);
   if (!s) return null;
   const today = meeting.date === DEMO_TODAY;
@@ -80,7 +80,7 @@ export function MeetingCard({ meeting }: { meeting: CallRoom }) {
 }
 
 export function RecapCard({ recap }: { recap: CallRecap }) {
-  const { getSociety } = useDemo();
+  const { getSociety } = useData();
   const s = getSociety(recap.societyId);
   return (
     <Link to="/recaps/$recapId" params={{ recapId: recap.id }} className="card-interactive block rounded-xl border bg-card p-4 shadow-soft">
@@ -96,7 +96,7 @@ export function RecapCard({ recap }: { recap: CallRecap }) {
 }
 
 export function ScheduleCallDialog({ defaultSocietyId }: { defaultSocietyId?: string }) {
-  const { joinedSocieties, scheduleMeeting, user } = useDemo();
+  const { joinedSocieties, scheduleMeeting, user } = useData();
   const [open, setOpen] = useState(false);
   const [societyId, setSocietyId] = useState(defaultSocietyId ?? joinedSocieties[0]?.id ?? "");
   const [name, setName] = useState("");

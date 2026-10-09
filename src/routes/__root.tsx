@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { DemoProvider } from "@/lib/demo-store";
+import { DataProvider } from "@/lib/api/store";
 import { AuthProvider } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
@@ -116,10 +116,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <DemoProvider>
+        <DataProvider>
           {bare ? <Outlet /> : <AppShell><Outlet /></AppShell>}
           <Toaster position="bottom-right" />
-        </DemoProvider>
+        </DataProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Hash, Inbox, Megaphone, Bookmark } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { channels, DEMO_TODAY } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
 import { formatDate, timeAgo } from "@/lib/format";
@@ -20,7 +20,7 @@ type Kind = "announcement" | "event" | "discussion";
 type Item = { id: string; kind: Kind; societyId: string; title: string; body: string; at: string; to: { to: string; params: Record<string, string> } };
 
 function Comms() {
-  const { announcements, events, messages, joinedSocieties, getSociety } = useDemo();
+  const { announcements, events, messages, joinedSocieties, getSociety } = useData();
   const [kind, setKind] = useState<"all" | Kind>("all");
   const [soc, setSoc] = useState("all");
   const [saved, setSaved] = useState<string[]>([]);

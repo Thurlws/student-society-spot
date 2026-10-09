@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MessageSquareText } from "lucide-react";
 import { useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { REQUEST_STATUSES, statusLabel } from "@/lib/support-requests";
 import type { SupportRequestStatus } from "@/lib/types";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/requests/")({
 });
 
 function MyRequests() {
-  const { supportRequests, user } = useDemo();
+  const { supportRequests, user } = useData();
   const [tab, setTab] = useState<"all" | SupportRequestStatus>("all");
   const mine = supportRequests
     .filter((r) => r.submittedBy === user.id)

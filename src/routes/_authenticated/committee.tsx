@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CalendarPlus, Check, Megaphone, PencilLine, ShieldCheck, UserPlus, Users, X, CalendarDays, BookmarkCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { DEMO_TODAY, proposals } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
 import { timeAgo } from "@/lib/format";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { eventCategories, type EventInput } from "@/lib/demo-rules";
+import { eventCategories, type EventInput } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/committee")({
   head: () => pageHead("Committee Dashboard", "Manage your society: announcements, events, members and profile."),
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/committee")({
 });
 
 function Committee() {
-  const d = useDemo();
+  const d = useData();
   const [modal, setModal] = useState<null | "ann" | "event" | "edit">(null);
   const seats = d.committeeSeats;
   const [picked, setPicked] = useState<string | null>(null);
@@ -148,7 +148,7 @@ function Committee() {
 }
 
 function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { postAnnouncement } = useDemo();
+  const { postAnnouncement } = useData();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
@@ -176,7 +176,7 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
 }
 
 function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { createEvent } = useDemo();
+  const { createEvent } = useData();
   const navigate = useNavigate();
   const [f, setF] = useState({ title: "", description: "", date: "2026-11-12", start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
   const [err, setErr] = useState("");
@@ -224,7 +224,7 @@ function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () 
 }
 
 function EditDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { getSociety, editSociety } = useDemo();
+  const { getSociety, editSociety } = useData();
   const s = getSociety(societyId)!;
   const [f, setF] = useState({ tagline: s.tagline, description: s.description, meets: s.meets });
   return (

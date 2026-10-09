@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Waypoints } from "lucide-react";
 import { pageHead } from "@/lib/seo";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { allInterests } from "@/data/mock";
 import { ProfileForm } from "@/components/profile-form";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 });
 
 function Onboarding() {
-  const { interests, toggleInterest } = useDemo();
+  const { interests, toggleInterest } = useData();
   const navigate = useNavigate();
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-6 py-12">

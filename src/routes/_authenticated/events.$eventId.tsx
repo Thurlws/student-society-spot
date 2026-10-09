@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarPlus, Check, Clock, MapPin, Tag, Users } from "lucide-react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { events as baseEvents } from "@/data/mock";
 import { formatDate, daysUntil } from "@/lib/format";
 import { downloadIcs } from "@/lib/ics";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/events/$eventId")({
 
 function EventPage() {
   const { eventId } = Route.useParams();
-  const { getEvent, getSociety, isRegistered, registerForEvent, cancelRegistration, attendeeCount, eventAvailability, events } = useDemo();
+  const { getEvent, getSociety, isRegistered, registerForEvent, cancelRegistration, attendeeCount, eventAvailability, events } = useData();
   const e = getEvent(eventId);
   if (!e) {
     return (
