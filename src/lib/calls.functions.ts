@@ -66,3 +66,15 @@ export const askAboutCall = createServerFn({ method: "POST" })
       return { answer: fallbackAnswer(data.transcript, data.question) };
     }
   });
+
+export const transcribeClip = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ audio: z.string().min(10).max(4_000_000), mime: z.string().max(80) }))
+  .handler(async ({ data }) => {
+    const { aiTranscribe } = await import("./ai.server");
+    const bin = Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0));
+    try {
+      return { text: await aiTranscribe(bin, data.mime), error: null as string | null };
+    } catch (e) {
+      return { text: "", error: e instanceof Error ? e.message : "Transcription failed" };
+    }
+  });
