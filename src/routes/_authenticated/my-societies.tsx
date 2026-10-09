@@ -6,7 +6,7 @@ import { PageHeader, SocietyCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/my-societies")({
+export const Route = createFileRoute("/_authenticated/my-societies")({
   head: () => pageHead("My Societies", "The societies you've joined and requests you've sent."),
   component: MySocieties,
 });

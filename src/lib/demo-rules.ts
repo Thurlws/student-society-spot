@@ -86,7 +86,7 @@ export const isRegisteredFor = (s: DemoState, userId: string, eventId: string) =
   (s.registrations[userId] ?? []).includes(eventId);
 
 export const canManageSociety = (actor: User, societyId: string) =>
-  actor.role === "committee" && actor.committeeSocietyId === societyId;
+  (actor.committeeSocietyIds ?? []).includes(societyId);
 
 export const allEvents = (s: DemoState, ctx: DemoContext) => [
   ...ctx.baseEvents,

@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/requests/$requestId")({
+export const Route = createFileRoute("/_authenticated/requests/$requestId")({
   head: () => ({
     meta: [
       { title: "Request · SocConnect" },

@@ -13,38 +13,30 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/inbox")({
+export const Route = createFileRoute("/_authenticated/inbox")({
   head: () =>
     pageHead("Request Inbox", "Member requests for your society, from submission to resolution."),
   component: InboxPage,
 });
 
 function InboxPage() {
-  const { role, user, setRole, getSociety, supportRequests } = useDemo();
+  const { user, committeeSeats, getSociety, supportRequests } = useDemo();
   const [tab, setTab] = useState<"all" | SupportRequestStatus>("all");
   const [mineOnly, setMineOnly] = useState(false);
 
-  if (role !== "committee" || !user.committeeSocietyId) {
+  const seat = committeeSeats[0];
+  const found = seat ? getSociety(seat.slug) : undefined;
+  if (!seat || !found) {
     return (
       <EmptyState
         icon={ShieldCheck}
         title="Committee access only"
-        body="The request inbox is for society committee members. In the demo you can switch to Jordan Lee, CompSoc President."
-        action={
-          <Button
-            onClick={() => {
-              setRole("committee");
-              toast.success("Now viewing as Jordan Lee (committee)");
-            }}
-          >
-            Switch to committee demo
-          </Button>
-        }
+        body={seat ? "Your society's request inbox switches to live data in the next update." : "The request inbox is for society committee members."}
       />
     );
   }
 
-  const s = getSociety(user.committeeSocietyId)!;
+  const s = found;
   const all = supportRequests.filter((r) => r.societyId === s.id).sort(inboxOrder);
   const scoped = mineOnly ? all.filter((r) => r.assignedTo === user.name) : all;
   const shown = tab === "all" ? scoped : scoped.filter((r) => r.status === tab);

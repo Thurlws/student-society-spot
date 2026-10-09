@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/societies/$societyId")({
+export const Route = createFileRoute("/_authenticated/societies/$societyId")({
   loader: ({ params }) => {
     const s = baseSocieties.find((x) => x.id === params.societyId);
     if (!s) throw notFound();

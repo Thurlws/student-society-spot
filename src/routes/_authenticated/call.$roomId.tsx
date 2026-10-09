@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/call/$roomId")({
+export const Route = createFileRoute("/_authenticated/call/$roomId")({
   head: () => ({
     meta: [
       { title: "Call · SocConnect" },
