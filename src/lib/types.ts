@@ -18,7 +18,8 @@ export interface User {
   course: string;
   year: string;
   interests: string[];
-  committeeSocietyId?: string;
+  /** Slugs of societies this user is on the committee of. */
+  committeeSocietyIds?: string[];
 }
 
 export interface CommitteeMember {

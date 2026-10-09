@@ -13,10 +13,12 @@ import {
   initialSupportRequests,
   societies as baseSocieties,
 } from "@/data/mock";
-import type { CallRecap, CallRoom, Event, MembershipStatus, Role, SupportRequest, SupportRequestStatus } from "@/lib/types";
+import type { User, CallRecap, CallRoom, Event, MembershipStatus, Role, SupportRequest, SupportRequestStatus } from "@/lib/types";
 import { demoNowIso } from "@/lib/format";
 import { callRooms, initialMeetings, initialRecaps } from "@/data/calls";
 import * as rules from "@/lib/demo-rules";
+import { initialsOf, useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import type { AnnouncementInput, DemoContext, DemoState, EventInput, NotificationPrefs, Outcome, SupportRequestInput } from "@/lib/demo-rules";
 
 /**
@@ -74,9 +76,24 @@ const ctx: DemoContext = {
   baseline,
 };
 
-const actorFor = (s: DemoState) => (s.role === "committee" ? committee : { ...student, interests: s.interests });
+/** The signed-in person. Updated on every render from the auth session (see useDemoValue). */
+let currentUser: User = { ...student, committeeSocietyIds: [] };
+const actorFor = (_s: DemoState): User => currentUser;
 
 function useDemoValue() {
+  const auth = useAuth();
+  const committeeIds = auth.access.committee.map((c) => c.slug);
+  const name = auth.profile?.display_name || auth.email.split("@")[0] || "You";
+  currentUser = {
+    id: auth.session?.user.id ?? "signed-out",
+    name,
+    initials: initialsOf(name),
+    course: auth.profile?.course ?? "",
+    year: auth.profile?.year ?? "",
+    interests: auth.interests,
+    role: committeeIds.length ? "committee" : "student",
+    committeeSocietyIds: committeeIds,
+  };
   const [state, setState] = useState<DemoState>(initialState);
   const [loaded, setLoaded] = useState(false);
   // Latest state, updated synchronously so rapid repeated clicks are checked against fresh data.
@@ -209,7 +226,9 @@ function useDemoValue() {
     updateRecapQa,
     shareRecap,
     user,
-    role: state.role,
+    role: user.role,
+    isAdmin: auth.access.is_admin,
+    committeeSeats: auth.access.committee,
     societies,
     events,
     announcements: state.announcements,
@@ -221,7 +240,7 @@ function useDemoValue() {
     registrations: state.registrations[user.id] ?? [],
     savedProposals: state.savedProposals,
     prefs: state.prefs,
-    interests: state.interests,
+    interests: auth.interests,
     getSociety,
     getEvent,
     membership,
@@ -231,7 +250,6 @@ function useDemoValue() {
     isRegistered: (id: string) => rules.isRegisteredFor(state, user.id, id),
     canManage: (societyId: string) => rules.canManageSociety(user, societyId),
     joinedSocieties: societies.filter((s) => membership(s.id) === "member"),
-    setRole: (role: Role) => update((s) => ({ ...s, role })),
     joinSociety: (id: string) => run((s, a) => rules.joinSociety(s, a, id, ctx)),
     cancelRequest: (id: string) => run((s, a) => rules.cancelRequest(s, a, id, ctx)),
     leaveSociety: (id: string) => run((s, a) => rules.leaveSociety(s, a, id, ctx)),
@@ -249,10 +267,16 @@ function useDemoValue() {
     markAllRead: () => setNotifications((ns) => ns.map((n) => ({ ...n, read: true }))),
     toggleProposal: (id: string) =>
       update((s) => ({ ...s, savedProposals: s.savedProposals.includes(id) ? s.savedProposals.filter((p) => p !== id) : [...s.savedProposals, id] })),
-    toggleInterest: (i: string) =>
-      update((s) => ({ ...s, interests: s.interests.includes(i) ? s.interests.filter((x) => x !== i) : [...s.interests, i] })),
+    toggleInterest: async (i: string) => {
+      const uid = auth.session?.user.id;
+      if (!uid) return;
+      const { data: row } = await supabase.from("interests").select("id").eq("name", i).maybeSingle();
+      if (!row) return;
+      if (auth.interests.includes(i)) await supabase.from("profile_interests").delete().eq("profile_id", uid).eq("interest_id", row.id);
+      else await supabase.from("profile_interests").insert({ profile_id: uid, interest_id: row.id });
+      await auth.refresh();
+    },
     setPref: (k: keyof NotificationPrefs, v: boolean) => update((s) => ({ ...s, prefs: { ...s.prefs, [k]: v } })),
-    reset: () => commit(initialState()),
   };
 }
 
