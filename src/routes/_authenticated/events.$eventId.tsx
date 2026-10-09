@@ -40,8 +40,11 @@ function EventPage() {
   const until = daysUntil(e.date);
   const related = events.filter((x) => x.id !== e.id && (x.societyId === e.societyId || x.tags.some((t) => e.tags.includes(t)))).slice(0, 3);
 
-  const toggle = () => {
-    const o = reg ? cancelRegistration(e.id) : registerForEvent(e.id);
+  const toggle = async () => {
+    if (busy) return;
+    setBusy(true);
+    const o = await (reg ? cancelRegistration(e.id) : registerForEvent(e.id));
+    setBusy(false);
     if (!o.ok) toast.error(o.error);
     else if (reg) toast("Registration cancelled");
     else toast.success("You're registered! See you there.");
