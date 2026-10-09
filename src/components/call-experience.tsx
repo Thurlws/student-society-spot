@@ -19,7 +19,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useDemo } from "@/lib/demo-store";
 import { callScript, roomPresence } from "@/data/calls";
 import { demoNowIso } from "@/lib/format";
-import { summarizeCall } from "@/lib/calls.functions";
+import { summarizeCall, transcribeClip } from "@/lib/calls.functions";
 import { fallbackSummary } from "@/lib/call-recap-fallback";
 import { getCallMode, getCallToken } from "@/lib/livekit.functions";
 import { inviteUrl } from "@/lib/invite";
@@ -68,6 +68,8 @@ export function CallExperience({
   const { saveRecap } = useDemo();
   const navigate = useNavigate();
   const summarize = useServerFn(summarizeCall);
+  const transcribe = useServerFn(transcribeClip);
+  const flushRef = useRef<(() => Promise<void>) | null>(null);
   const callMode = useServerFn(getCallMode);
   const callToken = useServerFn(getCallToken);
 
@@ -112,7 +114,8 @@ export function CallExperience({
     return [...new Set(pool)].filter((n) => n !== me).slice(0, 3);
   })();
 
-  const addLine = useCallback((speaker: string, text: string) => setTranscript((t) => [...t, { speaker, text, at: elapsedRef.current }]), []);
+  const transcriptRef = useRef<TranscriptLine[]>([]);
+  const addLine = useCallback((speaker: string, text: string) => setTranscript((t) => { const n = [...t, { speaker, text, at: elapsedRef.current }]; transcriptRef.current = n; return n; }), []);
   /** Your own words: add to the transcript and share with everyone in a live call. */
   const say = (text: string) => { addLine(me, text); sendRef.current?.(text, me); };
   const onParticipants = useCallback((names: string[]) => names.forEach((n) => seenRef.current.add(n)), []);
@@ -162,58 +165,113 @@ export function CallExperience({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, society?.id]);
 
-  // Live speech-to-text (browser)
+  // Live speech-to-text: record the mic in short clips and transcribe each with AI.
+  // Works in every browser (the built-in browser captions often fail with "network").
   useEffect(() => {
     if (phase !== "live") return;
-    const Ctor = (window as SRWindow).SpeechRecognition ?? (window as SRWindow).webkitSpeechRecognition;
-    if (!Ctor) { setSrSupported(false); return; }
-    const rec: SR = new Ctor();
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = "en-IE";
-    rec.onresult = (e) => {
-      let partial = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (!r) continue;
-        if (r.isFinal) { const t = r[0].transcript.trim(); if (t) say(t); } else partial += r[0].transcript;
-      }
-      setInterim(partial);
-      interimRef.current = partial;
-      setSrIssue(null);
-      setSpeaking(partial ? me : null);
+    if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) { setSrSupported(false); return; }
+    let stopped = false;
+    let stream: MediaStream | null = null;
+    let rec: MediaRecorder | null = null;
+    let ctx: AudioContext | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let heard = false;
+    const pending = new Set<Promise<void>>();
+    const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find((m) => MediaRecorder.isTypeSupported?.(m)) ?? "";
+
+    const upload = (blob: Blob) => {
+      const job = (async () => {
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+        setInterim("transcribing");
+        interimRef.current = "";
+        try {
+          const r = await transcribe({ data: { audio: btoa(bin), mime: blob.type || mime || "audio/webm" } });
+          if (r.text) { say(r.text); setSrIssue(null); }
+          else if (r.error) setSrIssue(`Captions: ${r.error}`);
+        } catch { setSrIssue("Captions couldn't reach the server — retrying…"); }
+        finally { setInterim(""); }
+      })();
+      pending.add(job);
+      void job.finally(() => pending.delete(job));
+      return job;
     };
-    rec.onerror = (e) => {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") { setSrSupported(false); setSrIssue("Captions are blocked — allow the microphone, or type below."); }
-      else if (e.error === "network") setSrIssue("Captions lost connection — retrying…");
-      else if (e.error === "audio-capture") setSrIssue("No microphone found for captions — type below.");
+
+    const startClip = () => {
+      if (stopped || !stream) return;
+      heard = false;
+      const chunks: Blob[] = [];
+      const r = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      rec = r;
+      r.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      r.onstop = () => {
+        const blob = new Blob(chunks, { type: (r.mimeType || mime || "audio/webm").split(";")[0] ?? "audio/webm" });
+        if (heard && blob.size > 2000) void upload(blob);
+        if (!stopped) startClip();
+      };
+      r.start();
+      timer = setTimeout(() => { if (r.state === "recording") r.stop(); }, 7000);
     };
-    // Chrome stops recognition after silence or errors; keep restarting while the mic is on.
-    rec.onend = () => { if (micRef.current && recRef.current === rec) setTimeout(() => { if (recRef.current === rec) try { rec.start(); } catch { /* already running */ } }, 250); };
-    recRef.current = rec;
-    if (micRef.current) try { rec.start(); } catch { /* noop */ }
-    return () => { recRef.current = null; rec.stop(); };
+
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then((s) => {
+      if (stopped) return s.getTracks().forEach((t) => t.stop());
+      stream = s;
+      s.getAudioTracks().forEach((t) => (t.enabled = micRef.current));
+      // Only send clips that contain sound, so silence isn't transcribed.
+      try {
+        ctx = new AudioContext();
+        const an = ctx.createAnalyser();
+        an.fftSize = 512;
+        ctx.createMediaStreamSource(s).connect(an);
+        const data = new Uint8Array(an.fftSize);
+        const tick = () => {
+          if (stopped || !ctx) return;
+          an.getByteTimeDomainData(data);
+          let peak = 0;
+          for (const v of data) peak = Math.max(peak, Math.abs(v - 128));
+          if (peak > 12 && micRef.current) { heard = true; setSpeaking(me); } else setSpeaking((x) => (x === me ? null : x));
+          requestAnimationFrame(tick);
+        };
+        tick();
+      } catch { heard = true; }
+      startClip();
+    }).catch(() => { setSrSupported(false); setSrIssue("Captions are blocked — allow the microphone, or type below."); });
+
+    flushRef.current = async () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+      if (rec && rec.state === "recording") await new Promise<void>((res) => { const r = rec!; const prev = r.onstop; r.onstop = (ev) => { (prev as ((e: Event) => void) | null)?.call(r, ev); res(); }; r.stop(); });
+      await Promise.all([...pending]);
+    };
+    recRef.current = { setEnabled: (on: boolean) => stream?.getAudioTracks().forEach((t) => (t.enabled = on)) } as unknown as SR;
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+      try { if (rec?.state === "recording") rec.stop(); } catch { /* noop */ }
+      stream?.getTracks().forEach((t) => t.stop());
+      void ctx?.close();
+      recRef.current = null;
+      flushRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   useEffect(() => {
-    const rec = recRef.current;
-    if (!rec) return;
-    try { if (micOn) rec.start(); else rec.stop(); } catch { /* noop */ }
+    (recRef.current as unknown as { setEnabled?: (on: boolean) => void } | null)?.setEnabled?.(micOn);
   }, [micOn]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [transcript, interim]);
 
   const endCall = async () => {
-    const rec = recRef.current;
+    // Transcribe the words still being recorded when Leave was pressed.
+    const flush = flushRef.current;
+    flushRef.current = null;
+    if (flush) { setPhase("summarizing"); await flush().catch(() => undefined); }
     recRef.current = null;
-    try { rec?.stop(); } catch { /* noop */ }
-    // Keep words still being recognised when Leave was pressed.
-    let lines = transcript;
-    const pending = interimRef.current.trim();
-    if (pending) { lines = [...transcript, { speaker: me, text: pending, at: elapsedRef.current }]; sendRef.current?.(pending, me); }
+    let lines = transcriptRef.current;
     if (lines.length === 0) {
-      toast.message("No captions were captured, so there's no recap.", { description: srSupported ? "Captions work in Chrome or Edge with the microphone allowed. You can also type into the transcript." : "Live captions need Chrome or Edge. Type into the transcript during the call instead." });
+      toast.message("No captions were captured, so there's no recap.", { description: "Make sure the microphone is allowed and on. You can also type into the transcript." });
       if (onEnded) setPhase("lobby");
       else navigate({ to: "/calls" });
       return;
@@ -342,11 +400,11 @@ export function CallExperience({
               {transcript.map((l, i) => (
                 <p key={i}><span className="font-semibold">{l.speaker}</span> <span className="text-xs opacity-50">{clock(l.at)}</span><br /><span className="opacity-90">{l.text}</span></p>
               ))}
-              {interim && <p className="opacity-60"><span className="font-semibold">{me}</span><br />{interim}…</p>}
+              {interim && <p className="opacity-60">Transcribing…</p>}
               <div ref={endRef} />
             </div>
             <form className="flex gap-2 border-t border-ink-foreground/10 p-3" onSubmit={(e) => { e.preventDefault(); if (typed.trim()) { say(typed.trim()); setTyped(""); } }}>
-              <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={srSupported ? "Type into the transcript" : "Live captions need Chrome — type instead"} className="border-ink-foreground/20 bg-transparent text-ink-foreground" />
+              <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={srSupported ? "Type into the transcript" : "Captions unavailable — type instead"} className="border-ink-foreground/20 bg-transparent text-ink-foreground" />
               <Button type="submit" size="icon" variant="secondary" aria-label="Add to transcript"><Send /></Button>
             </form>
           </aside>
