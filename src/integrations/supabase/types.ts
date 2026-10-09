@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           author_id: string | null
@@ -59,6 +88,257 @@ export type Database = {
           },
           {
             foreignKeyName: "announcements_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      call_invites: {
+        Row: {
+          code_hash: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          max_uses: number
+          room_id: string
+          uses: number
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          max_uses?: number
+          room_id: string
+          uses?: number
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          max_uses?: number
+          room_id?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_invites_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "call_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_participants: {
+        Row: {
+          guest_name: string | null
+          id: string
+          joined_at: string
+          livekit_identity: string
+          room_id: string
+          user_id: string | null
+        }
+        Insert: {
+          guest_name?: string | null
+          id?: string
+          joined_at?: string
+          livekit_identity: string
+          room_id: string
+          user_id?: string | null
+        }
+        Update: {
+          guest_name?: string | null
+          id?: string
+          joined_at?: string
+          livekit_identity?: string
+          room_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "call_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_recaps: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_sec: number
+          id: string
+          participant_ids: string[]
+          participants: string[]
+          qa: Json
+          room_id: string
+          shared: boolean
+          shared_at: string | null
+          society_id: string
+          started_at: string
+          summary: Json
+          title: string
+          transcript: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number
+          id?: string
+          participant_ids?: string[]
+          participants?: string[]
+          qa?: Json
+          room_id: string
+          shared?: boolean
+          shared_at?: string | null
+          society_id: string
+          started_at?: string
+          summary: Json
+          title: string
+          transcript?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number
+          id?: string
+          participant_ids?: string[]
+          participants?: string[]
+          qa?: Json
+          room_id?: string
+          shared?: boolean
+          shared_at?: string | null
+          society_id?: string
+          started_at?: string
+          summary?: Json
+          title?: string
+          transcript?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_recaps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_recaps_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "call_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_recaps_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_recaps_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
+          },
+        ]
+      }
+      call_rooms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          event_id: string | null
+          host_id: string | null
+          id: string
+          kind: string
+          name: string
+          slug: string
+          society_id: string
+          starts_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          event_id?: string | null
+          host_id?: string | null
+          id?: string
+          kind?: string
+          name: string
+          slug: string
+          society_id: string
+          starts_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          event_id?: string | null
+          host_id?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          slug?: string
+          society_id?: string
+          starts_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_rooms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_rooms_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_rooms_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_rooms_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_rooms_society_id_fkey"
             columns: ["society_id"]
             isOneToOne: false
             referencedRelation: "society_member_counts"
@@ -1033,11 +1313,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      purge_old_transcripts: { Args: never; Returns: number }
       register_for_event: { Args: { _event_id: string }; Returns: undefined }
+      schedule_meeting: {
+        Args: {
+          _date: string
+          _description: string
+          _name: string
+          _society_id: string
+          _start: string
+        }
+        Returns: string
+      }
       set_support_request_status: {
         Args: { _id: string; _resolution: string; _to: string }
         Returns: undefined
       }
+      share_recap: { Args: { _recap_id: string }; Returns: undefined }
       society_member_count: { Args: { _society_id: string }; Returns: number }
       society_member_counts: {
         Args: never

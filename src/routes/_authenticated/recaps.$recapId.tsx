@@ -7,7 +7,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useData } from "@/lib/api/store";
 import { formatDate } from "@/lib/format";
 import { askAboutCall } from "@/lib/calls.functions";
-import { fallbackAnswer } from "@/lib/call-recap-fallback";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { EmptyState } from "@/components/cards";
 import { Button } from "@/components/ui/button";
@@ -33,36 +32,36 @@ const suggestions = ["What did we decide?", "What do I need to do?", "Summarise 
 
 function RecapPage() {
   const { recapId } = Route.useParams();
-  const { recaps, getSociety, shareRecap, updateRecapQa, loaded } = useData();
+  const { recaps, getSociety, shareRecap, canShareRecap, refresh, loaded } = useData();
   const ask = useServerFn(askAboutCall);
   const recap = recaps.find((r) => r.id === recapId);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [recap?.qa.length, busy]);
+  useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [recap?.qa.length, pending.length, busy]);
 
-  if (!recap) return loaded ? <EmptyState title="Recap not found" body="It may have been removed when the demo was reset." action={<Button asChild><Link to="/calls">Back to calls</Link></Button>} /> : null;
+  if (!recap) return loaded ? <EmptyState title="Recap not found" body="It may not exist, or you may not have access. Recaps are visible to the people on the call and the committee, and to members once shared." action={<Button asChild><Link to="/calls">Back to calls</Link></Button>} /> : null;
   const s = getSociety(recap.societyId);
 
   const send = async (question: string) => {
     if (!question.trim() || busy) return;
-    const history = recap.qa;
-    const next = [...history, { role: "user" as const, content: question.trim() }];
-    updateRecapQa(recap.id, next);
+    setPending([{ role: "user", content: question.trim() }]);
     setQ("");
     setBusy(true);
     try {
-      const { answer } = await ask({ data: { title: recap.title, transcript: recap.transcript, history, question: question.trim() } });
-      updateRecapQa(recap.id, [...next, { role: "assistant", content: answer }]);
-    } catch {
-      // Server unreachable: answer from the transcript instead of failing.
-      updateRecapQa(recap.id, [...next, { role: "assistant", content: fallbackAnswer(recap.transcript, question) }]);
+      await ask({ data: { recapId: recap.id, question: question.trim() } });
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't answer that right now.");
     } finally {
+      setPending([]);
       setBusy(false);
       inputRef.current?.focus();
     }
   };
+  const qa = [...recap.qa, ...pending];
 
   return (
     <div className="space-y-6">
@@ -78,7 +77,7 @@ function RecapPage() {
             <p className="text-sm text-muted-foreground">{formatDate(recap.date)} · {Math.max(1, Math.round(recap.durationSec / 60))} min · {recap.participants.join(", ")}</p>
           </div>
         </div>
-        <Button variant={recap.shared ? "outline" : "default"} disabled={recap.shared} onClick={() => { shareRecap(recap.id); toast.success(`Recap posted to #general in ${s?.shortName}`); }}>
+        <Button variant={recap.shared ? "outline" : "default"} disabled={recap.shared || !canShareRecap(recap)} title={canShareRecap(recap) ? undefined : "Only the committee or the call's host can share"} onClick={async () => { const o = await shareRecap(recap.id); if (o.ok) toast.success(`Recap posted to #general in ${s?.shortName}`); else toast.error(o.error); }}>
           {recap.shared ? <><CheckCircle2 />Shared with members</> : <><Share2 />Share with members</>}
         </Button>
       </div>
@@ -104,7 +103,7 @@ function RecapPage() {
           </div>
           <Collapsible className="rounded-xl border bg-card shadow-soft">
             <CollapsibleTrigger className="group flex w-full items-center justify-between px-5 py-4 text-sm font-semibold">
-              Full transcript ({recap.transcript.length} lines)<ChevronDown className="size-4 transition group-data-[state=open]:rotate-180" />
+              {recap.transcriptDeleted ? "Transcript deleted after 7 days" : `Full transcript (${recap.transcript.length} lines)`}<ChevronDown className="size-4 transition group-data-[state=open]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent className="max-h-96 space-y-2 overflow-y-auto border-t px-5 py-4 text-sm">
               {recap.transcript.map((l, i) => <p key={i}><span className="text-xs text-muted-foreground">{clock(l.at)}</span> <span className="font-medium">{l.speaker}:</span> {l.text}</p>)}
@@ -118,13 +117,13 @@ function RecapPage() {
             <p className="text-xs text-muted-foreground">Answers come only from what was said.</p>
           </div>
           <div className="flex-1 space-y-4 overflow-y-auto p-5 text-sm">
-            {recap.qa.length === 0 && (
+            {qa.length === 0 && (
               <div className="space-y-2">
                 <p className="text-muted-foreground">Missed something? Try:</p>
                 {suggestions.map((sg) => <button key={sg} onClick={() => send(sg)} className="block rounded-full border px-3 py-1.5 text-left text-xs hover:bg-muted">{sg}</button>)}
               </div>
             )}
-            {recap.qa.map((m, i) => m.role === "user"
+            {qa.map((m, i) => m.role === "user"
               ? <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-ink px-3.5 py-2 text-ink-foreground">{m.content}</div>
               : <div key={i} className="space-y-2 leading-relaxed [&_li]:ml-4 [&_ol]:list-decimal [&_strong]:font-semibold [&_ul]:list-disc"><ReactMarkdown>{m.content}</ReactMarkdown></div>)}
             {busy && <p className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />Thinking…</p>}

@@ -20,7 +20,7 @@ import { Route as AuthenticatedMySocietiesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocietyPulseRouteImport } from './routes/_authenticated/society-pulse'
-import { Route as JoinRoomIdRouteImport } from './routes/join.$roomId'
+import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as AuthenticatedCallRoomIdRouteImport } from './routes/_authenticated/call.$roomId'
 import { Route as AuthenticatedCallsIndexRouteImport } from './routes/_authenticated/calls.index'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events.index'
@@ -88,9 +88,9 @@ const AuthenticatedSocietyPulseRoute =
     path: '/society-pulse',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const JoinRoomIdRoute = JoinRoomIdRouteImport.update({
-  id: '/join/$roomId',
-  path: '/join/$roomId',
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCallRoomIdRoute = AuthenticatedCallRoomIdRouteImport.update({
@@ -157,7 +157,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
-  '/join/$roomId': typeof JoinRoomIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/recaps/$recapId': typeof AuthenticatedRecapsRecapIdRoute
@@ -178,7 +178,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
-  '/join/$roomId': typeof JoinRoomIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/': typeof AuthenticatedIndexRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
@@ -202,7 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/society-pulse': typeof AuthenticatedSocietyPulseRoute
-  '/join/$roomId': typeof JoinRoomIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/call/$roomId': typeof AuthenticatedCallRoomIdRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
@@ -227,7 +227,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
-    | '/join/$roomId'
+    | '/join/$code'
     | '/call/$roomId'
     | '/events/$eventId'
     | '/recaps/$recapId'
@@ -248,7 +248,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
-    | '/join/$roomId'
+    | '/join/$code'
     | '/'
     | '/call/$roomId'
     | '/events/$eventId'
@@ -271,7 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/_authenticated/society-pulse'
-    | '/join/$roomId'
+    | '/join/$code'
     | '/_authenticated/'
     | '/_authenticated/call/$roomId'
     | '/_authenticated/events/$eventId'
@@ -287,7 +287,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
-  JoinRoomIdRoute: typeof JoinRoomIdRoute
+  JoinCodeRoute: typeof JoinCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -369,11 +369,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSocietyPulseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/join/$roomId': {
-      id: '/join/$roomId'
-      path: '/join/$roomId'
-      fullPath: '/join/$roomId'
-      preLoaderRoute: typeof JoinRoomIdRouteImport
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/call/$roomId': {
@@ -490,7 +490,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   WelcomeRoute: WelcomeRoute,
-  JoinRoomIdRoute: JoinRoomIdRoute,
+  JoinCodeRoute: JoinCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
