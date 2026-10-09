@@ -189,7 +189,7 @@ function CallPage() {
 
   const tiles = [user.name, ...others];
   return (
-    <div className="-mx-4 -my-6 flex h-[calc(100dvh-4rem)] flex-col bg-ink text-ink-foreground sm:-mx-6 lg:-mx-8">
+    <div className="flex h-[calc(100dvh-10rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl bg-ink text-ink-foreground shadow-soft">
       <div className="flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-3">
           <SocietyAvatar society={society} size="sm" />
