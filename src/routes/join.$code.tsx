@@ -1,21 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, QrCode, Video } from "lucide-react";
+import { CheckCircle2, Loader2, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useData } from "@/lib/api/store";
+import { useServerFn } from "@tanstack/react-start";
 import { CallExperience } from "@/components/call-experience";
 import { EmptyState } from "@/components/cards";
 import { Button } from "@/components/ui/button";
 import { GUEST_NAME_KEY, cleanGuestName } from "@/lib/invite";
-import type { CallRecap, Society } from "@/lib/types";
-import { SocietyAvatar } from "@/components/society-avatar";
+import { lookupGuestInvite } from "@/lib/livekit.functions";
+import type { CallRoom, Society, SocietyAccent } from "@/lib/types";
 
 export const Route = createFileRoute("/join/$code")({
   head: () => ({
     meta: [
       { title: "Join the call · SocConnect" },
-      { name: "description", content: "Open a SocConnect call straight from a shared link or QR code — no sign-in needed." },
+      { name: "description", content: "Join a SocConnect society call from a guest link or QR code." },
       { property: "og:title", content: "Join the call · SocConnect" },
-      { property: "og:description", content: "Open a SocConnect call straight from a shared link or QR code — no sign-in needed." },
+      { property: "og:description", content: "Join a SocConnect society call from a guest link or QR code." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -24,33 +24,49 @@ export const Route = createFileRoute("/join/$code")({
   component: JoinPage,
 });
 
-/**
- * The page a QR code or shared call link opens: the call on its own, like Zoom's
- * "Join meeting" screen. No menu, no sign-in, no membership check — you type a
- * name and you're in. After leaving, the AI recap appears right here.
- */
+type Lookup = Awaited<ReturnType<typeof lookupGuestInvite>>;
+
+/** A committee-made guest link: checked on the server (hashed code, expiry, use limit). */
 function JoinPage() {
-  const { roomId } = Route.useParams();
-  const { getRoom, getSociety, recaps } = useData();
-  const room = getRoom(roomId);
-  const society = room ? getSociety(room.societyId) : undefined;
-
+  const { code } = Route.useParams();
+  const lookup = useServerFn(lookupGuestInvite);
+  const [info, setInfo] = useState<Lookup | null>(null);
   const [defaultName, setDefaultName] = useState("Guest");
-  const [recapId, setRecapId] = useState<string | null>(null);
-  const recap = recapId ? recaps.find((r) => r.id === recapId) : undefined;
+  const [left, setLeft] = useState(false);
 
-  // Read the remembered name only on the client, so the page never renders different text on the server.
   useEffect(() => {
     const saved = cleanGuestName(localStorage.getItem(GUEST_NAME_KEY) ?? "");
     if (saved) setDefaultName(saved);
-  }, []);
+    const clean = code.trim().toLowerCase();
+    if (!/^[a-z0-9]{8,32}$/.test(clean)) { setInfo({ ok: false, reason: "This call link isn't valid. Ask whoever sent it for a new one." }); return; }
+    lookup({ data: { code: clean } }).then(setInfo, () => setInfo({ ok: false, reason: "Couldn't check this link. Try again in a moment." }));
+  }, [code, lookup]);
 
-  if (!room || !society) {
+  if (!info) return <div className="flex min-h-dvh items-center justify-center text-muted-foreground"><Loader2 className="animate-spin" /></div>;
+  if (!info.ok) {
     return (
       <div className="mx-auto max-w-md px-4 py-16">
-        <EmptyState title="This call link no longer works" body="The room may have been removed. Ask whoever sent it for a fresh link." />
-        <div className="mt-4 text-center">
-          <Button asChild variant="outline"><Link to="/welcome">Go to SocConnect</Link></Button>
+        <EmptyState title="This call link doesn't work" body={info.reason} />
+        <div className="mt-4 text-center"><Button asChild variant="outline"><Link to="/welcome">Go to SocConnect</Link></Button></div>
+      </div>
+    );
+  }
+
+  const society: Society = {
+    id: "guest", name: info.societyName, shortName: info.societyShort, category: "", tagline: "", description: "", icon: info.icon,
+    accent: info.accent as SocietyAccent, memberCount: 0, tags: [], committee: [], requiresApproval: false, meets: "",
+  };
+  const room: CallRoom = { id: "guest", societyId: "guest", name: info.roomName, kind: "room", description: "Guest call" };
+
+  if (left) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <CheckCircle2 className="mx-auto size-10 text-success" />
+        <h1 className="mt-4 font-display text-2xl font-semibold">Thanks for joining</h1>
+        <p className="mt-2 text-sm text-muted-foreground">The {info.societyShort} committee can share the call's recap with you.</p>
+        <div className="mt-6 flex flex-col gap-2">
+          <Button onClick={() => setLeft(false)}><Video />Join the call again</Button>
+          <Button asChild variant="outline"><Link to="/welcome">Find your societies</Link></Button>
         </div>
       </div>
     );
@@ -62,83 +78,5 @@ function JoinPage() {
     setDefaultName(clean);
   };
 
-  if (recap) return <GuestRecap recap={recap} society={society} onJoinAgain={() => setRecapId(null)} />;
-
-  return <CallExperience room={room} society={society} guest defaultName={defaultName} onName={remember} onEnded={setRecapId} />;
-}
-
-/** Recap shown to someone who joined from a link: the call's own page, not the full app. */
-function GuestRecap({ recap, society, onJoinAgain }: { recap: CallRecap; society: Society; onJoinAgain: () => void }) {
-  const mins = Math.max(1, Math.round(recap.durationSec / 60));
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <p className="mb-6 text-center font-display text-sm font-semibold tracking-tight text-muted-foreground">
-        SocConnect <span className="opacity-50">·</span> {society.shortName}
-      </p>
-
-      <div className="rounded-2xl border bg-card p-6 shadow-soft sm:p-8">
-        <div className="flex items-start gap-4">
-          <SocietyAvatar society={society} size="md" />
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-xs font-medium text-success"><CheckCircle2 className="size-4" />AI recap ready</p>
-            <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">{recap.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {mins} min · {recap.participants.join(", ")} · {recap.transcript.length} captioned lines
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 space-y-6">
-          <section>
-            <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Summary</h2>
-            <p className="mt-2 text-sm leading-relaxed">{recap.summary.overview}</p>
-          </section>
-
-          {recap.summary.topics.length > 0 && (
-            <section>
-              <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Topics</h2>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {recap.summary.topics.map((t) => <span key={t} className="rounded-full bg-surface px-3 py-1 text-xs">{t}</span>)}
-              </div>
-            </section>
-          )}
-
-          {recap.summary.decisions.length > 0 && (
-            <section>
-              <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Decisions</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                {recap.summary.decisions.map((d) => <li key={d}>{d}</li>)}
-              </ul>
-            </section>
-          )}
-
-          {recap.summary.actionItems.length > 0 && (
-            <section>
-              <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">Action items</h2>
-              <ul className="mt-2 space-y-1 text-sm">
-                {recap.summary.actionItems.map((a, i) => (
-                  <li key={i}><span className="font-medium">{a.owner}</span> — {a.task}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <details className="rounded-xl border bg-surface p-4">
-            <summary className="cursor-pointer text-sm font-medium">Full transcript ({recap.transcript.length})</summary>
-            <div className="mt-3 space-y-2 text-sm">
-              {recap.transcript.map((l, i) => (
-                <p key={i}><span className="font-semibold">{l.speaker}</span> <span className="text-xs text-muted-foreground">{Math.floor(l.at / 60)}:{String(l.at % 60).padStart(2, "0")}</span><br />{l.text}</p>
-              ))}
-            </div>
-          </details>
-        </div>
-
-        <div className="mt-8 flex flex-col gap-2 sm:flex-row">
-          <Button className="flex-1" onClick={onJoinAgain}><Video />Join the call again</Button>
-          <Button asChild variant="outline" className="flex-1"><Link to="/welcome"><QrCode />Find your societies</Link></Button>
-        </div>
-        <p className="mt-3 text-center text-xs text-muted-foreground">This recap is saved in this browser. To keep it, share the summary with your group before you close the tab.</p>
-      </div>
-    </div>
-  );
+  return <CallExperience room={room} society={society} guest inviteCode={code.trim().toLowerCase()} defaultName={defaultName} onName={remember} onEnded={() => setLeft(true)} />;
 }
