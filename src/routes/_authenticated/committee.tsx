@@ -26,13 +26,24 @@ export const Route = createFileRoute("/_authenticated/committee")({
 function Committee() {
   const d = useDemo();
   const [modal, setModal] = useState<null | "ann" | "event" | "edit">(null);
-  if (d.role !== "committee" || !d.user.committeeSocietyId) {
-    return (
-      <EmptyState icon={ShieldCheck} title="Committee access only" body="This area is for society committee members. In the demo you can switch to Jordan Lee, CompSoc President."
-        action={<Button onClick={() => { d.setRole("committee"); toast.success("Now viewing as Jordan Lee (committee)"); }}>Switch to committee demo</Button>} />
-    );
+  const seats = d.committeeSeats;
+  const [picked, setPicked] = useState<string | null>(null);
+  if (!seats.length) {
+    return <EmptyState icon={ShieldCheck} title="Committee access only" body="This area is for society committee members. A platform admin can add you to your society's committee." />;
   }
-  const s = d.getSociety(d.user.committeeSocietyId)!;
+  const slug = picked && seats.some((c) => c.slug === picked) ? picked : seats[0]!.slug;
+  const found = d.getSociety(slug);
+  const picker = seats.length > 1 && (
+    <Select value={slug} onValueChange={setPicked}>
+      <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+      <SelectContent>{seats.map((c) => <SelectItem key={c.slug} value={c.slug}>{c.short_name}</SelectItem>)}</SelectContent>
+    </Select>
+  );
+  if (!found) {
+    const seat = seats.find((c) => c.slug === slug)!;
+    return <EmptyState icon={ShieldCheck} title={`${seat.short_name} committee`} body={`You're ${seat.position}. Your society's dashboard tools switch to live data in the next update.`} action={picker || undefined} />;
+  }
+  const s = found;
   const reqs = d.requests.filter((r) => r.societyId === s.id);
   const resolved = d.resolvedRequests.filter((r) => r.societyId === s.id);
   const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= DEMO_TODAY);
@@ -42,7 +53,7 @@ function Committee() {
   return (
     <div className="space-y-8">
       <PageHeader title={`${s.shortName} committee`} subtitle={`You're managing ${s.name} as ${s.committee[0]?.position ?? "committee member"}.`}
-        actions={<Button variant="outline" asChild><Link to="/societies/$societyId" params={{ societyId: s.id }}>View public page</Link></Button>} />
+        actions={<div className="flex gap-2">{picker}<Button variant="outline" asChild><Link to="/societies/$societyId" params={{ societyId: s.id }}>View public page</Link></Button></div>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
