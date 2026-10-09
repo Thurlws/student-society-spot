@@ -10,9 +10,9 @@
 <!-- LOVABLE:END -->
 
 ## SocConnect architecture
-- All demo state lives in `src/lib/demo-store.tsx` (context + localStorage); pages never import mutable data directly — this is the seam the backend phase replaces with API calls.
-- Business rules are pure functions in `src/lib/demo-rules.ts` that return `{ ok, error }` (Outcome); store actions run them via `run()`. Add new rules there with tests in `src/test/demo-rules.test.ts`. State is per demo account (memberships, registrations, notifications).
-- Static mock data lives in `src/data/mock.ts` with a fixed DEMO_TODAY so the demo reads the same on any day.
+- App data comes from `src/lib/api/` (`useData()`: one TanStack Query over the database, polled until realtime); pages never touch the database directly — keeps one seam for data.
+- Permissions and multi-step writes are Postgres functions/RLS (join_society, decide_membership, register_for_event, support-request functions); mutations return `Outcome` `{ ok, error }` from `src/lib/validation.ts`, which only holds Zod form checks — the browser is never trusted.
+- "Today" and times are real Europe/Dublin via `src/lib/format.ts`; societies are addressed by slug in the UI and mapped to ids in the data layer — keeps URLs stable.
 - Date formatting is manual in `src/lib/format.ts` (no toLocaleDateString) to avoid SSR hydration mismatches.
 - The app shell wraps every route except `/welcome` in `__root.tsx`.
 - Calls: with `LIVEKIT_URL`/`LIVEKIT_API_KEY`/`LIVEKIT_API_SECRET` set, calls are real multi-person video via LiveKit (`src/components/live-call.tsx`; tokens minted server-side in `src/lib/livekit.server.ts`), and each person's browser speech-to-text is shared over the data channel so the recap covers everyone. Without them, calls fall back to scripted simulated participants (`src/data/calls.ts`). Recaps fall back to a keyword summary when AI is unavailable (`src/lib/call-recap-fallback.ts`).
