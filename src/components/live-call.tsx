@@ -13,11 +13,12 @@ import {
   type TrackReferenceOrPlaceholder,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { Copy, MicOff, Users } from "lucide-react";
+import { MicOff, QrCode, Users } from "lucide-react";
 import { useEffect, useRef, type MutableRefObject, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { InviteDialog } from "@/components/invite-dialog";
 
 const TRANSCRIPT_TOPIC = "transcript";
 const initials = (n: string) =>
@@ -128,7 +129,7 @@ export function LiveCallBridge({
 }
 
 /** Video tiles for everyone in the room, plus an invite card while you're alone. */
-export function LiveTiles({ accentSolid }: { accentSolid: string }) {
+export function LiveTiles({ accentSolid, room, societyName }: { accentSolid: string; room: { id: string; name: string }; societyName?: string | undefined }) {
   const tracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }], {
     onlySubscribed: false,
   });
@@ -141,7 +142,7 @@ export function LiveTiles({ accentSolid }: { accentSolid: string }) {
           accentSolid={accentSolid}
         />
       ))}
-      {tracks.length <= 1 && <InviteTile />}
+      {tracks.length <= 1 && <InviteTile room={room} societyName={societyName} />}
     </>
   );
 }
@@ -190,27 +191,17 @@ function LiveTile({
   );
 }
 
-function InviteTile() {
+function InviteTile({ room, societyName }: { room: { id: string; name: string }; societyName?: string | undefined }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-ink-foreground/20 p-6 text-center">
       <Users className="size-6 opacity-60" />
       <p className="text-sm font-semibold">Waiting for others to join</p>
       <p className="max-w-xs text-xs opacity-70">
-        Anyone who opens this call from another laptop joins you here. Share the link:
+        Point a phone camera at the code, or send the link — it opens this call straight away.
       </p>
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => {
-          navigator.clipboard
-            ?.writeText(window.location.href)
-            .then(() => toast.success("Call link copied"))
-            .catch(() => toast.message(window.location.href));
-        }}
-      >
-        <Copy />
-        Copy call link
-      </Button>
+      <InviteDialog roomId={room.id} roomName={room.name} societyName={societyName}>
+        <Button size="sm" variant="secondary"><QrCode />Show QR & link</Button>
+      </InviteDialog>
     </div>
   );
 }
