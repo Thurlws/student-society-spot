@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
 import { useCallMode } from "@/lib/use-call-mode";
 import { roomPresence } from "@/data/calls";
-import { DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { formatDate } from "@/lib/format";
 import type { CallRecap, CallRoom } from "@/lib/types";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -59,14 +59,14 @@ export function MeetingCard({ meeting }: { meeting: CallRoom }) {
   const { getSociety } = useData();
   const s = getSociety(meeting.societyId);
   if (!s) return null;
-  const today = meeting.date === DEMO_TODAY;
+  const today = meeting.date === todayIso();
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-soft">
       <SocietyAvatar society={s} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{meeting.name}</p>
         <p className="truncate text-xs text-muted-foreground">
-          <CalendarClock className="mr-1 inline size-3" />{today ? "Today" : formatDate(meeting.date ?? DEMO_TODAY)} · {meeting.start} · {s.shortName}{meeting.host ? ` · hosted by ${meeting.host}` : ""}
+          <CalendarClock className="mr-1 inline size-3" />{today ? "Today" : formatDate(meeting.date ?? todayIso())} · {meeting.start} · {s.shortName}{meeting.host ? ` · hosted by ${meeting.host}` : ""}
         </p>
       </div>
       <div className="flex items-center gap-1">
@@ -100,7 +100,7 @@ export function ScheduleCallDialog({ defaultSocietyId }: { defaultSocietyId?: st
   const [open, setOpen] = useState(false);
   const [societyId, setSocietyId] = useState(defaultSocietyId ?? joinedSocieties[0]?.id ?? "");
   const [name, setName] = useState("");
-  const [date, setDate] = useState(DEMO_TODAY);
+  const [date, setDate] = useState(() => todayIso());
   const [start, setStart] = useState("18:00");
   const [description, setDescription] = useState("");
   return (

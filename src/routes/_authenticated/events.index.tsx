@@ -3,7 +3,7 @@ import { CalendarDays, LayoutGrid, MapPin, Search, SearchX, Clock } from "lucide
 import { useMemo, useState } from "react";
 import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
-import { DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { formatDate, monthLabel } from "@/lib/format";
 import { PageHeader, EventCard, EmptyState, DemoBadge } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -22,7 +22,7 @@ function EventsPage() {
   const [cat, setCat] = useState("All");
   const [scope, setScope] = useState<"all" | "mine" | "registered">("all");
   const [view, setView] = useState<"grid" | "calendar">("grid");
-  const upcoming = events.filter((e) => e.date >= DEMO_TODAY);
+  const upcoming = events.filter((e) => e.date >= todayIso());
   const featured = upcoming.find((e) => e.featured) ?? upcoming[0];
   const cats = ["All", ...Array.from(new Set(upcoming.map((e) => e.category)))];
   const joined = new Set(joinedSocieties.map((s) => s.id));
@@ -113,8 +113,8 @@ function CalendarView({ ids }: { ids: Set<string> }) {
           const valid = d > 0 && d <= days;
           const dayEvents = valid ? events.filter((e) => e.date === iso(d) && ids.has(e.id)) : [];
           return (
-            <div key={i} className={cn("min-h-24 bg-card p-1.5", !valid && "bg-surface/60", valid && iso(d) === DEMO_TODAY && "bg-primary-soft/60")}>
-              {valid && <p className={cn("mb-1 text-[11px]", iso(d) === DEMO_TODAY ? "font-bold text-primary" : "text-muted-foreground")}>{d}</p>}
+            <div key={i} className={cn("min-h-24 bg-card p-1.5", !valid && "bg-surface/60", valid && iso(d) === todayIso() && "bg-primary-soft/60")}>
+              {valid && <p className={cn("mb-1 text-[11px]", iso(d) === todayIso() ? "font-bold text-primary" : "text-muted-foreground")}>{d}</p>}
               {dayEvents.map((e) => {
                 const s = getSociety(e.societyId)!;
                 return (

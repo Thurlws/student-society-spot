@@ -7,7 +7,7 @@ import { timeAgo } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { toast } from "sonner";
-import { EventCard, EmptyState, DemoBadge } from "@/components/cards";
+import { EventCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
 import { NewRequestDialog } from "@/components/support-requests";
 import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/components/calls";
