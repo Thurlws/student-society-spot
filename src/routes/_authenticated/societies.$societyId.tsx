@@ -154,10 +154,10 @@ function SocietyPage() {
                 </div>
                 <form
                   className="flex gap-2 border-t p-3"
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
                     if (!channel) return;
-                    const o = postMessage(channel, draft);
+                    const o = await postMessage(channel, draft);
                     if (o.ok) setDraft(""); else toast.error(o.error);
                   }}
                 >

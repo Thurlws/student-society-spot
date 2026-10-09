@@ -180,9 +180,9 @@ function Activity({ request: r, manage }: { request: SupportRequest; manage: boo
       </ol>
       <form
         className="mt-5 space-y-2 border-t pt-5"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          const o = commentOnSupportRequest(r.id, text);
+          const o = await commentOnSupportRequest(r.id, text);
           if (!o.ok) {
             toast.error(o.error);
             return;
@@ -218,7 +218,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
   const committee = getSociety(r.societyId)?.committee ?? [];
 
   const move = (to: SupportRequest["status"], note?: string) => {
-    const o = setSupportRequestStatus(r.id, to, note);
+    const o = await setSupportRequestStatus(r.id, to, note);
     if (!o.ok) {
       toast.error(o.error);
       return;
@@ -240,7 +240,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
           value={r.assignedTo ?? UNASSIGNED}
           onValueChange={(v) => {
             const who = v === UNASSIGNED ? undefined : v;
-            const o = assignSupportRequest(r.id, who);
+            const o = await assignSupportRequest(r.id, who);
             if (!o.ok) toast.error(o.error);
             else toast.success(who ? `Assigned to ${who}` : "Assignee removed");
           }}
@@ -276,7 +276,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
           </Button>
           <form
             className="space-y-2 border-t pt-5"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               move("resolved", resolution);
             }}

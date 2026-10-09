@@ -198,9 +198,9 @@ export function NewRequestDialog({
         ) : (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              const o = submitSupportRequest({
+              const o = await submitSupportRequest({
                 societyId: f.societyId,
                 category: f.category,
                 priority: f.priority,
