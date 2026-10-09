@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useData } from "@/lib/api/store";
-import { allInterests } from "@/data/mock";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
 import { ProfileForm } from "@/components/profile-form";
@@ -24,7 +23,7 @@ function Card({ title, desc, children }: { title: string; desc?: string; childre
 }
 
 function SettingsPage() {
-  const { user, role, interests, toggleInterest, prefs, setPref } = useData();
+  const { user, role, interests, toggleInterest, prefs, setPref, allInterests } = useData();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader title="Settings" subtitle="Manage your profile and how SocConnect keeps you informed." />

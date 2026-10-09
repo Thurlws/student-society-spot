@@ -3,10 +3,10 @@ import { CalendarPlus, Check, Megaphone, PencilLine, ShieldCheck, UserPlus, User
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
-import { DEMO_TODAY, proposals } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { timeAgo } from "@/lib/format";
-import { PageHeader, EmptyState, DemoBadge } from "@/components/cards";
+import { PageHeader, EmptyState } from "@/components/cards";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { CommitteeRequestsSummary } from "@/components/support-requests";
 import { Button } from "@/components/ui/button";
@@ -46,9 +46,9 @@ function Committee() {
   const s = found;
   const reqs = d.requests.filter((r) => r.societyId === s.id);
   const resolved = d.resolvedRequests.filter((r) => r.societyId === s.id);
-  const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= DEMO_TODAY);
+  const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= todayIso());
   const anns = d.announcements.filter((a) => a.societyId === s.id);
-  const saved = proposals.filter((p) => d.savedProposals.includes(p.id));
+  const saved = d.proposals.filter((p) => d.savedProposals.includes(p.id));
 
   return (
     <div className="space-y-8">
@@ -156,7 +156,7 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications. <DemoBadge /> Saved in this browser only.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications.</DialogDescription></DialogHeader>
         <form className="space-y-4" onSubmit={async (e) => {
           e.preventDefault();
           const o = await postAnnouncement(societyId, { title, body, pinned });
@@ -178,13 +178,13 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
 function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
   const { createEvent } = useData();
   const navigate = useNavigate();
-  const [f, setF] = useState({ title: "", description: "", date: "2026-11-12", start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
+  const [f, setF] = useState({ title: "", description: "", date: todayIso(), start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
   const [err, setErr] = useState("");
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page. <DemoBadge /></DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page.</DialogDescription></DialogHeader>
         <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
           const o = await createEvent(societyId, {
