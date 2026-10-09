@@ -10,8 +10,8 @@ const dublinParts = new Intl.DateTimeFormat("en-GB", {
 
 /** A moment as Dublin wall-clock date (YYYY-MM-DD) and time (HH:mm). */
 export function toDublin(d: Date | string) {
-  const parts = Object.fromEntries(dublinParts.formatToParts(new Date(d)).map((p) => [p.type, p.value]));
-  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}`, hour: Number(parts.hour) };
+  const parts: Record<string, string> = Object.fromEntries(dublinParts.formatToParts(new Date(d)).map((p) => [p.type, p.value]));
+  return { date: `${parts["year"]}-${parts["month"]}-${parts["day"]}`, time: `${parts["hour"]}:${parts["minute"]}`, hour: Number(parts["hour"]) };
 }
 
 /** Today's date in Dublin, YYYY-MM-DD. */
