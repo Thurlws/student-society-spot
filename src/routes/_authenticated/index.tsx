@@ -40,7 +40,6 @@ function Home() {
       <section className="relative overflow-hidden rounded-2xl border bg-hero p-8 shadow-soft sm:p-10">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{formatDate(todayIso(), { weekday: "long", day: "numeric", month: "long" })}</span>
-          <DemoBadge />
         </div>
         <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{greeting()}, {user.name.split(" ")[0]}.</h1>
         <p className="mt-2 max-w-xl text-muted-foreground">Your communities, upcoming plans, and new opportunities — all in one place.</p>
