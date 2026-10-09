@@ -59,7 +59,7 @@ function useDataValue() {
       const { data: out, error } = await fn();
       if (error) return fail(errText(error));
       await refresh();
-      return { ok: true, id: typeof out === "string" ? out : undefined };
+      return typeof out === "string" ? { ok: true, id: out } : { ok: true };
     } catch (e) {
       return fail(errText(e));
     }
@@ -187,7 +187,7 @@ function useDataValue() {
       else await supabase.from("profile_interests").insert({ profile_id: uidAuth, interest_id: row.id });
       await auth.refresh();
     },
-    setPref: (k: keyof NotificationPrefs, v: boolean) => act(() => supabase.from("notification_prefs").update({ [k]: v }).eq("user_id", user.id)),
+    setPref: (k: keyof NotificationPrefs, v: boolean) => act(() => supabase.from("notification_prefs").update({ [k]: v } as Partial<NotificationPrefs>).eq("user_id", user.id)),
 
     // ---- Calls (in memory until Phase 3) ----
     rooms,
