@@ -75,21 +75,21 @@ function Pulse() {
               const t = shared(x, y).length;
               if (!t) return null;
               const hi = sa && (x.id === sa.id || y.id === sa.id);
-              return <line key={`${x.id}-${y.id}`} x1={pos[x.id].x} y1={pos[x.id].y} x2={pos[y.id].x} y2={pos[y.id].y} className="stroke-ink-foreground" strokeOpacity={hi ? 0.28 : 0.05 * t} strokeWidth={hi ? 1.2 : 0.8} />;
+              return <line key={`${x.id}-${y.id}`} x1={pos[x.id]!.x} y1={pos[x.id]!.y} x2={pos[y.id]!.x} y2={pos[y.id]!.y} className="stroke-ink-foreground" strokeOpacity={hi ? 0.28 : 0.05 * t} strokeWidth={hi ? 1.2 : 0.8} />;
             }))}
             {proposals.map((p) => {
               const [x, y] = p.societyIds;
               const active = (a === x && b === y) || (a === y && b === x);
               const touches = a === x || a === y;
               return (
-                <line key={p.id} x1={pos[x].x} y1={pos[x].y} x2={pos[y].x} y2={pos[y].y}
+                <line key={p.id} x1={pos[x]!.x} y1={pos[x]!.y} x2={pos[y]!.x} y2={pos[y]!.y}
                   className={cn("stroke-teal cursor-pointer", (active || touches) && "animate-dash")}
                   strokeWidth={active ? 3 : 2} strokeDasharray="6 6" strokeOpacity={active ? 1 : touches ? 0.85 : 0.45}
                   onClick={() => { setA(x); setB(y); }} />
               );
             })}
             {societies.map((s) => {
-              const p = pos[s.id];
+              const p = pos[s.id]!;
               const sel = s.id === a || s.id === b;
               const dim = sa && !sel && !related.some((r) => r.s.id === s.id);
               const Icon = societyIcon(s.icon);
@@ -159,7 +159,7 @@ function Pulse() {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Curated ideas</p>
             <div className="space-y-2">
               {proposals.map((p) => {
-                const [x, y] = p.societyIds.map((id) => societies.find((s) => s.id === id)!);
+                const [x, y] = p.societyIds.map((id) => societies.find((s) => s.id === id)!) as [Society, Society];
                 return (
                   <button key={p.id} onClick={() => { setA(x.id); setB(y.id); }} className={cn("flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left shadow-soft transition-colors hover:border-primary/30", pair?.id === p.id && "border-primary/50 bg-primary-soft/40")}>
                     <div className="flex -space-x-2"><SocietyAvatar society={x} size="sm" className="ring-2 ring-card" /><SocietyAvatar society={y} size="sm" className="ring-2 ring-card" /></div>
@@ -176,7 +176,7 @@ function Pulse() {
       <Sheet open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {open && (() => {
-            const [x, y] = open.societyIds.map((id) => societies.find((s) => s.id === id)!);
+            const [x, y] = open.societyIds.map((id) => societies.find((s) => s.id === id)!) as [Society, Society];
             return (
               <>
                 <SheetHeader>

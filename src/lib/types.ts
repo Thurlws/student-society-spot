@@ -51,10 +51,10 @@ export interface Event {
   societyId: string;
   date: string; // ISO date YYYY-MM-DD
   start: string; // HH:mm
-  end?: string;
+  end?: string | undefined;
   venue: string;
   category: string;
-  capacity?: number;
+  capacity?: number | undefined;
   attendees: number;
   tags: string[];
   featured?: boolean;
@@ -99,7 +99,7 @@ export interface Notification {
   body: string;
   createdAt: string;
   read: boolean;
-  link?: { to: string; params?: Record<string, string> };
+  link?: { to: string; params?: Record<string, string> } | undefined;
 }
 
 export interface CollaborationProposal {
