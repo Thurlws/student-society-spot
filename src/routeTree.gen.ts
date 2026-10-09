@@ -16,6 +16,7 @@ import { Route as MySocietiesRouteImport } from './routes/my-societies'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SocietyPulseRouteImport } from './routes/society-pulse'
 import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as CallsIndexRouteImport } from './routes/calls.index'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 import { Route as SocietiesIndexRouteImport } from './routes/societies.index'
@@ -56,6 +57,11 @@ const WelcomeRoute = WelcomeRouteImport.update({
   path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallsIndexRoute = CallsIndexRouteImport.update({
+  id: '/calls/',
+  path: '/calls/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
   id: '/events/',
   path: '/events/',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/societies/$societyId': typeof SocietiesSocietyIdRoute
+  '/calls/': typeof CallsIndexRoute
   '/events/': typeof EventsIndexRoute
   '/societies/': typeof SocietiesIndexRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/societies/$societyId': typeof SocietiesSocietyIdRoute
+  '/calls': typeof CallsIndexRoute
   '/events': typeof EventsIndexRoute
   '/societies': typeof SocietiesIndexRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/societies/$societyId': typeof SocietiesSocietyIdRoute
+  '/calls/': typeof CallsIndexRoute
   '/events/': typeof EventsIndexRoute
   '/societies/': typeof SocietiesIndexRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/events/$eventId'
     | '/societies/$societyId'
+    | '/calls/'
     | '/events/'
     | '/societies/'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/events/$eventId'
     | '/societies/$societyId'
+    | '/calls'
     | '/events'
     | '/societies'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/events/$eventId'
     | '/societies/$societyId'
+    | '/calls/'
     | '/events/'
     | '/societies/'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   SocietiesSocietyIdRoute: typeof SocietiesSocietyIdRoute
+  CallsIndexRoute: typeof CallsIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   SocietiesIndexRoute: typeof SocietiesIndexRoute
 }
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calls/': {
+      id: '/calls/'
+      path: '/calls'
+      fullPath: '/calls/'
+      preLoaderRoute: typeof CallsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/': {
       id: '/events/'
       path: '/events'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   WelcomeRoute: WelcomeRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   SocietiesSocietyIdRoute: SocietiesSocietyIdRoute,
+  CallsIndexRoute: CallsIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   SocietiesIndexRoute: SocietiesIndexRoute,
 }
