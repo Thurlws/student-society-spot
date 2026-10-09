@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Hash, Inbox, Megaphone, Bookmark } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useData } from "@/lib/api/store";
-import { channels, DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { formatDate, timeAgo } from "@/lib/format";
 import { PageHeader, EmptyState } from "@/components/cards";
@@ -20,7 +20,7 @@ type Kind = "announcement" | "event" | "discussion";
 type Item = { id: string; kind: Kind; societyId: string; title: string; body: string; at: string; to: { to: string; params: Record<string, string> } };
 
 function Comms() {
-  const { announcements, events, messages, joinedSocieties, getSociety } = useData();
+  const { announcements, events, messages, joinedSocieties, getSociety, channels } = useData();
   const [kind, setKind] = useState<"all" | Kind>("all");
   const [soc, setSoc] = useState("all");
   const [saved, setSaved] = useState<string[]>([]);
@@ -28,7 +28,7 @@ function Comms() {
 
   const items = useMemo<Item[]>(() => {
     const ann: Item[] = announcements.filter((a) => joined.has(a.societyId)).map((a) => ({ id: a.id, kind: "announcement", societyId: a.societyId, title: a.title, body: a.body, at: a.createdAt, to: { to: "/societies/$societyId", params: { societyId: a.societyId } } }));
-    const ev: Item[] = events.filter((e) => joined.has(e.societyId) && e.date >= DEMO_TODAY).map((e) => ({ id: e.id, kind: "event", societyId: e.societyId, title: e.title, body: `${formatDate(e.date)} · ${e.start} · ${e.venue}`, at: `${DEMO_TODAY}T08:00:00`, to: { to: "/events/$eventId", params: { eventId: e.id } } }));
+    const ev: Item[] = events.filter((e) => joined.has(e.societyId) && e.date >= todayIso()).map((e) => ({ id: e.id, kind: "event", societyId: e.societyId, title: e.title, body: `${formatDate(e.date)} · ${e.start} · ${e.venue}`, at: `${e.date}T${e.start}:00`, to: { to: "/events/$eventId", params: { eventId: e.id } } }));
     const dis: Item[] = messages.map((m) => ({ m, c: channels.find((c) => c.id === m.channelId)! })).filter(({ c }) => c && joined.has(c.societyId)).map(({ m, c }) => ({ id: m.id, kind: "discussion", societyId: c.societyId, title: `${m.author} in #${c.name}`, body: m.body, at: m.createdAt, to: { to: "/societies/$societyId", params: { societyId: c.societyId } } }));
     return [...ann, ...ev, ...dis].sort((a, b) => b.at.localeCompare(a.at));
   }, [announcements, events, messages, joined]);

@@ -3,7 +3,6 @@ import { Search, SearchX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
-import { allInterests } from "@/data/mock";
 import { PageHeader, SocietyCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/societies/")({
 });
 
 function Discover() {
-  const { societies, membership } = useData();
+  const { societies, membership, allInterests } = useData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [tags, setTags] = useState<string[]>([]);
