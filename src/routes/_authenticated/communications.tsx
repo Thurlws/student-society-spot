@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/communications")({
+export const Route = createFileRoute("/_authenticated/communications")({
   head: () => pageHead("Communications", "Every announcement, event update and discussion from your societies in one feed."),
   component: Comms,
 });
