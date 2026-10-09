@@ -9,7 +9,7 @@ import { GUEST_NAME_KEY, cleanGuestName } from "@/lib/invite";
 import type { CallRecap, Society } from "@/lib/types";
 import { SocietyAvatar } from "@/components/society-avatar";
 
-export const Route = createFileRoute("/join/$roomId")({
+export const Route = createFileRoute("/join/$code")({
   head: () => ({
     meta: [
       { title: "Join the call · SocConnect" },
