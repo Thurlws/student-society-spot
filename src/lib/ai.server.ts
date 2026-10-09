@@ -10,7 +10,7 @@ export class AiError extends Error {
 }
 
 function provider() {
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new AiError(401, "AI is not configured.");
   return createOpenAI({
     baseURL: BASE,
