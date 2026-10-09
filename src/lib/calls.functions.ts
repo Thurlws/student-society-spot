@@ -79,7 +79,7 @@ export const summarizeCall = createServerFn({ method: "POST" })
     const { data: saved, error } = await supabaseAdmin.from("call_recaps").insert({
       room_id: room.id, society_id: room.society_id, title: `${room.name} — ${soc.short_name}`,
       started_at: new Date(Date.now() - data.durationSec * 1000).toISOString(), duration_sec: data.durationSec,
-      participants: names, participant_ids: ids, transcript: data.transcript, summary, created_by: userId,
+      participants: names, participant_ids: ids, transcript: data.transcript, summary: summary as unknown as Record<string, never>, created_by: userId,
     }).select("id").single();
     if (error || !saved) throw new Error("Couldn't save the recap. Try again.");
     return { id: saved.id, source: summary.source ?? "ai" };
@@ -92,8 +92,8 @@ export const askAboutCall = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: recap } = await context.supabase.from("call_recaps").select("id, title, transcript, qa").eq("id", data.recapId).maybeSingle();
     if (!recap) throw new Error("You can't see this recap.");
-    const transcript = (recap.transcript ?? []) as TranscriptLine[];
-    const history = ((recap.qa ?? []) as { role: "user" | "assistant"; content: string }[]).slice(-40);
+    const transcript = (recap.transcript ?? []) as unknown as TranscriptLine[];
+    const history = ((recap.qa ?? []) as unknown as { role: "user" | "assistant"; content: string }[]).slice(-40);
     let answer: string;
     if (!transcript.length) answer = "The transcript for this call has been deleted (transcripts are kept for 7 days), so I can only go by the summary above.";
     else if (!(await useQuota(context.userId, "question"))) answer = "You've asked a lot of questions in the last hour — try again a bit later.";
