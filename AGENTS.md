@@ -8,3 +8,9 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## SocConnect architecture
+- All demo state lives in `src/lib/demo-store.tsx` (context + localStorage); pages never import mutable data directly — this is the seam the backend phase replaces with API calls.
+- Static mock data lives in `src/data/mock.ts` with a fixed DEMO_TODAY so the demo reads the same on any day.
+- Date formatting is manual in `src/lib/format.ts` (no toLocaleDateString) to avoid SSR hydration mismatches.
+- The app shell wraps every route except `/welcome` in `__root.tsx`.
