@@ -4,29 +4,16 @@ import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { todayIso } from "@/lib/format";
 import { greeting, timeAgo, formatDate } from "@/lib/format";
-import { EventCard, SectionHeader, SocietyCard, EmptyState, DemoBadge } from "@/components/cards";
+import { EventCard, SectionHeader, SocietyCard, EmptyState } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Society } from "@/lib/types";
 import { AskSocConnect, useSocietyFits } from "@/components/society-ai";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => pageHead("Home", "Your societies, upcoming plans and new opportunities — all in one place."),
   component: Home,
 });
-
-function recommend(societies: Society[], interests: string[], member: (id: string) => string) {
-  const candidates = societies.filter((s) => member(s.id) === "none");
-  const scored = candidates
-    .map((s) => ({ s, overlap: s.tags.filter((t) => interests.includes(t)) }))
-    .sort((a, b) => b.overlap.length - a.overlap.length || b.s.memberCount - a.s.memberCount);
-  const top = scored.filter((x) => x.overlap.length > 0).slice(0, 3);
-  const wildcard = scored.find((x) => x.overlap.length === 0);
-  const picks = top.map((x) => ({ s: x.s, reason: `Matches your interest in ${x.overlap.slice(0, 2).join(" & ").toLowerCase()}.` }));
-  if (wildcard) picks.push({ s: wildcard.s, reason: "Something outside your usual interests — worth a look." });
-  return picks;
-}
 
 function Home() {
   const { user, events, joinedSocieties, announcements, societies, isRegistered, getSociety, recommendations } = useData();
