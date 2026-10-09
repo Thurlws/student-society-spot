@@ -23,7 +23,7 @@ import { summarizeCall } from "@/lib/calls.functions";
 import { fallbackSummary } from "@/lib/call-recap-fallback";
 import { getCallMode, getCallToken } from "@/lib/livekit.functions";
 import { inviteUrl } from "@/lib/invite";
-import { LiveCallBridge, LiveCallRoom, LiveTiles } from "@/components/live-call";
+import { CallHeaderCount, LiveCallBridge, LiveCallRoom, LiveTiles } from "@/components/live-call";
 import { InviteDialog } from "@/components/invite-dialog";
 import type { CallSummary, CallRoom, Society, TranscriptLine } from "@/lib/types";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -314,7 +314,7 @@ export function CallExperience({
             <p className="text-xs opacity-70">{society.shortName} · {clock(elapsed)}</p>
           </div>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-ink-foreground/10 px-3 py-1 text-xs"><span className="size-1.5 animate-pulse rounded-full bg-destructive" />{lk ? "Live · AI notes on" : "AI notes on"}</span>
+        {lk ? <CallHeaderCount /> : <span className="flex items-center gap-1.5 rounded-full bg-ink-foreground/10 px-3 py-1 text-xs"><span className="size-1.5 animate-pulse rounded-full bg-destructive" />AI notes on</span>}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 pb-3 md:flex-row">
