@@ -57,7 +57,7 @@ function AdminPage() {
 
   const setStatus = async (s: SocietyRow, status: "active" | "archived") => {
     const { error } = await supabase.from("societies").update({ status }).eq("id", s.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success(status === "archived" ? `${s.short_name} archived` : `${s.short_name} restored`);
     void qc.invalidateQueries({ queryKey: ["admin"] });
   };
@@ -100,11 +100,11 @@ function Committee({ society, roles, invites }: { society: SocietyRow; roles: Ro
   const invite = async (e: React.FormEvent) => {
     e.preventDefault();
     const addr = email.trim().toLowerCase();
-    if (!/^[^@\s]+@(mytudublin\.ie|tudublin\.ie)$/.test(addr)) return toast.error("Use a TU Dublin email address.");
+    if (!/^[^@\s]+@(mytudublin\.ie|tudublin\.ie)$/.test(addr)) return void toast.error("Use a TU Dublin email address.");
     setBusy(true);
-    const { error } = await supabase.from("role_invites").insert({ email: addr, society_id: society.id, role: "committee", position: position.trim() || "Committee member", invited_by: session?.user.id });
+    const { error } = await supabase.from("role_invites").insert({ email: addr, society_id: society.id, role: "committee", position: position.trim() || "Committee member", invited_by: session?.user.id ?? null });
     setBusy(false);
-    if (error) return toast.error(error.code === "23505" ? "That person is already invited." : error.message);
+    if (error) return void toast.error(error.code === "23505" ? "That person is already invited." : error.message);
     toast.success(`${addr} added to ${society.short_name}'s committee`);
     setEmail(""); setPosition("");
     void refresh();
@@ -112,7 +112,7 @@ function Committee({ society, roles, invites }: { society: SocietyRow; roles: Ro
 
   const remove = async (table: "society_roles" | "role_invites", id: string) => {
     const { error } = await supabase.from(table).delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     void refresh();
   };
 
@@ -156,12 +156,12 @@ function SocietyDialog({ society, onClose }: { society: SocietyRow | null; onClo
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = f.slug || slugify(f.short_name || f.name);
-    if (f.name.trim().length < 2 || !f.short_name.trim() || slug.length < 2) return toast.error("Name, short name and address are required.");
+    if (f.name.trim().length < 2 || !f.short_name.trim() || slug.length < 2) return void toast.error("Name, short name and address are required.");
     setBusy(true);
     const row = { ...f, slug, name: f.name.trim(), short_name: f.short_name.trim(), category: f.category.trim() || "Community" };
     const { error } = society ? await supabase.from("societies").update(row).eq("id", society.id) : await supabase.from("societies").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.code === "23505" ? "That address is already taken." : error.message);
+    if (error) return void toast.error(error.code === "23505" ? "That address is already taken." : error.message);
     toast.success(society ? "Society updated" : "Society created");
     void qc.invalidateQueries({ queryKey: ["admin"] });
     onClose();
