@@ -1233,6 +1233,10 @@ export type Database = {
         Args: { _assignee: string; _id: string }
         Returns: undefined
       }
+      can_see_profile: {
+        Args: { _profile: string; _uid: string }
+        Returns: boolean
+      }
       cancel_membership_request: {
         Args: { _society_id: string }
         Returns: undefined
@@ -1350,6 +1354,10 @@ export type Database = {
           status: string
           user_id: string
         }[]
+      }
+      society_visible: {
+        Args: { _society_id: string; _uid: string }
+        Returns: boolean
       }
       submit_support_request: {
         Args: {
