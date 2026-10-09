@@ -25,7 +25,7 @@ export function ProfileForm({ submitLabel = "Save profile", onSaved, finishOnboa
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session) return;
-    if (name.trim().length < 2) return toast.error("Please enter your name.");
+    if (name.trim().length < 2) return void toast.error("Please enter your name.");
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
@@ -37,7 +37,7 @@ export function ProfileForm({ submitLabel = "Save profile", onSaved, finishOnboa
       })
       .eq("id", session.user.id);
     setBusy(false);
-    if (error) return toast.error("Couldn't save your profile. Try again.");
+    if (error) return void toast.error("Couldn't save your profile. Try again.");
     await refresh();
     toast.success("Profile saved");
     onSaved?.();
