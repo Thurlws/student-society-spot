@@ -9,6 +9,7 @@ import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Society } from "@/lib/types";
+import { AskSocConnect, useSocietyFits } from "@/components/society-ai";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => pageHead("Home", "Your societies, upcoming plans and new opportunities — all in one place."),
@@ -28,12 +29,16 @@ function recommend(societies: Society[], interests: string[], member: (id: strin
 }
 
 function Home() {
-  const { user, events, joinedSocieties, announcements, membership, societies, isRegistered, getSociety, interests } = useData();
+  const { user, events, joinedSocieties, announcements, societies, isRegistered, getSociety, recommendations } = useData();
+  const fits = useSocietyFits();
   const upcoming = events.filter((e) => e.date >= todayIso());
   const mine = upcoming.filter((e) => isRegistered(e.id) || joinedSocieties.some((s) => s.id === e.societyId)).slice(0, 4);
   const joinedIds = new Set(joinedSocieties.map((s) => s.id));
   const recent = announcements.filter((a) => joinedIds.has(a.societyId)).slice(0, 4);
-  const recs = recommend(societies, interests, membership);
+  const recs = recommendations.slice(0, 4).flatMap(r => {
+    const s = societies.find(s => s.id === r.slug);
+    return s ? [{ s, reason: fits.data?.reasons[r.slug] ?? (r.score ? `Matches your interests in ${r.matched_interests.join(", ")}.` : "Explore something new.") }] : [];
+  });
 
   return (
     <div className="space-y-12">
@@ -61,6 +66,7 @@ function Home() {
         </div>
       </section>
 
+      <AskSocConnect />
       <section>
         <SectionHeader title="Coming up for you" subtitle="From your societies and registrations" action={<Link to="/events" className="flex items-center gap-1 text-sm font-medium text-primary">All events <ArrowRight className="size-4" /></Link>} />
         {mine.length ? (
@@ -76,7 +82,8 @@ function Home() {
           <div className="space-y-3">
             {recent.length === 0 && <EmptyState icon={Megaphone} title="No announcements" body="Announcements from your societies appear here." />}
             {recent.map((a) => {
-              const s = getSociety(a.societyId)!;
+               const s = getSociety(a.societyId);
+               if (!s) return null;
               return (
                 <Link key={a.id} to="/societies/$societyId" params={{ societyId: s.id }} className="card-interactive flex gap-4 rounded-xl border bg-card p-4 shadow-soft">
                   <SocietyAvatar society={s} size="sm" />
@@ -122,7 +129,8 @@ function Home() {
       </div>
 
       <section>
-        <SectionHeader title="You might enjoy" subtitle="Based on your interests in Settings — simple tag matching, nothing more." />
+        <SectionHeader title="You might enjoy" subtitle="Based on your interests" />
+        {fits.data?.notice && <p className="mb-3 text-sm text-warning">{fits.data.notice}</p>}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {recs.map(({ s, reason }) => <SocietyCard key={s.id} society={s} reason={reason} />)}
         </div>
