@@ -134,7 +134,7 @@ function SocietyPage() {
                       <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", m.author === user.name ? "bg-ink text-ink-foreground" : "bg-muted")}>{m.author.split(" ").map((p) => p[0]).join("")}</span>
                       <div>
                         <p className="text-sm"><span className="font-semibold">{m.author}</span> <span className="text-xs text-muted-foreground">{timeAgo(m.createdAt)}</span></p>
-                        <p className="text-sm text-foreground/90">{m.body}</p>
+                        <p className="whitespace-pre-line text-sm text-foreground/90">{m.body}</p>
                       </div>
                     </div>
                   ))}
