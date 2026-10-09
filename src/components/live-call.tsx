@@ -12,7 +12,7 @@ import {
   useTracks,
   type TrackReferenceOrPlaceholder,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { Track, type Participant } from "livekit-client";
 import { MicOff, QrCode, Users } from "lucide-react";
 import { useEffect, useRef, type MutableRefObject, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -136,33 +136,55 @@ export function LiveCallBridge({
 /** Video tiles for everyone in the room, plus an invite card while you're alone. */
 export function LiveTiles({ accentSolid, roomId, roomName, societyName }: { accentSolid: string; roomId: string; roomName: string; societyName?: string | undefined }) {
   const tracks = useTracks(CAMERA_TRACKS, ALL_TRACKS);
+  const participants = useParticipants();
+  // Tiles follow the people in the room, not the video tracks: someone whose
+  // camera hasn't arrived yet still gets a tile with their initials, so the call
+  // never looks like a person dropped out.
+  const covered = new Set(tracks.map((t) => t.participant.identity));
+  const cameraless = participants.filter((p) => !covered.has(p.identity));
   return (
     <>
       {tracks.map((t) => (
         <LiveTile
-          key={`${t.participant.identity}-${t.source}`}
+          key={t.participant.identity}
+          participant={t.participant}
           trackRef={t}
           accentSolid={accentSolid}
         />
       ))}
-      {tracks.length <= 1 && <InviteTile roomId={roomId} roomName={roomName} societyName={societyName} />}
+      {cameraless.map((p) => (
+        <LiveTile key={p.identity} participant={p} accentSolid={accentSolid} />
+      ))}
+      {participants.length <= 1 && <InviteTile roomId={roomId} roomName={roomName} societyName={societyName} />}
     </>
   );
 }
 
+/** "2 in the call" — counts everyone the room actually knows about. */
+export function CallHeaderCount() {
+  const participants = useParticipants();
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs font-semibold">
+      <span className="size-2 animate-pulse rounded-full bg-success" />
+      {participants.length} in the call
+    </span>
+  );
+}
+
 function LiveTile({
+  participant,
   trackRef,
   accentSolid,
 }: {
-  trackRef: TrackReferenceOrPlaceholder;
+  participant: Participant;
+  trackRef?: TrackReferenceOrPlaceholder | undefined;
   accentSolid: string;
 }) {
-  const p = trackRef.participant;
-  const speaking = useIsSpeaking(p);
-  const camMuted = useIsMuted(trackRef);
-  const micMuted = useIsMuted({ participant: p, source: Track.Source.Microphone });
-  const name = p.name || p.identity;
-  const showVideo = isTrackReference(trackRef) && !camMuted;
+  const speaking = useIsSpeaking(participant);
+  const camMuted = useIsMuted({ participant, source: Track.Source.Camera });
+  const micMuted = useIsMuted({ participant, source: Track.Source.Microphone });
+  const name = participant.name || participant.identity;
+  const showVideo = trackRef !== undefined && isTrackReference(trackRef) && !camMuted;
 
   return (
     <div
@@ -174,7 +196,7 @@ function LiveTile({
       {showVideo ? (
         <VideoTrack
           trackRef={trackRef}
-          className={cn("h-full w-full object-cover", p.isLocal && "-scale-x-100")}
+          className={cn("h-full w-full object-cover", participant.isLocal && "-scale-x-100")}
         />
       ) : (
         <span
@@ -188,7 +210,7 @@ function LiveTile({
       )}
       <span className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-lg bg-ink/70 px-2 py-1 text-xs">
         {micMuted && <MicOff className="size-3" />}
-        {p.isLocal ? `${name} (you)` : name}
+        {participant.isLocal ? `${name} (you)` : name}
       </span>
     </div>
   );
