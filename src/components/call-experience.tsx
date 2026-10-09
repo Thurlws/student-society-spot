@@ -16,9 +16,9 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { callScript, roomPresence } from "@/data/calls";
-import { demoNowIso } from "@/lib/format";
+import { nowIso } from "@/lib/format";
 import { summarizeCall, transcribeClip } from "@/lib/calls.functions";
 import { fallbackSummary } from "@/lib/call-recap-fallback";
 import { getCallMode, getCallToken } from "@/lib/livekit.functions";
@@ -65,7 +65,7 @@ export function CallExperience({
   onName?: (name: string) => void;
   onEnded?: (recapId: string) => void;
 }) {
-  const { saveRecap } = useDemo();
+  const { saveRecap } = useData();
   const navigate = useNavigate();
   const summarize = useServerFn(summarizeCall);
   const transcribe = useServerFn(transcribeClip);
@@ -286,7 +286,7 @@ export function CallExperience({
     }
     if (summary.source === "fallback") toast.message("AI summary unavailable, so we saved a basic recap from the transcript.");
     const participants = lk ? [...new Set([me, ...seenRef.current])] : [me, ...others];
-    const id = saveRecap({ roomId: room.id, societyId: society.id, title: `${room.name} — ${society.shortName}`, date: demoNowIso(), durationSec: elapsedRef.current, participants, transcript: lines, summary });
+    const id = saveRecap({ roomId: room.id, societyId: society.id, title: `${room.name} — ${society.shortName}`, date: nowIso(), durationSec: elapsedRef.current, participants, transcript: lines, summary });
     if (onEnded) onEnded(id);
     else navigate({ to: "/recaps/$recapId", params: { recapId: id } });
   };

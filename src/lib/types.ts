@@ -23,6 +23,7 @@ export interface User {
 }
 
 export interface CommitteeMember {
+  userId?: string;
   name: string;
   position: string;
 }

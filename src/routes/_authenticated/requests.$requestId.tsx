@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { formatDate, timeAgo } from "@/lib/format";
 import { categoryLabel, priorityLabel, statusLabel } from "@/lib/support-requests";
 import type { SupportRequest, SupportRequestActivity } from "@/lib/types";
@@ -53,7 +53,7 @@ const activityIcon: Record<SupportRequestActivity["kind"], typeof Send> = {
 
 function RequestPage() {
   const { requestId } = Route.useParams();
-  const { getSupportRequest, canViewRequest, canManageRequest, getSociety, loaded } = useDemo();
+  const { getSupportRequest, canViewRequest, canManageRequest, getSociety, loaded } = useData();
   const r = getSupportRequest(requestId);
 
   if (!r || !canViewRequest(r)) {
@@ -149,7 +149,7 @@ function RequestPage() {
 }
 
 function Activity({ request: r, manage }: { request: SupportRequest; manage: boolean }) {
-  const { commentOnSupportRequest } = useDemo();
+  const { commentOnSupportRequest } = useData();
   const [text, setText] = useState("");
   return (
     <section className="rounded-xl border bg-card p-6 shadow-soft">
@@ -180,9 +180,9 @@ function Activity({ request: r, manage }: { request: SupportRequest; manage: boo
       </ol>
       <form
         className="mt-5 space-y-2 border-t pt-5"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          const o = commentOnSupportRequest(r.id, text);
+          const o = await commentOnSupportRequest(r.id, text);
           if (!o.ok) {
             toast.error(o.error);
             return;
@@ -213,12 +213,12 @@ function Activity({ request: r, manage }: { request: SupportRequest; manage: boo
 }
 
 function ManagePanel({ request: r }: { request: SupportRequest }) {
-  const { getSociety, assignSupportRequest, setSupportRequestStatus } = useDemo();
+  const { getSociety, assignSupportRequest, setSupportRequestStatus } = useData();
   const [resolution, setResolution] = useState("");
   const committee = getSociety(r.societyId)?.committee ?? [];
 
-  const move = (to: SupportRequest["status"], note?: string) => {
-    const o = setSupportRequestStatus(r.id, to, note);
+  const move = async (to: SupportRequest["status"], note?: string) => {
+    const o = await setSupportRequestStatus(r.id, to, note);
     if (!o.ok) {
       toast.error(o.error);
       return;
@@ -238,9 +238,9 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
         <Label>Assigned to</Label>
         <Select
           value={r.assignedTo ?? UNASSIGNED}
-          onValueChange={(v) => {
+          onValueChange={async (v) => {
             const who = v === UNASSIGNED ? undefined : v;
-            const o = assignSupportRequest(r.id, who);
+            const o = await assignSupportRequest(r.id, who);
             if (!o.ok) toast.error(o.error);
             else toast.success(who ? `Assigned to ${who}` : "Assignee removed");
           }}
@@ -276,7 +276,7 @@ function ManagePanel({ request: r }: { request: SupportRequest }) {
           </Button>
           <form
             className="space-y-2 border-t pt-5"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               move("resolved", resolution);
             }}

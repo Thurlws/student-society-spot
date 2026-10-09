@@ -1,49 +1,58 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, FileText, Hash, Lock, Megaphone, MessageSquarePlus, Pin, Send, CalendarClock, Users, Link2, ClipboardList, BookOpen } from "lucide-react";
 import { useState } from "react";
-import { useDemo } from "@/lib/demo-store";
-import { societies as baseSocieties, channels, resources, DEMO_TODAY } from "@/data/mock";
+import { useData } from "@/lib/api/store";
+import { todayIso } from "@/lib/format";
 import { timeAgo } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { toast } from "sonner";
-import { EventCard, EmptyState, DemoBadge } from "@/components/cards";
+import { EventCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
 import { NewRequestDialog } from "@/components/support-requests";
 import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/components/calls";
-import { callRooms } from "@/data/calls";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/societies/$societyId")({
-  loader: ({ params }) => {
-    const s = baseSocieties.find((x) => x.id === params.societyId);
-    if (!s) throw notFound();
-    return { name: s.name, tagline: s.tagline };
-  },
-  head: ({ loaderData }) =>
-    loaderData ? pageHead(loaderData.name, loaderData.tagline) : { meta: [{ title: "Society not found" }, { name: "robots", content: "noindex" }] },
-  component: SocietyPage,
+  head: () => pageHead("Society", "A student society on SocConnect."),
+  component: SocietyRoute,
 });
 
 const resIcon = { Guide: BookOpen, Link: Link2, Document: FileText, Form: ClipboardList };
 
-function SocietyPage() {
+function SocietyRoute() {
   const { societyId } = Route.useParams();
-  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, approvedMembers } = useDemo();
+  const { getSociety, loaded } = useData();
+  if (!getSociety(societyId)) {
+    if (!loaded) return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="py-20 text-center">
+        <h1 className="text-xl font-semibold">Society not found</h1>
+        <Link to="/societies" className="mt-4 inline-block text-primary">Back to societies</Link>
+      </div>
+    );
+  }
+  return <SocietyPage societyId={societyId} />;
+}
+
+function SocietyPage({ societyId }: { societyId: string }) {
+  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, channels, resources, rooms } = useData();
   const s = getSociety(societyId)!;
+  const today = todayIso();
   const isMember = membership(s.id) === "member";
   const a = accentClasses[s.accent];
   const socAnn = announcements.filter((x) => x.societyId === s.id);
-  const socEvents = events.filter((e) => e.societyId === s.id && e.date >= DEMO_TODAY);
+  const socEvents = events.filter((e) => e.societyId === s.id && e.date >= today);
   const socChannels = channels.filter((c) => c.societyId === s.id);
-  const [channel, setChannel] = useState(socChannels[0]?.id);
+  const [picked, setChannel] = useState<string | undefined>();
+  const channel = picked ?? socChannels[0]?.id;
   const [draft, setDraft] = useState("");
   const socRes = resources.filter((r) => r.societyId === s.id);
-  // Committee, you, people approved from the committee inbox, then a few fictional sample members.
-  const shownMembers = [...new Set([...s.committee.map((c) => c.name), ...(isMember ? [user.name] : []), ...approvedMembers(s.id), "Aisha Bello", "Kevin Doherty", "Hana Sato"])];
+  // Member lists stay private; show the committee and you.
+  const shownMembers = [...new Set([...s.committee.map((c) => c.name), ...(isMember ? [user.name] : [])])];
 
   const MembersOnly = ({ what }: { what: string }) => (
     <EmptyState icon={Lock} title={`${what} are for members`} body={`Join ${s.shortName} to take part.`} action={<JoinButton society={s} />} />
@@ -138,7 +147,7 @@ function SocietyPage() {
                 <div className="border-b px-5 py-3">
                   <p className="font-semibold">#{socChannels.find((c) => c.id === channel)?.name}</p>
                   <p className="text-xs text-muted-foreground">{socChannels.find((c) => c.id === channel)?.description}</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"><DemoBadge />Messages are saved in this browser only. Other members won't see them yet.</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Only members of {s.shortName} can read this channel.</p>
                 </div>
                 <div className="flex-1 space-y-4 overflow-y-auto p-5">
                   {messages.filter((m) => m.channelId === channel).length === 0 && <p className="text-center text-sm text-muted-foreground">No messages yet — start the conversation.</p>}
@@ -154,10 +163,10 @@ function SocietyPage() {
                 </div>
                 <form
                   className="flex gap-2 border-t p-3"
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
                     if (!channel) return;
-                    const o = postMessage(channel, draft);
+                    const o = await postMessage(channel, draft);
                     if (o.ok) setDraft(""); else toast.error(o.error);
                   }}
                 >
@@ -176,9 +185,9 @@ function SocietyPage() {
                 <p className="text-sm text-muted-foreground">Drop into a room any time, or schedule a call. Every call gets an AI recap.</p>
                 <ScheduleCallDialog defaultSocietyId={s.id} />
               </div>
-              <div className="grid gap-3 md:grid-cols-2">{callRooms.filter((r) => r.societyId === s.id).map((r) => <RoomCard key={r.id} room={r} />)}</div>
-              {meetings.some((m) => m.societyId === s.id && (m.date ?? "") >= DEMO_TODAY) && (
-                <div><p className="mb-3 text-sm font-semibold">Upcoming calls</p><div className="grid gap-3 md:grid-cols-2">{meetings.filter((m) => m.societyId === s.id && (m.date ?? "") >= DEMO_TODAY).map((m) => <MeetingCard key={m.id} meeting={m} />)}</div></div>
+              <div className="grid gap-3 md:grid-cols-2">{rooms.filter((r) => r.societyId === s.id).map((r) => <RoomCard key={r.id} room={r} />)}</div>
+              {meetings.some((m) => m.societyId === s.id && (m.date ?? "") >= today) && (
+                <div><p className="mb-3 text-sm font-semibold">Upcoming calls</p><div className="grid gap-3 md:grid-cols-2">{meetings.filter((m) => m.societyId === s.id && (m.date ?? "") >= today).map((m) => <MeetingCard key={m.id} meeting={m} />)}</div></div>
               )}
               {recaps.some((r) => r.societyId === s.id) && (
                 <div><p className="mb-3 text-sm font-semibold">Recaps</p><div className="grid gap-3 md:grid-cols-2">{recaps.filter((r) => r.societyId === s.id).map((r) => <RecapCard key={r.id} recap={r} />)}</div></div>

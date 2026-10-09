@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarClock, FileText, Headphones, Radio } from "lucide-react";
-import { useDemo } from "@/lib/demo-store";
-import { callRooms } from "@/data/calls";
-import { DEMO_TODAY } from "@/data/mock";
+import { useData } from "@/lib/api/store";
+import { todayIso } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
 import { useCallMode } from "@/lib/use-call-mode";
 import { DemoBadge, EmptyState } from "@/components/cards";
@@ -15,11 +14,11 @@ export const Route = createFileRoute("/_authenticated/calls/")({
 });
 
 function CallsPage() {
-  const { joinedSocieties, meetings, recaps } = useDemo();
+  const { joinedSocieties, meetings, recaps, rooms: allRooms } = useData();
   const callMode = useCallMode();
   const joined = new Set(joinedSocieties.map((s) => s.id));
-  const rooms = callRooms.filter((r) => joined.has(r.societyId));
-  const upcoming = meetings.filter((m) => joined.has(m.societyId) && (m.date ?? "") >= DEMO_TODAY).sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
+  const rooms = allRooms.filter((r) => joined.has(r.societyId));
+  const upcoming = meetings.filter((m) => joined.has(m.societyId) && (m.date ?? "") >= todayIso()).sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
   const myRecaps = recaps.filter((r) => joined.has(r.societyId));
 
   return (

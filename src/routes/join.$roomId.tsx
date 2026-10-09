@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, QrCode, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { CallExperience } from "@/components/call-experience";
 import { EmptyState } from "@/components/cards";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/join/$roomId")({
  */
 function JoinPage() {
   const { roomId } = Route.useParams();
-  const { getRoom, getSociety, recaps } = useDemo();
+  const { getRoom, getSociety, recaps } = useData();
   const room = getRoom(roomId);
   const society = room ? getSociety(room.societyId) : undefined;
 

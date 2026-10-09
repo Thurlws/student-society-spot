@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, LayoutGrid, MapPin, Search, SearchX, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDemo } from "@/lib/demo-store";
+import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
-import { DEMO_TODAY } from "@/data/mock";
+import { todayIso } from "@/lib/format";
 import { formatDate, monthLabel } from "@/lib/format";
 import { PageHeader, EventCard, EmptyState, DemoBadge } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/events/")({
 });
 
 function EventsPage() {
-  const { events, getSociety, isRegistered, joinedSocieties } = useDemo();
+  const { events, getSociety, isRegistered, joinedSocieties } = useData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [scope, setScope] = useState<"all" | "mine" | "registered">("all");
   const [view, setView] = useState<"grid" | "calendar">("grid");
-  const upcoming = events.filter((e) => e.date >= DEMO_TODAY);
+  const upcoming = events.filter((e) => e.date >= todayIso());
   const featured = upcoming.find((e) => e.featured) ?? upcoming[0];
   const cats = ["All", ...Array.from(new Set(upcoming.map((e) => e.category)))];
   const joined = new Set(joinedSocieties.map((s) => s.id));
@@ -91,20 +91,22 @@ function EventsPage() {
 }
 
 function CalendarView({ ids }: { ids: Set<string> }) {
-  const { events, getSociety, isRegistered } = useDemo();
-  const [month, setMonth] = useState(9); // October (0-indexed)
-  const first = new Date(2026, month, 1);
+  const { events, getSociety, isRegistered } = useData();
+  const [cursor, setCursor] = useState(() => { const [y, m] = todayIso().split("-").map(Number); return { y: y!, m: m! - 1 }; });
+  const month = cursor.m, year = cursor.y;
+  const shift = (n: number) => setCursor(({ y, m }) => { const t = y * 12 + m + n; return { y: Math.floor(t / 12), m: t % 12 }; });
+  const first = new Date(year, month, 1);
   const offset = (first.getDay() + 6) % 7;
-  const days = new Date(2026, month + 1, 0).getDate();
+  const days = new Date(year, month + 1, 0).getDate();
   const cells = Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, i) => i - offset + 1);
-  const iso = (d: number) => `2026-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const iso = (d: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   return (
     <div className="rounded-xl border bg-card p-4 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
-        <p className="flex items-center gap-2 font-display font-semibold">{monthLabel(2026, month)} <DemoBadge /></p>
+        <p className="flex items-center gap-2 font-display font-semibold">{monthLabel(year, month)}</p>
         <div className="flex gap-1">
-          <Button size="sm" variant="outline" disabled={month === 9} onClick={() => setMonth(9)}>Oct</Button>
-          <Button size="sm" variant="outline" disabled={month === 10} onClick={() => setMonth(10)}>Nov</Button>
+          <Button size="sm" variant="outline" aria-label="Previous month" onClick={() => shift(-1)}>‹</Button>
+          <Button size="sm" variant="outline" aria-label="Next month" onClick={() => shift(1)}>›</Button>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-border text-xs">
@@ -113,8 +115,8 @@ function CalendarView({ ids }: { ids: Set<string> }) {
           const valid = d > 0 && d <= days;
           const dayEvents = valid ? events.filter((e) => e.date === iso(d) && ids.has(e.id)) : [];
           return (
-            <div key={i} className={cn("min-h-24 bg-card p-1.5", !valid && "bg-surface/60", valid && iso(d) === DEMO_TODAY && "bg-primary-soft/60")}>
-              {valid && <p className={cn("mb-1 text-[11px]", iso(d) === DEMO_TODAY ? "font-bold text-primary" : "text-muted-foreground")}>{d}</p>}
+            <div key={i} className={cn("min-h-24 bg-card p-1.5", !valid && "bg-surface/60", valid && iso(d) === todayIso() && "bg-primary-soft/60")}>
+              {valid && <p className={cn("mb-1 text-[11px]", iso(d) === todayIso() ? "font-bold text-primary" : "text-muted-foreground")}>{d}</p>}
               {dayEvents.map((e) => {
                 const s = getSociety(e.societyId)!;
                 return (
