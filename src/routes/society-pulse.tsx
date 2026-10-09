@@ -34,8 +34,8 @@ function Pulse() {
     const m: Record<string, { x: number; y: number }> = {};
     societies.forEach((s, i) => {
       const ang = (i / societies.length) * Math.PI * 2 - Math.PI / 2;
-      const r = i % 2 === 0 ? 205 : 150;
-      m[s.id] = { x: CX + Math.cos(ang) * r * 1.15, y: CY + Math.sin(ang) * r };
+      const r = i % 2 === 0 ? 215 : 150;
+      m[s.id] = { x: CX + Math.cos(ang) * r * 1.3, y: CY + Math.sin(ang) * r };
     });
     return m;
   }, [societies]);
@@ -65,7 +65,7 @@ function Pulse() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="relative overflow-hidden rounded-2xl bg-pulse shadow-lift">
+        <div className="relative self-start overflow-hidden rounded-2xl bg-pulse shadow-lift">
           <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Network of societies">
             <defs>
               <radialGradient id="glow"><stop offset="0%" stopColor="currentColor" stopOpacity="0.35" /><stop offset="100%" stopColor="currentColor" stopOpacity="0" /></radialGradient>
@@ -91,7 +91,7 @@ function Pulse() {
             {societies.map((s) => {
               const p = pos[s.id]!;
               const sel = s.id === a || s.id === b;
-              const dim = sa && !sel && !related.some((r) => r.s.id === s.id);
+              const dim = sa && !sel && !related.some((r) => r.s.id === s.id) && !(a && findProposal(a, s.id));
               const Icon = societyIcon(s.icon);
               return (
                 <g key={s.id} transform={`translate(${p.x},${p.y})`} className={cn("cursor-pointer transition-opacity", accentClasses[s.accent].text, dim && "opacity-35")} onClick={() => click(s.id)} tabIndex={0} role="button" aria-label={s.name} onKeyDown={(e) => e.key === "Enter" && click(s.id)}>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useDemo } from "@/lib/demo-store";
 import { pageHead } from "@/lib/seo";
 import { DEMO_TODAY } from "@/data/mock";
-import { formatDate } from "@/lib/format";
+import { formatDate, monthLabel } from "@/lib/format";
 import { PageHeader, EventCard, EmptyState, DemoBadge } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { Input } from "@/components/ui/input";
@@ -101,7 +101,7 @@ function CalendarView({ ids }: { ids: Set<string> }) {
   return (
     <div className="rounded-xl border bg-card p-4 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
-        <p className="flex items-center gap-2 font-display font-semibold">{first.toLocaleDateString("en-GB", { month: "long", year: "numeric" })} <DemoBadge /></p>
+        <p className="flex items-center gap-2 font-display font-semibold">{monthLabel(2026, month)} <DemoBadge /></p>
         <div className="flex gap-1">
           <Button size="sm" variant="outline" disabled={month === 9} onClick={() => setMonth(9)}>Oct</Button>
           <Button size="sm" variant="outline" disabled={month === 10} onClick={() => setMonth(10)}>Nov</Button>
