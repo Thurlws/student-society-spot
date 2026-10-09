@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCommitteeRouteImport } from './routes/_authenticated/committee'
@@ -28,48 +29,52 @@ import { Route as AuthenticatedRequestsRequestIdRouteImport } from './routes/_au
 import { Route as AuthenticatedSocietiesIndexRouteImport } from './routes/_authenticated/societies.index'
 import { Route as AuthenticatedSocietiesSocietyIdRouteImport } from './routes/_authenticated/societies.$societyId'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/_authenticated/',
+  id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommitteeRoute = AuthenticatedCommitteeRouteImport.update({
-  id: '/_authenticated/committee',
+  id: '/committee',
   path: '/committee',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommunicationsRoute =
   AuthenticatedCommunicationsRouteImport.update({
-    id: '/_authenticated/communications',
+    id: '/communications',
     path: '/communications',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
-  id: '/_authenticated/inbox',
+  id: '/inbox',
   path: '/inbox',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMySocietiesRoute =
   AuthenticatedMySocietiesRouteImport.update({
-    id: '/_authenticated/my-societies',
+    id: '/my-societies',
     path: '/my-societies',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/_authenticated/settings',
+  id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSocietyPulseRoute =
   AuthenticatedSocietyPulseRouteImport.update({
-    id: '/_authenticated/society-pulse',
+    id: '/society-pulse',
     path: '/society-pulse',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const JoinRoomIdRoute = JoinRoomIdRouteImport.update({
   id: '/join/$roomId',
@@ -77,59 +82,60 @@ const JoinRoomIdRoute = JoinRoomIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCallRoomIdRoute = AuthenticatedCallRoomIdRouteImport.update({
-  id: '/_authenticated/call/$roomId',
+  id: '/call/$roomId',
   path: '/call/$roomId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCallsIndexRoute = AuthenticatedCallsIndexRouteImport.update({
-  id: '/_authenticated/calls/',
+  id: '/calls/',
   path: '/calls/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEventsIndexRoute =
   AuthenticatedEventsIndexRouteImport.update({
-    id: '/_authenticated/events/',
+    id: '/events/',
     path: '/events/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEventsEventIdRoute =
   AuthenticatedEventsEventIdRouteImport.update({
-    id: '/_authenticated/events/$eventId',
+    id: '/events/$eventId',
     path: '/events/$eventId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRecapsRecapIdRoute =
   AuthenticatedRecapsRecapIdRouteImport.update({
-    id: '/_authenticated/recaps/$recapId',
+    id: '/recaps/$recapId',
     path: '/recaps/$recapId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRequestsIndexRoute =
   AuthenticatedRequestsIndexRouteImport.update({
-    id: '/_authenticated/requests/',
+    id: '/requests/',
     path: '/requests/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRequestsRequestIdRoute =
   AuthenticatedRequestsRequestIdRouteImport.update({
-    id: '/_authenticated/requests/$requestId',
+    id: '/requests/$requestId',
     path: '/requests/$requestId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSocietiesIndexRoute =
   AuthenticatedSocietiesIndexRouteImport.update({
-    id: '/_authenticated/societies/',
+    id: '/societies/',
     path: '/societies/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSocietiesSocietyIdRoute =
   AuthenticatedSocietiesSocietyIdRouteImport.update({
-    id: '/_authenticated/societies/$societyId',
+    id: '/societies/$societyId',
     path: '/societies/$societyId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/welcome': typeof WelcomeRoute
   '/committee': typeof AuthenticatedCommitteeRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
@@ -138,7 +144,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
   '/join/$roomId': typeof JoinRoomIdRoute
-  '/': typeof AuthenticatedIndexRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/recaps/$recapId': typeof AuthenticatedRecapsRecapIdRoute
@@ -171,6 +176,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/_authenticated/committee': typeof AuthenticatedCommitteeRoute
   '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
@@ -193,6 +199,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/welcome'
     | '/committee'
     | '/communications'
@@ -201,7 +208,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/society-pulse'
     | '/join/$roomId'
-    | '/'
     | '/call/$roomId'
     | '/events/$eventId'
     | '/recaps/$recapId'
@@ -233,6 +239,7 @@ export interface FileRouteTypes {
     | '/societies'
   id:
     | '__root__'
+    | '/_authenticated'
     | '/welcome'
     | '/_authenticated/committee'
     | '/_authenticated/communications'
@@ -254,28 +261,20 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
-  AuthenticatedCommitteeRoute: typeof AuthenticatedCommitteeRoute
-  AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
-  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
-  AuthenticatedMySocietiesRoute: typeof AuthenticatedMySocietiesRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedSocietyPulseRoute: typeof AuthenticatedSocietyPulseRoute
   JoinRoomIdRoute: typeof JoinRoomIdRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedCallRoomIdRoute: typeof AuthenticatedCallRoomIdRoute
-  AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
-  AuthenticatedRecapsRecapIdRoute: typeof AuthenticatedRecapsRecapIdRoute
-  AuthenticatedRequestsRequestIdRoute: typeof AuthenticatedRequestsRequestIdRoute
-  AuthenticatedSocietiesSocietyIdRoute: typeof AuthenticatedSocietiesSocietyIdRoute
-  AuthenticatedCallsIndexRoute: typeof AuthenticatedCallsIndexRoute
-  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
-  AuthenticatedRequestsIndexRoute: typeof AuthenticatedRequestsIndexRoute
-  AuthenticatedSocietiesIndexRoute: typeof AuthenticatedSocietiesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/welcome': {
       id: '/welcome'
       path: '/welcome'
@@ -288,49 +287,49 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/committee': {
       id: '/_authenticated/committee'
       path: '/committee'
       fullPath: '/committee'
       preLoaderRoute: typeof AuthenticatedCommitteeRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/communications': {
       id: '/_authenticated/communications'
       path: '/communications'
       fullPath: '/communications'
       preLoaderRoute: typeof AuthenticatedCommunicationsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inbox': {
       id: '/_authenticated/inbox'
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof AuthenticatedInboxRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/my-societies': {
       id: '/_authenticated/my-societies'
       path: '/my-societies'
       fullPath: '/my-societies'
       preLoaderRoute: typeof AuthenticatedMySocietiesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/society-pulse': {
       id: '/_authenticated/society-pulse'
       path: '/society-pulse'
       fullPath: '/society-pulse'
       preLoaderRoute: typeof AuthenticatedSocietyPulseRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/join/$roomId': {
       id: '/join/$roomId'
@@ -344,76 +343,93 @@ declare module '@tanstack/react-router' {
       path: '/call/$roomId'
       fullPath: '/call/$roomId'
       preLoaderRoute: typeof AuthenticatedCallRoomIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calls/': {
       id: '/_authenticated/calls/'
       path: '/calls'
       fullPath: '/calls/'
       preLoaderRoute: typeof AuthenticatedCallsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/events/': {
       id: '/_authenticated/events/'
       path: '/events'
       fullPath: '/events/'
       preLoaderRoute: typeof AuthenticatedEventsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/events/$eventId': {
       id: '/_authenticated/events/$eventId'
       path: '/events/$eventId'
       fullPath: '/events/$eventId'
       preLoaderRoute: typeof AuthenticatedEventsEventIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/recaps/$recapId': {
       id: '/_authenticated/recaps/$recapId'
       path: '/recaps/$recapId'
       fullPath: '/recaps/$recapId'
       preLoaderRoute: typeof AuthenticatedRecapsRecapIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/requests/': {
       id: '/_authenticated/requests/'
       path: '/requests'
       fullPath: '/requests/'
       preLoaderRoute: typeof AuthenticatedRequestsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/requests/$requestId': {
       id: '/_authenticated/requests/$requestId'
       path: '/requests/$requestId'
       fullPath: '/requests/$requestId'
       preLoaderRoute: typeof AuthenticatedRequestsRequestIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/societies/': {
       id: '/_authenticated/societies/'
       path: '/societies'
       fullPath: '/societies/'
       preLoaderRoute: typeof AuthenticatedSocietiesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/societies/$societyId': {
       id: '/_authenticated/societies/$societyId'
       path: '/societies/$societyId'
       fullPath: '/societies/$societyId'
       preLoaderRoute: typeof AuthenticatedSocietiesSocietyIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  WelcomeRoute: WelcomeRoute,
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCommitteeRoute: typeof AuthenticatedCommitteeRoute
+  AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedMySocietiesRoute: typeof AuthenticatedMySocietiesRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSocietyPulseRoute: typeof AuthenticatedSocietyPulseRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCallRoomIdRoute: typeof AuthenticatedCallRoomIdRoute
+  AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
+  AuthenticatedRecapsRecapIdRoute: typeof AuthenticatedRecapsRecapIdRoute
+  AuthenticatedRequestsRequestIdRoute: typeof AuthenticatedRequestsRequestIdRoute
+  AuthenticatedSocietiesSocietyIdRoute: typeof AuthenticatedSocietiesSocietyIdRoute
+  AuthenticatedCallsIndexRoute: typeof AuthenticatedCallsIndexRoute
+  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
+  AuthenticatedRequestsIndexRoute: typeof AuthenticatedRequestsIndexRoute
+  AuthenticatedSocietiesIndexRoute: typeof AuthenticatedSocietiesIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCommitteeRoute: AuthenticatedCommitteeRoute,
   AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedMySocietiesRoute: AuthenticatedMySocietiesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSocietyPulseRoute: AuthenticatedSocietyPulseRoute,
-  JoinRoomIdRoute: JoinRoomIdRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCallRoomIdRoute: AuthenticatedCallRoomIdRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
@@ -424,6 +440,15 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
   AuthenticatedRequestsIndexRoute: AuthenticatedRequestsIndexRoute,
   AuthenticatedSocietiesIndexRoute: AuthenticatedSocietiesIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  WelcomeRoute: WelcomeRoute,
+  JoinRoomIdRoute: JoinRoomIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
