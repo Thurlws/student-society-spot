@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  Bell, CalendarDays, ChevronsLeft, Compass, Home, Inbox, LayoutDashboard, Menu, MessageSquareText, MessagesSquare, Search, Settings, Users, Waypoints, Video, LogOut, ShieldCheck,
+  Bell, CalendarDays, ChevronsLeft, Compass, Home, Inbox, LayoutDashboard, Menu, MessageSquareText, MessagesSquare, Moon, Search, Settings, Sun, Users, Waypoints, Video, LogOut, ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { timeAgo, formatDate } from "@/lib/format";
+import { toggleTheme, useTheme } from "@/lib/theme";
 
 type NavItem = { to: string; label: string; icon: LucideIcon; committeeOnly?: boolean };
 const nav: NavItem[] = [
@@ -192,6 +193,21 @@ function Notifications() {
   );
 }
 
+function ThemeToggle() {
+  const theme = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </Button>
+  );
+}
+
 function UserMenu() {
   const { user } = useData();
   const { email, signOut, access } = useAuth();
@@ -251,6 +267,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex flex-1 justify-center"><GlobalSearch /></div>
           {role === "committee" && <span className="hidden rounded-md border border-ink/25 px-2 py-0.5 text-xs font-medium sm:inline">Committee view</span>}
           <Notifications />
+          <ThemeToggle />
           <UserMenu />
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 pb-24 sm:px-6 lg:px-10 lg:pb-10">{children}</main>
