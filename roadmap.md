@@ -5,6 +5,7 @@
 - [x] Phase 3: secure calls and AI recaps
 - [x] Sign-up: native year selection and searchable official TU Dublin courses
 - [x] Phase 4: AI recommendations, society questions and editable collaboration proposals implemented
-- [ ] Phase 4 real-society end-to-end verification — blocked: no societies or committee seats exist yet
+- [x] Pull official TU Dublin society data from GitHub main; 67 societies loaded; directory, campus filter, logos and official details verified signed in
+- [ ] Phase 4 real-society end-to-end verification — blocked: no committee seats or members exist yet (societies now exist)
 - [x] Upload changes to GitHub develop; resolve outdated main conflicts and merge preserving both histories
 - [ ] Phase 5: realtime, tests, docs
