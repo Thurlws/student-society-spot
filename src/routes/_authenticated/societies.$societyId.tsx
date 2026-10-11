@@ -5,7 +5,7 @@ import { useData } from "@/lib/api/store";
 import { todayIso } from "@/lib/format";
 import { timeAgo } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
-import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
+import { SocietyAvatar, SocietyBanner, accentClasses } from "@/components/society-avatar";
 import { toast } from "sonner";
 import { EventCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
@@ -14,7 +14,7 @@ import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn, safeHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { OfficialInfo } from "@/components/official-info";
 
 export const Route = createFileRoute("/_authenticated/societies/$societyId")({
@@ -48,7 +48,6 @@ function SocietyPage({ societyId }: { societyId: string }) {
   const a = accentClasses[s.accent];
   // Imported taglines are often the description's first sentence cut short; don't print it twice.
   const showTagline = !!s.tagline && !s.description.startsWith(s.tagline.replace(/[….\s]+$/, ""));
-  const banner = safeHref(s.bannerUrl);
   const socAnn = announcements.filter((x) => x.societyId === s.id);
   const socEvents = events.filter((e) => e.societyId === s.id && e.date >= today);
   const socChannels = channels.filter((c) => c.societyId === s.id);
@@ -67,17 +66,13 @@ function SocietyPage({ societyId }: { societyId: string }) {
     <div>
       <Link to="/societies" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />All societies</Link>
       <div className="overflow-hidden rounded-2xl border bg-card shadow-soft">
-        <div className={cn("h-28 sm:h-36", a.soft)}>
-          {banner
-            ? <img src={banner} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-            : <div className={cn("h-full w-full opacity-30 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:16px_16px]", a.text)} />}
-        </div>
+        <SocietyBanner society={s} className="h-28 sm:h-36" />
         <div className="px-6 pb-6">
           <div className="flex items-start justify-between gap-4">
             <SocietyAvatar society={s} size="lg" className="-mt-8 border-4 border-card bg-card" />
             <div className="pt-4"><JoinButton society={s} size="default" /></div>
           </div>
-          <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{s.name}</h1>
+          <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">{s.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{[s.category, s.campus && `${s.campus} campus`, `${s.memberCount} members`].filter(Boolean).join(", ")}</p>
         </div>
       </div>
@@ -85,7 +80,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
       <Tabs key={hash.startsWith("announcement-") ? "announcement" : "overview"} defaultValue={hash.startsWith("announcement-") ? "announcements" : "overview"} className="mt-6">
         <TabsList className="h-auto flex-wrap justify-start bg-transparent p-0">
           {["overview", "announcements", "discussions", "calls", "events", "resources", "members"].map((t) => (
-            <TabsTrigger key={t} value={t} className="rounded-md capitalize data-[state=active]:bg-highlight data-[state=active]:text-ink data-[state=active]:shadow-none">{t}</TabsTrigger>
+            <TabsTrigger key={t} value={t} className="rounded-full capitalize data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none">{t}</TabsTrigger>
           ))}
         </TabsList>
 
@@ -95,7 +90,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
               {showTagline && <p className={cn("mb-3 text-sm font-semibold", a.text)}>{s.tagline}</p>}
               <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{s.description || "This society hasn't published a description yet."}</p>
               {s.meets && !s.extraSections?.some((x) => x.title === "Meetings") && <p className="mt-4 text-sm"><span className="font-semibold">Meets: </span><span className="text-muted-foreground">{s.meets}</span></p>}
-              {s.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{s.tags.map((t) => <span key={t} className="rounded-md bg-muted px-2 py-0.5 text-xs">{t}</span>)}</div>}
+              {s.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{s.tags.map((t) => <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{t}</span>)}</div>}
             </div>
             {(s.extraSections ?? []).map((x) => (
               <div key={x.title} className="rounded-xl border bg-card p-6 shadow-soft">
@@ -138,7 +133,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
             <article key={x.id} id={`announcement-${x.id}`} className="scroll-mt-20 rounded-xl border bg-card p-5 shadow-soft">
               <p className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Megaphone className={cn("size-3.5", a.text)} />{x.author}, {timeAgo(x.createdAt)}
-                {x.pinned && <span className="flex items-center gap-1 font-medium text-foreground"><Pin className="size-3" />Pinned</span>}
+                {x.pinned && <span className="flex items-center gap-1 font-medium text-primary"><Pin className="size-3" />Pinned</span>}
               </p>
               <h3 className="mt-2 font-semibold">{x.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{x.body}</p>
@@ -152,7 +147,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
               <div className="border-b bg-surface p-3 md:border-b-0 md:border-r">
                 <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground">Channels</p>
                 {socChannels.map((c) => (
-                  <button key={c.id} onClick={() => setChannel(c.id)} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm", channel === c.id ? "bg-card font-semibold text-ink" : "text-muted-foreground hover:bg-card")}>
+                  <button key={c.id} onClick={() => setChannel(c.id)} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm", channel === c.id ? "bg-card font-semibold text-primary shadow-soft" : "text-muted-foreground hover:bg-card")}>
                     <Hash className="size-3.5" />{c.name}
                   </button>
                 ))}
@@ -221,7 +216,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
               {socRes.map((r) => { const I = resIcon[r.kind]; return (
                 <div key={r.id} className="flex gap-3 rounded-xl border bg-card p-4 shadow-soft">
                   <span className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary"><I className="size-4" /></span>
-                  <div><p className="text-sm font-semibold">{r.title}</p><p className="text-xs text-muted-foreground">{r.kind} · {r.description}</p></div>
+                  <div><p className="text-sm font-semibold">{r.title}</p><p className="text-xs text-muted-foreground">{r.kind}: {r.description}</p></div>
                 </div>
               ); })}
             </div>

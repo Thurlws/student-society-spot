@@ -21,11 +21,11 @@ function MySocieties() {
       {joined.length ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{joined.map((s) => <SocietyCard key={s.id} society={s} action={<JoinButton society={s} full />} />)}</div>
       ) : (
-        <EmptyState icon={Users} title="You haven't joined any societies" body="Find a society that does something you're into and join it here." action={<Button asChild size="sm"><Link to="/societies">Find societies</Link></Button>} />
+        <EmptyState icon={Users} title="You haven't joined any societies" body="Find a society that does something you're into and join it here." action={<Button asChild size="sm"><Link to="/societies">Discover societies</Link></Button>} />
       )}
       {pending.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-bold">Waiting for approval</h2>
+          <h2 className="mb-4 text-lg font-semibold">Waiting for approval</h2>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{pending.map((s) => <SocietyCard key={s.id} society={s} action={<JoinButton society={s} full />} />)}</div>
         </section>
       )}

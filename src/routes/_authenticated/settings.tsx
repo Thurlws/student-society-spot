@@ -32,7 +32,7 @@ function SettingsPage() {
           <span className="flex size-14 items-center justify-center rounded-full bg-ink font-display text-lg font-semibold text-ink-foreground">{user.initials}</span>
           <div>
             <p className="font-semibold">{user.name}</p>
-            <p className="text-sm text-muted-foreground">{user.course} · {user.year}</p>
+            <p className="text-sm text-muted-foreground">{user.course}, {user.year}</p>
             <p className="text-xs text-muted-foreground">{role === "committee" ? "Committee member" : "Student"}</p>
           </div>
         </div>
@@ -42,7 +42,7 @@ function SettingsPage() {
           {allInterests.map((i) => {
             const on = interests.includes(i);
             return (
-              <button key={i} onClick={() => toggleInterest(i)} className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60", on ? "border-ink bg-highlight text-ink" : "bg-card hover:border-ink/40")}>{i}</button>
+              <button key={i} onClick={() => toggleInterest(i)} className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60", on ? "border-primary bg-primary-soft text-primary" : "bg-card hover:border-primary/40")}>{i}</button>
             );
           })}
         </div>
@@ -60,7 +60,7 @@ function SettingsPage() {
             </div>
           ))}
           <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="email" className="text-muted-foreground">Weekly email digest · not available in this prototype</Label>
+            <Label htmlFor="email" className="text-muted-foreground">Weekly email digest (not available yet)</Label>
             <Switch id="email" checked={false} disabled />
           </div>
         </div>
