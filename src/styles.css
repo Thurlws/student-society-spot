@@ -5,15 +5,15 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * SocConnect design system: a society noticeboard. Ink on paper, a highlighter
- * for whatever is selected or yours, and flat poster colours for societies
- * (--soc-*) so every society keeps its identity. No gradients or glows.
- * Type is Archivo throughout; headings use its wider cut.
+ * SocConnect design system. Cool granite canvas, ink text and one TU Dublin
+ * blue primary (#004c6c). Society accents are separate tokens (--soc-*), taken from
+ * Dublin's Georgian doors, so every society has an identity inside one system.
+ * The logo tile is the only gradient; everything else is flat.
  */
 
 @theme inline {
-  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", ui-sans-serif, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -28,7 +28,6 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
-  --color-highlight: var(--highlight);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-teal: var(--teal);
@@ -68,111 +67,56 @@
 }
 
 :root {
-  --radius: 0.5rem;
-
-  /* Paper, ink and a highlighter. */
-  --background: #f3f3ef;
-  --surface: #eaeae4;
-  --foreground: #1b1c1a;
+  --radius: 0.75rem;
+  --background: #f2f3f0;
+  --surface: #ebede9;
+  --foreground: #1e2624;
   --card: #ffffff;
-  --card-foreground: #1b1c1a;
+  --card-foreground: #1e2624;
   --popover: #ffffff;
-  --popover-foreground: #1b1c1a;
-  --primary: #1b1c1a;
+  --popover-foreground: #1e2624;
+  --primary: #004c6c;
   --primary-foreground: #ffffff;
-  --primary-soft: #fff1bf;
-  --highlight: #ffd84d;
-  --secondary: #eaeae4;
-  --secondary-foreground: #1b1c1a;
-  --teal: #15706a;
-  --teal-soft: #e1efed;
-  --muted: #ecece7;
-  --muted-foreground: #5d605a;
-  --accent: #ecece7;
-  --accent-foreground: #1b1c1a;
-  --destructive: #b3261e;
+  --primary-soft: #e0ebef;
+  --secondary: #e9ebe7;
+  --secondary-foreground: #1e2624;
+  --teal: #2f7f7a;
+  --teal-soft: #e0efed;
+  --muted: #e9ebe7;
+  --muted-foreground: #5b6663;
+  --accent: #e9ebe7;
+  --accent-foreground: #1e2624;
+  --destructive: #b5402f;
   --destructive-foreground: #ffffff;
-  --success: #2e7d4f;
-  --warning: #8f5e00;
-  --border: #dcdcd5;
-  --input: #cfcfc7;
-  --ring: #1b1c1a;
-  --ink: #1b1c1a;
-  --ink-foreground: #f6f6f2;
-  --sidebar: #f3f3ef;
-  --sidebar-foreground: #2b2d2a;
-  --sidebar-primary: #1b1c1a;
+  --success: #2e7048;
+  --warning: #94650c;
+  --border: #dde0db;
+  --input: #cfd4cd;
+  --ring: #004c6c;
+  --ink: #1e2624;
+  --ink-foreground: #f2f3f0;
+  --sidebar: #f7f8f6;
+  --sidebar-foreground: #3a4542;
+  --sidebar-primary: #004c6c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6e6df;
-  --sidebar-accent-foreground: #1b1c1a;
-  --sidebar-border: #dcdcd5;
-  --sidebar-ring: #1b1c1a;
+  --sidebar-accent: #e9ebe7;
+  --sidebar-accent-foreground: #1e2624;
+  --sidebar-border: #dde0db;
+  --sidebar-ring: #004c6c;
 
-  /* Society colours: flat poster inks, all readable as text on white. */
-  --soc-indigo: #34407a;
-  --soc-teal: #17736c;
-  --soc-coral: #b8492f;
-  --soc-amber: #9a6700;
-  --soc-rose: #b23a55;
-  --soc-sky: #2c6a99;
-  --soc-emerald: #2c7a4b;
-  --soc-plum: #7b3f73;
+  /* Georgian door colours. Keys match the database `accent` values. */
+  --soc-indigo: #4a4c8e;
+  --soc-teal: #2f7f7a;
+  --soc-coral: #c0492f;
+  --soc-amber: #94650c;
+  --soc-rose: #b0365a;
+  --soc-sky: #3f78a8;
+  --soc-emerald: #2e7048;
+  --soc-plum: #6b3a6e;
 
-  --shadow-soft: 0 1px 0 0 rgb(27 28 26 / 0.04);
-  --shadow-lift: 0 2px 6px -2px rgb(27 28 26 / 0.1), 0 14px 32px -14px rgb(27 28 26 / 0.28);
-}
-
-/* Dark mode: same noticeboard, lights off. Ink becomes paper and vice versa;
-   society poster colours lighten so they stay readable on dark surfaces. */
-.dark {
-  --background: #171815;
-  --surface: #1f201d;
-  --foreground: #ecebe6;
-  --card: #22231f;
-  --card-foreground: #ecebe6;
-  --popover: #22231f;
-  --popover-foreground: #ecebe6;
-  --primary: #ecebe6;
-  --primary-foreground: #1b1c1a;
-  --primary-soft: #3a3524;
-  --highlight: #ffd84d;
-  --secondary: #2a2b27;
-  --secondary-foreground: #ecebe6;
-  --teal: #4fb3a9;
-  --teal-soft: #1e3532;
-  --muted: #262723;
-  --muted-foreground: #a3a49c;
-  --accent: #2a2b27;
-  --accent-foreground: #ecebe6;
-  --destructive: #e0655e;
-  --destructive-foreground: #1b1c1a;
-  --success: #5cb87f;
-  --warning: #d9a13c;
-  --border: #373832;
-  --input: #43443d;
-  --ring: #ecebe6;
-  --ink: #ecebe6;
-  --ink-foreground: #1b1c1a;
-  --sidebar: #1b1c19;
-  --sidebar-foreground: #d6d5cf;
-  --sidebar-primary: #ecebe6;
-  --sidebar-primary-foreground: #1b1c1a;
-  --sidebar-accent: #2a2b27;
-  --sidebar-accent-foreground: #ecebe6;
-  --sidebar-border: #373832;
-  --sidebar-ring: #ecebe6;
-
-  --soc-indigo: #8b97d6;
-  --soc-teal: #4fb3a9;
-  --soc-coral: #e0805f;
-  --soc-amber: #d9a13c;
-  --soc-rose: #e0708a;
-  --soc-sky: #6fa8d1;
-  --soc-emerald: #5cb87f;
-  --soc-plum: #c07fb6;
-
-  --shadow-soft: 0 1px 0 0 rgb(0 0 0 / 0.2);
-  --shadow-lift: 0 2px 6px -2px rgb(0 0 0 / 0.4), 0 14px 32px -14px rgb(0 0 0 / 0.6);
+  --gradient-brand: linear-gradient(135deg, var(--primary), #2a7f9e);
+  --shadow-soft: 0 1px 2px rgb(30 38 36 / 0.04);
+  --shadow-lift: 0 1px 2px rgb(30 38 36 / 0.05), 0 8px 24px -10px rgb(30 38 36 / 0.18);
 }
 
 @layer base {
@@ -187,59 +131,19 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
-  h1, h2 {
+  h1, h2, h3 {
     font-family: var(--font-display);
-    font-stretch: 112.5%;
-    letter-spacing: -0.015em;
-  }
-  h3 {
-    font-family: var(--font-display);
-    letter-spacing: -0.005em;
-  }
-  ::selection {
-    background-color: var(--color-highlight);
-    color: var(--color-ink);
+    letter-spacing: -0.02em;
   }
 }
 
-/* Headline cut of Archivo, for type used as a display element outside h1/h2. */
-@utility font-wide {
-  font-stretch: 112.5%;
-  letter-spacing: -0.015em;
+@utility bg-brand {
+  background: var(--gradient-brand);
 }
-
-/* A highlighter stroke behind whatever is selected (active nav item, picked filter). */
-@utility marker {
-  position: relative;
-  isolation: isolate;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0.125rem -0.125rem;
-    z-index: -1;
-    border-radius: 0.2rem 0.45rem 0.3rem 0.5rem;
-    background-color: var(--color-highlight);
-    transform: rotate(-0.6deg);
-  }
-}
-
-/* Links that read as links in running text and lists: ink with a highlighter underline. */
-@utility link-ink {
-  font-weight: 600;
-  text-decoration-line: underline;
-  text-decoration-color: var(--color-highlight);
-  text-decoration-thickness: 3px;
-  text-underline-offset: 3px;
-  &:hover {
-    text-decoration-color: var(--color-ink);
-  }
-}
-
 @utility card-interactive {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
   &:hover {
-    border-color: color-mix(in oklab, var(--color-ink) 40%, var(--color-border));
-    box-shadow: 0 1px 0 0 var(--color-ink);
+    border-color: var(--input);
   }
 }
 
