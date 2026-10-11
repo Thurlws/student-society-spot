@@ -28,7 +28,7 @@ function Comms() {
 
   const items = useMemo<Item[]>(() => {
     const ann: Item[] = announcements.filter((a) => joined.has(a.societyId)).map((a) => ({ id: a.id, kind: "announcement", societyId: a.societyId, title: a.title, body: a.body, at: a.createdAt, to: { to: "/societies/$societyId", params: { societyId: a.societyId } } }));
-    const ev: Item[] = events.filter((e) => joined.has(e.societyId) && e.date >= todayIso()).map((e) => ({ id: e.id, kind: "event", societyId: e.societyId, title: e.title, body: `${formatDate(e.date)} · ${e.start} · ${e.venue}`, at: `${e.date}T${e.start}:00`, to: { to: "/events/$eventId", params: { eventId: e.id } } }));
+    const ev: Item[] = events.filter((e) => joined.has(e.societyId) && e.date >= todayIso()).map((e) => ({ id: e.id, kind: "event", societyId: e.societyId, title: e.title, body: `${formatDate(e.date)}, ${e.start}, ${e.venue}`, at: `${e.date}T${e.start}:00`, to: { to: "/events/$eventId", params: { eventId: e.id } } }));
     const dis: Item[] = messages.map((m) => ({ m, c: channels.find((c) => c.id === m.channelId)! })).filter(({ c }) => c && joined.has(c.societyId)).map(({ m, c }) => ({ id: m.id, kind: "discussion", societyId: c.societyId, title: `${m.author} in #${c.name}`, body: m.body, at: m.createdAt, to: { to: "/societies/$societyId", params: { societyId: c.societyId } } }));
     return [...ann, ...ev, ...dis].sort((a, b) => b.at.localeCompare(a.at));
   }, [announcements, events, messages, joined]);
@@ -47,7 +47,7 @@ function Comms() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {kinds.map(({ k, l, icon: I }) => (
-            <button key={k} onClick={() => setKind(k)} className={cn("flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium", kind === k ? "border-ink bg-highlight text-ink" : "bg-card hover:border-ink/40")}>
+            <button key={k} onClick={() => setKind(k)} className={cn("flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium", kind === k ? "border-primary bg-primary text-primary-foreground" : "bg-card")}>
               <I className="size-3.5" />{l} <span className="opacity-70">{k === "all" ? items.length : items.filter((i) => i.kind === k).length}</span>
             </button>
           ))}
