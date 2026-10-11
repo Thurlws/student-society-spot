@@ -282,8 +282,8 @@ export function NewRequestDialog({
                     className={cn(
                       "rounded-full border px-3 py-1 text-sm font-medium transition-colors",
                       f.priority === p
-                        ? "border-ink bg-highlight text-ink"
-                        : "bg-card hover:border-ink/40",
+                        ? "border-primary bg-primary-soft text-primary"
+                        : "bg-card hover:border-primary/40",
                     )}
                     aria-pressed={f.priority === p}
                   >
@@ -346,12 +346,12 @@ export function CommitteeRequestsSummary({ societyId }: { societyId: string }) {
             key={r.id}
             to="/requests/$requestId"
             params={{ requestId: r.id }}
-            className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:border-ink/40"
+            className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:border-primary/30"
           >
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold">{r.title}</span>
               <span className="text-xs text-muted-foreground">
-                {r.submitterName} · {timeAgo(r.createdAt)}
+                {r.submitterName}, {timeAgo(r.createdAt)}
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
