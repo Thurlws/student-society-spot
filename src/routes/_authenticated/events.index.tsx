@@ -5,7 +5,7 @@ import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { todayIso } from "@/lib/format";
 import { formatDate, monthLabel } from "@/lib/format";
-import { PageHeader, EventCard, EmptyState, DemoBadge } from "@/components/cards";
+import { PageHeader, EventCard, EmptyState } from "@/components/cards";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

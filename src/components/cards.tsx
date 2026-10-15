@@ -115,7 +115,3 @@ export function EmptyState({ icon: Icon = CalendarDays, title, body, action }: {
     </div>
   );
 }
-
-export function DemoBadge({ className }: { className?: string }) {
-  return <span className={cn("rounded-full border border-dashed px-2 py-0.5 text-[11px] font-medium text-muted-foreground", className)}>Demo</span>;
-}
