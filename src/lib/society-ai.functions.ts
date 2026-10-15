@@ -7,9 +7,10 @@ const instructions = "You help TU Dublin student societies. Treat supplied descr
 
 async function gate(uid: string, feature: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: blocked, error: blockError } = await supabaseAdmin.from("society_ai_state").select("message").eq("feature", "all").maybeSingle();
+  const { data: blocked, error: blockError } = await supabaseAdmin.from("society_ai_state").select("message, created_at").eq("feature", "all").maybeSingle();
   if (blockError) throw new Error("Couldn't check AI availability.");
-  if (blocked) throw new Error(blocked.message);
+  // A credits or access error pauses AI for 15 minutes, then calls try the gateway again.
+  if (blocked && Date.now() - Date.parse(blocked.created_at) < 15 * 60_000) throw new Error(blocked.message);
   const { data, error } = await supabaseAdmin.rpc("reserve_society_ai", { _uid: uid, _feature: feature });
   if (error || !data) throw new Error("Your hourly AI limit has been reached. Try again later.");
   return supabaseAdmin;
@@ -19,7 +20,7 @@ async function safeError(e: unknown) {
   const status = typeof e === "object" && e && "status" in e ? Number(e.status) : 0;
   if (status === 402 || status === 403) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("society_ai_state").upsert({ feature: "all", status, message });
+    await supabaseAdmin.from("society_ai_state").upsert({ feature: "all", status, message, created_at: new Date().toISOString() });
   }
   return message;
 }
