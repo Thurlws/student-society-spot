@@ -1,12 +1,28 @@
 # Returning users don't get the sign-in email
 
-**Status (2026-10-15):** open. App code and migrations ruled out locally. In production a returning user saw "Check your inbox", and nothing arrived in the inbox, Junk or spam. Waiting on someone with Lovable Cloud access to fill in the checklist below.
+**Status (2026-10-15):** cause found. Microsoft 365 quarantines the sign-in emails as spam. Fix is roadmap task T1.1.
 
 ## Symptom
 
-A user who already has an account enters their email on `/welcome` and never receives the sign-in **link**. New users do receive theirs. It keeps happening, always to existing accounts.
+A user who already has an account enters their email on `/welcome`, sees "Check your inbox", and never receives the sign-in **link**, not even in Junk. It keeps happening to existing accounts.
 
 The app sends a link, not a code. The first audit report said "code"; that was a wording mistake in the bug report.
+
+## Cause (confirmed 2026-10-15)
+
+The emails are sent, and TU Dublin's Microsoft 365 puts them in **quarantine**, which is separate from Junk. A student's quarantine page (https://security.microsoft.com/quarantine) showed three of them that day:
+
+| Field | Value |
+|---|---|
+| Subject | Sign in to your account |
+| Sender | `no-reply@auth.lovable.cloud` (Lovable Cloud's shared default sender) |
+| Quarantine reason | Spam |
+| Policy | Anti-spam policy |
+| Release status | Needs review (expires after 30 days) |
+
+Likely reasons: a shared sending domain used by every Lovable app, and a "Sign in to your account" subject with a login link, which matches common phishing patterns.
+
+Still unknown: whether new users' "Confirm signup" emails are quarantined too. Test with a fresh `@mytudublin.ie` address that has never signed up. The fix is the same either way.
 
 ## How sign-in works
 
@@ -17,7 +33,7 @@ The app sends a link, not a code. The first audit report said "code"; that was a
    - both: 60 s per-user cooldown (hosted default) and a project-wide hourly email cap.
 3. On success the card shows "Check your inbox. We sent a sign-in link…". Errors are shown via `friendly()` (`welcome.tsx:69-71`), which rewrites anything containing "database error" or "tu dublin" into "Please use your TU Dublin email".
 
-## Ruled out locally
+## Ruled out along the way
 
 `npm run db:start` then `npm run db:check-sign-in` (script: `dev/check-sign-in-email.mjs`). Local stack = same 7 migrations, Supabase default templates, confirmations on, 60 s cooldown. Results on 2026-10-15:
 
@@ -30,39 +46,29 @@ The app sends a link, not a code. The first audit report said "code"; that was a
 | Never-confirmed account, again after 62 s | 200, confirmation email re-sent |
 | Non-university address | 500 "Please use your TU Dublin email (@mytudublin.ie)" from the trigger |
 
-So with default settings our code sends the returning-user email. The difference in production must be in Lovable Cloud's email setup or in delivery.
+So our code and migrations send the email. In production the card showed "Check your inbox", which rules out the cooldown and hourly cap (both show an error).
 
-## Remaining suspects
+## Fix
 
-1. **Magic link template** in Lovable Cloud is broken, empty, or missing `{{ .ConfirmationURL }}`. Only returning users get this template, which matches the symptom best.
-2. **Lovable's email sending.** If Lovable sends auth emails through its own service (managed email or a send hook), Supabase can report success while the real send fails later. Lovable Cloud's email or auth logs would show it. Nothing in this repo configures a hook.
-3. **Microsoft 365 quarantine** (`mytudublin.ie`). Mail Microsoft treats as phishing goes to quarantine, not Junk, so an empty Junk folder doesn't rule it out. Check https://security.microsoft.com/quarantine, or ask TU Dublin IT for a message trace.
-4. ~~Hourly cap or cooldown.~~ Ruled out 2026-10-15: both return an error, and the card showed "Check your inbox".
+**Real fix (roadmap T1.1):**
 
-**Next test (no Lovable access needed):** someone who has never signed up tries a fresh `@mytudublin.ie` address. If their "Confirm signup" email arrives, the fault is specific to returning users (suspect 1 or 2). If it doesn't arrive either, Microsoft 365 is blocking these emails for everyone (suspect 3).
+1. Set up a custom sending domain in Lovable Cloud (Cloud → Emails: managed email or a verified custom domain) on a domain we own, with SPF, DKIM and DMARC records. This also lifts the hourly email cap.
+2. Ask TU Dublin IT to allow that domain in their anti-spam policy for the pilot. Don't ask them to allow `auth.lovable.cloud`: every Lovable app can send from it.
+3. Make the template clearly ours: a subject like "Your SocConnect sign-in link" and a body that names SocConnect and TU Dublin.
+4. Code changes: replace `friendly()` with messages keyed on `error.code`; add "Resend" with a 60 s countdown; on the "Check your inbox" screen, tell students to check Junk and quarantine if nothing arrives in two minutes. 6-digit codes (`verifyOtp({ email, token, type: "email" })`) are optional; they survive Microsoft Defender opening links before the student does.
 
-Related but different: Microsoft Defender Safe Links can open single-use links before the student does, which gives "link expired" instead of "no email".
+**Until then (demos):** the student can release the message from the quarantine page. Adding `no-reply@auth.lovable.cloud` to Outlook's Safe senders may let later emails through, because Microsoft honours safe senders for ordinary spam verdicts. That's untested here, and it also lets other Lovable apps' mail through for that student.
 
-## Checklist for Lovable Cloud (roadmap task T0.2)
+**Regression check:** `npm run db:check-sign-in` for our code; one real `@mytudublin.ie` mailbox (new and returning account) before every demo, since quarantine can't be simulated locally.
 
-Needs someone signed in to the Lovable project. Fill in the answers here. Don't paste secrets or full tokens.
+## Lovable Cloud settings (optional now)
+
+No longer needed to find the cause. Rows 1-3 matter for the fix.
 
 | # | Where | Record | Answer |
 |---|---|---|---|
-| 1 | Cloud → Emails → Confirm signup | Subject, and does the body contain `{{ .ConfirmationURL }}`? | |
-| 2 | Cloud → Emails → Magic link | Subject, and does the body contain `{{ .ConfirmationURL }}`? Any template errors in preview? | |
-| 3 | Cloud → Emails | Managed email or custom domain set up? Sender address | |
+| 1 | Cloud → Emails → Confirm signup | Subject and body | |
+| 2 | Cloud → Emails → Magic link | Subject and body | Subject seen in quarantine: "Sign in to your account" |
+| 3 | Cloud → Emails | Managed email or custom domain set up? Sender address | Sender seen: `no-reply@auth.lovable.cloud` (default, no custom domain) |
 | 4 | Auth settings → Advanced | Rate limit for sending emails (per hour) | |
-| 5 | Auth settings | Email confirmations on or off (auto-confirm) | |
-| 6 | Auth settings | Email OTP expiration | |
-| 7 | Auth settings | Site URL and redirect URLs; is the published domain listed? | |
-| 8 | Auth logs | Reproduce once with a returning account: status of `POST /otp`, and any mail-send log line or error | |
-| 9 | Student's Outlook | Junk folder and quarantine notices for that sender | 2026-10-15: not in inbox, Junk or spam. Quarantine not checked yet |
-| 10 | The sign-in card | Exact text shown after pressing the button | 2026-10-15: "Check your inbox. We sent a sign-in link to … Open it on this device to continue." |
-
-## Fix plan once confirmed
-
-- Template: restore `{{ .ConfirmationURL }}` in the Magic link template and preview both templates.
-- Delivery: set up a custom sending domain (SPF, DKIM, DMARC) in Lovable Cloud. That also lifts the hourly cap.
-- Either way (roadmap T1.1): replace `friendly()` with messages keyed on `error.code`, add "Resend" with a 60 s countdown, and consider 6-digit codes (`verifyOtp({ email, token, type: "email" })`), which survive link scanners.
-- Regression check: `npm run db:check-sign-in`. Extend it when the flow or templates change.
+| 5 | Auth settings | Site URL and redirect URLs; is the published domain listed? | |
