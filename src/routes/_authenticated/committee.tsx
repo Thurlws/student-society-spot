@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarPlus, Check, Megaphone, PencilLine, ShieldCheck, UserPlus, Users, X, CalendarDays, BookmarkCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { formatDate, timeAgo } from "@/lib/format";
 import { PageHeader, EmptyState } from "@/components/cards";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { CommitteeRequestsSummary } from "@/components/support-requests";
+import { EventDialog } from "@/components/event-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { eventCategories, type EventInput } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/committee")({
   head: () => pageHead("Committee Dashboard", "Manage your society: announcements, events, members and profile."),
@@ -47,6 +47,7 @@ function Committee() {
   const reqs = d.requests.filter((r) => r.societyId === s.id);
   const resolved = d.resolvedRequests.filter((r) => r.societyId === s.id);
   const upcoming = d.events.filter((e) => e.societyId === s.id && e.date >= todayIso());
+  const live = upcoming.filter((e) => !e.cancelled);
   const anns = d.announcements.filter((a) => a.societyId === s.id);
   const saved = d.proposals.filter((p) => d.savedProposals.includes(p.id));
 
@@ -59,7 +60,7 @@ function Committee() {
         {[
           { l: "Members", v: s.memberCount, icon: Users },
           { l: "Pending requests", v: reqs.length, icon: UserPlus },
-          { l: "Upcoming events", v: upcoming.length, icon: CalendarDays },
+          { l: "Upcoming events", v: live.length, icon: CalendarDays },
           { l: "Announcements", v: anns.length, icon: Megaphone },
         ].map((x) => (
           <div key={x.l} className="rounded-xl border bg-card p-5 shadow-soft">
@@ -127,7 +128,7 @@ function Committee() {
             {upcoming.map((e) => (
               <Link key={e.id} to="/events/$eventId" params={{ eventId: e.id }} className="flex items-center justify-between rounded-lg border p-3 hover:border-primary/30">
                 <span><span className="block text-sm font-semibold">{e.title}</span><span className="text-xs text-muted-foreground">{formatDate(e.date)}, {e.start}, {e.venue}</span></span>
-                <span className="text-xs text-muted-foreground">{d.attendeeCount(e)}{e.capacity ? `/${e.capacity}` : ""}</span>
+                <span className="text-xs text-muted-foreground">{e.cancelled ? "Cancelled" : `${d.attendeeCount(e)}${e.capacity ? `/${e.capacity}` : ""}`}</span>
               </Link>
             ))}
           </div>
@@ -169,54 +170,6 @@ function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClo
           <div className="flex items-center gap-2"><Switch id="ap" checked={pinned} onCheckedChange={setPinned} /><Label htmlFor="ap">Pin to top</Label></div>
           {err && <p className="text-sm text-destructive">{err}</p>}
           <DialogFooter><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit">Publish</Button></DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EventDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { createEvent } = useData();
-  const navigate = useNavigate();
-  const [f, setF] = useState({ title: "", description: "", date: todayIso(), start: "18:00", end: "20:00", venue: "", category: "Workshop", capacity: "40" });
-  const [err, setErr] = useState("");
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Create event</DialogTitle><DialogDescription>Published immediately to the events page.</DialogDescription></DialogHeader>
-        <form className="space-y-3" onSubmit={async (e) => {
-          e.preventDefault();
-          const o = await createEvent(societyId, {
-            title: f.title, description: f.description, date: f.date, start: f.start, end: f.end || undefined, venue: f.venue,
-            category: f.category as EventInput["category"],
-            capacity: f.capacity.trim() === "" ? undefined : Number(f.capacity),
-          });
-          if (!o.ok) { setErr(o.error); return; }
-          toast.success("Event published");
-          setErr(""); onClose();
-          if (o.id) navigate({ to: "/events/$eventId", params: { eventId: o.id } });
-        }}>
-          <div className="space-y-1.5"><Label>Title</Label><Input value={f.title} onChange={set("title")} maxLength={100} /></div>
-          <div className="space-y-1.5"><Label>Description</Label><Textarea rows={3} value={f.description} onChange={set("description")} maxLength={1000} /></div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={f.date} onChange={set("date")} /></div>
-            <div className="space-y-1.5"><Label>Start</Label><Input type="time" value={f.start} onChange={set("start")} /></div>
-            <div className="space-y-1.5"><Label>End</Label><Input type="time" value={f.end} onChange={set("end")} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-2 space-y-1.5"><Label>Venue</Label><Input value={f.venue} onChange={set("venue")} /></div>
-            <div className="space-y-1.5"><Label>Capacity</Label><Input type="number" min={1} step={1} value={f.capacity} onChange={set("capacity")} placeholder="No limit" /></div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Category</Label>
-            <Select value={f.category} onValueChange={(v) => setF({ ...f, category: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{eventCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {err && <p className="text-sm text-destructive">{err}</p>}
-          <DialogFooter><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit">Publish event</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -102,6 +102,7 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
       id: e.id, title: e.title, description: e.description, societyId: slugOf[e.society_id]!, date: start.date, start: start.time,
       end: e.ends_at ? toDublin(e.ends_at).time : undefined, venue: e.venue, category: e.category, capacity: e.capacity ?? undefined,
       attendees: attendees.get(e.id) ?? 0, tags: e.tags, featured: e.featured,
+      cancelled: !!e.cancelled_at, cancelReason: e.cancel_reason || undefined,
     };
   });
 
