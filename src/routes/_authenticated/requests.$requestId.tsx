@@ -57,7 +57,7 @@ function RequestPage() {
   const r = getSupportRequest(requestId);
 
   if (!r || !canViewRequest(r)) {
-    // Wait for saved demo state before deciding a newly created request doesn't exist.
+    // Wait for the first load before deciding a newly created request doesn't exist.
     if (!loaded) return null;
     return (
       <EmptyState

@@ -225,7 +225,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
 
         <TabsContent value="members" className="mt-6">
           <div className="rounded-xl border bg-card p-6 shadow-soft">
-            <div className="flex items-center gap-3"><Users className="size-5 text-primary" /><p className="font-semibold">{s.memberCount} members <span className="text-xs font-normal text-muted-foreground">(demo figure)</span></p></div>
+            <div className="flex items-center gap-3"><Users className="size-5 text-primary" /><p className="font-semibold">{s.memberCount} members</p></div>
             <div className="mt-4 flex flex-wrap gap-2">
               {shownMembers.map((n) => (
                 <span key={n} className="rounded-full border bg-surface px-3 py-1 text-xs">{n}</span>

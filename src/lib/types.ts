@@ -139,7 +139,7 @@ export interface CollaborationProposal {
 export interface MembershipRequest {
   id: string;
   societyId: string;
-  /** Set when the requester is a demo account, so approval can update their membership. */
+  /** The requester's account. */
   userId?: string | undefined;
   name: string;
   course: string;
