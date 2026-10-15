@@ -78,6 +78,13 @@
       "when": 1792105584160,
       "tag": "0010_per_user_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792105644065,
+      "tag": "0011_domain_check_on_email_change",
+      "breakpoints": true
     }
   ]
 }
