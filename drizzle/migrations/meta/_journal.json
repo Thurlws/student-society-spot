@@ -64,6 +64,13 @@
       "when": 1792105334563,
       "tag": "0008_private_permission_helpers",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792105528976,
+      "tag": "0009_one_ai_quota_function",
+      "breakpoints": true
     }
   ]
 }

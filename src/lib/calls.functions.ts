@@ -15,16 +15,11 @@ const summarySchema = z.object({
   actionItems: z.array(z.object({ owner: z.string(), task: z.string() })),
 });
 
-const LIMITS = { summary: 10, question: 60 } as const;
-
-/** Rate limit per user per hour, recorded in ai_usage. */
-async function useQuota(userId: string, feature: keyof typeof LIMITS) {
+/** Hourly AI quota per user. The limits and the lock live in reserve_society_ai (migration 0009). */
+async function reserveQuota(userId: string, feature: "summary" | "question" | "transcribe") {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const since = new Date(Date.now() - 3600_000).toISOString();
-  const { count } = await supabaseAdmin.from("ai_usage").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("feature", feature).gte("created_at", since);
-  if ((count ?? 0) >= LIMITS[feature]) return false;
-  await supabaseAdmin.from("ai_usage").insert({ user_id: userId, feature });
-  return true;
+  const { data, error } = await supabaseAdmin.rpc("reserve_society_ai", { _uid: userId, _feature: feature });
+  return !error && data === true;
 }
 
 /**
@@ -47,7 +42,7 @@ export const summarizeCall = createServerFn({ method: "POST" })
 
     const soc = room.societies as unknown as { name: string; short_name: string };
     let summary: CallSummary;
-    if (!(await useQuota(userId, "summary"))) {
+    if (!(await reserveQuota(userId, "summary"))) {
       summary = { ...fallbackSummary(data.transcript, data.durationSec), source: "fallback" };
     } else {
       try {
@@ -96,7 +91,7 @@ export const askAboutCall = createServerFn({ method: "POST" })
     const history = ((recap.qa ?? []) as unknown as { role: "user" | "assistant"; content: string }[]).slice(-40);
     let answer: string;
     if (!transcript.length) answer = "The transcript for this call has been deleted (transcripts are kept for 7 days), so I can only go by the summary above.";
-    else if (!(await useQuota(context.userId, "question"))) answer = "You've asked a lot of questions in the last hour — try again a bit later.";
+    else if (!(await reserveQuota(context.userId, "question"))) answer = "You've asked a lot of questions in the last hour — try again a bit later.";
     else {
       try {
         const { aiText } = await import("./ai.server");
@@ -130,13 +125,20 @@ const clip = z.object({ audio: z.string().min(10).max(4_000_000), mime: z.string
 export const transcribeClip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(clip)
-  .handler(async ({ data }) => transcribe(data.audio, data.mime));
+  .handler(async ({ data, context }) => {
+    if (!(await reserveQuota(context.userId, "transcribe"))) return { text: "", error: CAPTION_LIMIT };
+    return transcribe(data.audio, data.mime);
+  });
 
-/** Captions for guests: only while their invite code is still valid. */
+/** Captions for guests: only while their invite code is still valid, on its creator's quota. */
 export const transcribeGuestClip = createServerFn({ method: "POST" })
   .inputValidator(clip.extend({ code: z.string().regex(/^[a-z0-9]{8,32}$/) }))
   .handler(async ({ data }) => {
-    const { inviteIsValid } = await import("./livekit.functions");
-    if (!(await inviteIsValid(data.code))) return { text: "", error: "This call link has expired." };
+    const { inviteCreator } = await import("./livekit.functions");
+    const creator = await inviteCreator(data.code);
+    if (!creator) return { text: "", error: "This call link has expired." };
+    if (!(await reserveQuota(creator, "transcribe"))) return { text: "", error: CAPTION_LIMIT };
     return transcribe(data.audio, data.mime);
   });
+
+const CAPTION_LIMIT = "Captions have reached their hourly limit. Type into the transcript instead.";
