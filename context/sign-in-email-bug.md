@@ -1,6 +1,6 @@
 # Returning users don't get the sign-in email
 
-**Status (2026-10-15):** cause found. Microsoft 365 quarantines the sign-in emails as spam. Fix is roadmap task T1.1.
+**Status (2026-10-16):** cause found (Microsoft 365 quarantines the emails as spam). App side fixed on branch `phase-1`; the rest needs the custom sending domain and settings in Lovable Cloud (checklist below).
 
 ## Symptom
 
@@ -50,25 +50,24 @@ So our code and migrations send the email. In production the card showed "Check 
 
 ## Fix
 
-**Real fix (roadmap T1.1):**
+**Done in code (branch `phase-1`, 2026-10-16):**
 
-1. Set up a custom sending domain in Lovable Cloud (Cloud → Emails: managed email or a verified custom domain) on a domain we own, with SPF, DKIM and DMARC records. This also lifts the hourly email cap.
-2. Ask TU Dublin IT to allow that domain in their anti-spam policy for the pilot. Don't ask them to allow `auth.lovable.cloud`: every Lovable app can send from it.
-3. Make the template clearly ours: a subject like "Your SocConnect sign-in link" and a body that names SocConnect and TU Dublin.
-4. Code changes: replace `friendly()` with messages keyed on `error.code`; add "Resend" with a 60 s countdown; on the "Check your inbox" screen, tell students to check Junk and quarantine if nothing arrives in two minutes. 6-digit codes (`verifyOtp({ email, token, type: "email" })`) are optional; they survive Microsoft Defender opening links before the student does.
+- `signInError` in `src/lib/auth.tsx` replaces `friendly()`, so errors come from Supabase's error codes (unit-tested in `src/test/sign-in-errors.test.ts`).
+- The "Check your inbox" screen says the link lasts 10 minutes, points to Junk and to Microsoft quarantine, and has "Resend link" with a 60 s countdown.
+- New page `/auth/confirm` (`src/routes/auth.confirm.tsx`). Links can now point at our own site, which Lovable lists as a deliverability factor. The token is used only when the person presses Continue, so mail scanners that open links can't use it up. Used or expired links get a clear message and a "Get a new link" button.
+- The wording we want is in `dev/supabase/templates/` (`magic-link.html`, `confirm-signup.html`) with the subjects "Your SocConnect sign-in link" and "Confirm your SocConnect account". It names SocConnect and TU Dublin, says why the email arrived and how long the link lasts, and avoids "Sign in to your account". The local stack sends these, and `bun run db:check-sign-in` follows their links.
+- 10-minute links in the local stack (`otp_expiry = 600`). Checked locally: a 9-minute-old link signs in, an 11-minute-old one is refused as expired.
+
+**To do in Lovable Cloud:**
+
+1. **Now, no domain needed:** Auth settings → Email OTP expiration = **600** seconds. Until this is set, production links last Supabase's default of 1 hour, while the app already says 10 minutes.
+2. **Custom domain** (Cloud → Emails): enter the domain. Lovable creates a sender subdomain (default `notify`, so for example `noreply@notify.<domain>`) and shows the DNS records to add: a TXT record for verification and NS records that delegate the subdomain to Lovable (add them inside the domain's DNS zone; don't change the domain's nameservers at the registrar), plus `_dmarc` if you turn on "Show as sent from @<domain>". Lovable handles SPF and DKIM. Verification takes a few hours, up to 72.
+3. **Templates** (Cloud → Emails → Auth emails → Customize auth emails): this generates the six templates as React Email files in the repo; ask Lovable "Show me my email template files" for the path. Change Magic link and Confirm signup to the wording and subjects in `dev/supabase/templates/`. If the template data includes the token hash, point the button at `<site URL>/auth/confirm?token_hash=<hash>&type=email`; otherwise keep Lovable's link (the page is ready either way). Publish the app so the templates go live.
+4. **Auth settings → Site URL and Redirect URLs:** the Site URL must be the published app address, because `/auth/confirm` links are built from it. List the published domain in Redirect URLs.
+5. **Test** with real `@mytudublin.ie` mailboxes, one new and one returning account. Check the inbox, then quarantine.
+6. **Ask TU Dublin IT** to allow the new sender domain in their anti-spam policy. Don't ask them to allow `auth.lovable.cloud`: every Lovable app can send from it.
+7. New sending domains warm up over weeks. Keep these emails transactional and the sender address the same.
 
 **Until then (demos):** the student can release the message from the quarantine page. Adding `no-reply@auth.lovable.cloud` to Outlook's Safe senders may let later emails through, because Microsoft honours safe senders for ordinary spam verdicts. That's untested here, and it also lets other Lovable apps' mail through for that student.
 
-**Regression check:** `npm run db:check-sign-in` for our code; one real `@mytudublin.ie` mailbox (new and returning account) before every demo, since quarantine can't be simulated locally.
-
-## Lovable Cloud settings (optional now)
-
-No longer needed to find the cause. Rows 1-3 matter for the fix.
-
-| # | Where | Record | Answer |
-|---|---|---|---|
-| 1 | Cloud → Emails → Confirm signup | Subject and body | |
-| 2 | Cloud → Emails → Magic link | Subject and body | Subject seen in quarantine: "Sign in to your account" |
-| 3 | Cloud → Emails | Managed email or custom domain set up? Sender address | Sender seen: `no-reply@auth.lovable.cloud` (default, no custom domain) |
-| 4 | Auth settings → Advanced | Rate limit for sending emails (per hour) | |
-| 5 | Auth settings | Site URL and redirect URLs; is the published domain listed? | |
+**Regression check:** `bun run db:check-sign-in` for our code; one real `@mytudublin.ie` mailbox (new and returning account) before every demo, since quarantine can't be simulated locally.
