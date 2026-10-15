@@ -39,7 +39,8 @@ The Supabase CLI runs through `npx`, pinned to one version, so there's nothing t
 ```bash
 bun run db:start          # first run pulls the Docker images, takes a few minutes
 bun run db:reset          # rebuild the database from drizzle/migrations
-bun run db:check-sign-in  # check that new and returning users get a sign-in email
+bun run db:test           # pgTAP tests in dev/supabase/tests
+bun run db:check-sign-in  # check that new and returning users get a working sign-in email
 bun run db:stop
 ```
 
@@ -66,7 +67,7 @@ bun run build
 bun run lint     # currently fails on about 2,500 Prettier formatting errors; `bun run format` fixes them
 ```
 
-CI runs typecheck, tests and build on every pull request and every push to `main` (`.github/workflows/ci.yml`). The unit tests cover helpers and rendering only. Nothing tests the database rules yet.
+CI runs typecheck, tests and build on every pull request and every push to `main` (`.github/workflows/ci.yml`). Database tests (`bun run db:test`) need Docker, so they run locally, not in CI yet.
 
 ## Environment variables
 
@@ -112,7 +113,7 @@ Society calls are real multi-person calls when the LiveKit variables are set. Cr
 
 ## Known issues
 
-- Returning users sometimes don't receive the sign-in email. See [`context/sign-in-email-bug.md`](context/sign-in-email-bug.md).
+- Sign-in emails from Lovable's default sender land in Microsoft 365 quarantine at TU Dublin. The fix needs a custom sending domain; see [`context/sign-in-email-bug.md`](context/sign-in-email-bug.md).
 - Single university only. TU Dublin is hard-coded in the sign-up trigger and in about a dozen source files.
 - The October 2026 audit found several access-control and privacy problems that need fixing before a pilot. See [`context/roadmap.md`](context/roadmap.md).
 
