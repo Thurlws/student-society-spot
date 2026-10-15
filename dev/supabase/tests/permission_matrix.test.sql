@@ -179,7 +179,7 @@ insert into matrix (label, kind, sql, expected) values
 ('role_invites: invite an admin', 'rows', $$insert into public.role_invites (email, role) values ('new.admin@mytudublin.ie', 'platform_admin')$$, '{denied,denied,denied,denied,denied,denied,1}'),
 ('role_invites: delete', 'rows', $$delete from public.role_invites where id = md5('invite')::uuid$$, '{0,0,0,0,0,0,1}'),
 ('events: insert directly', 'rows', $$insert into public.events (society_id, title, starts_at, venue, category) values (md5('A')::uuid, 'Direct', now() + interval '1 day', 'Room', 'Social')$$, '{denied,denied,denied,denied,denied,denied,denied}'),
-('events: edit A''s directly', 'rows', $$update public.events set title = 'Renamed' where id = md5('event A')::uuid$$, '{0,0,0,0,1,0,0}'),
+('events: edit A''s directly', 'rows', $$update public.events set title = 'Renamed' where id = md5('event A')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('events: delete A''s', 'rows', $$delete from public.events where id = md5('event A')::uuid$$, '{0,0,0,0,1,0,0}'),
 ('event_registrations: insert directly', 'rows', $$insert into public.event_registrations values (md5('event B')::uuid, auth.uid())$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('event_registrations: delete directly', 'rows', $$delete from public.event_registrations where event_id in @events$$, '{0,0,0,0,0,0,0}'),
@@ -225,7 +225,9 @@ insert into matrix (label, kind, sql, expected) values
 ('decide_membership(applicant at B)', 'call', $$select public.decide_membership(md5('applicant at B')::uuid, 'approve')$$, '{denied,refused,refused,refused,refused,ok,refused}'),
 ('society_members(B)', 'count', $$select * from public.society_members(md5('B')::uuid)$$, '{denied,0,0,0,0,2,0}'),
 ('register_for_event(A''s event)', 'call', $$select public.register_for_event(md5('event A')::uuid)$$, '{denied,ok,ok,refused,ok,ok,ok}'),
-('register_for_event(Z''s event)', 'call', $$select public.register_for_event(md5('event Z')::uuid)$$, '{denied,ok,ok,ok,ok,ok,ok}'),
+('register_for_event(Z''s event)', 'call', $$select public.register_for_event(md5('event Z')::uuid)$$, '{denied,refused,refused,refused,refused,refused,ok}'),
+('update_event(A''s event)', 'call', $$select public.update_event(md5('event A')::uuid, 'Quiz night', '', current_date + 8, '19:00', null, 'Room 4', 'Social', 50)$$, '{denied,refused,refused,refused,ok,refused,refused}'),
+('cancel_event(A''s event)', 'call', $$select public.cancel_event(md5('event A')::uuid, 'Room flooded')$$, '{denied,refused,refused,refused,ok,refused,refused}'),
 ('cancel_registration(A''s event)', 'call', $$select public.cancel_registration(md5('event A')::uuid)$$, '{denied,refused,refused,ok,refused,refused,refused}'),
 ('create_event(A)', 'call', $$select public.create_event(md5('A')::uuid, 'Board games', '', current_date + 7, '18:00', '20:00', 'Room 1', 'Social', 20)$$, '{denied,refused,refused,refused,ok,refused,refused}'),
 ('schedule_meeting(A)', 'call', $$select public.schedule_meeting(md5('A')::uuid, 'Planning call', '', current_date + 7, '18:00')$$, '{denied,refused,refused,refused,ok,refused,refused}'),
@@ -260,10 +262,10 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
   array['email_domain_allowed'], 'signed-out visitors can call no database function except the domain check');
 select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
-  array['assign_support_request', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
+  array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
         'create_event', 'decide_membership', 'event_attendee_counts', 'join_society', 'leave_society', 'my_access',
         'recommend_societies', 'register_for_event', 'schedule_meeting', 'set_support_request_status', 'share_recap',
-        'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request'],
+        'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
 select is_empty($$select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and not (p.proconfig @> array['search_path=public'] or p.proconfig @> array['search_path="public"'])$$,

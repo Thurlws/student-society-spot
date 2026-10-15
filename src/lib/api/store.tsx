@@ -5,7 +5,7 @@ import { initialsOf, useAuth } from "@/lib/auth";
 import { loadAppData, type AppData } from "@/lib/api/fetch";
 import { todayIso } from "@/lib/format";
 import {
-  announcementInput, eventInput, firstIssue, messageInput, societyEditInput, supportRequestInput,
+  announcementInput, cancelReasonInput, eventInput, firstIssue, messageInput, societyEditInput, supportRequestInput,
   type AnnouncementInput, type EventAvailability, type EventInput, type NotificationPrefs, type Outcome, type SupportRequestInput,
 } from "@/lib/validation";
 import type { CallRecap, Event, MembershipStatus, SupportRequest, SupportRequestStatus, User } from "@/lib/types";
@@ -72,6 +72,7 @@ function useDataValue() {
   const membership = (slug: string): MembershipStatus => (canManage(slug) ? "member" : data.memberships[slug] ?? "none");
   const isRegistered = (id: string) => data.registrations.includes(id);
   const eventAvailability = (e: Event): EventAvailability => {
+    if (e.cancelled) return "cancelled";
     if (e.date < todayIso()) return "past";
     if (isRegistered(e.id)) return "registered";
     if (e.capacity !== undefined && e.attendees >= e.capacity) return "full";
@@ -139,6 +140,21 @@ function useDataValue() {
         _society_id: sid(slug)!, _title: e.title, _description: e.description, _date: e.date, _start: e.start,
         _end: e.end ?? (null as unknown as string), _venue: e.venue, _category: e.category, _capacity: e.capacity ?? (null as unknown as number),
       }));
+    },
+    /** Registered people are notified by the database when the time or place changes. */
+    updateEvent: async (id: string, input: EventInput) => {
+      const p = eventInput(todayIso()).safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      const e = p.data;
+      return act(() => supabase.rpc("update_event", {
+        _event_id: id, _title: e.title, _description: e.description, _date: e.date, _start: e.start,
+        _end: e.end ?? (null as unknown as string), _venue: e.venue, _category: e.category, _capacity: e.capacity ?? (null as unknown as number),
+      }));
+    },
+    cancelEvent: async (id: string, reason: string) => {
+      const p = cancelReasonInput.safeParse(reason);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() => supabase.rpc("cancel_event", { _event_id: id, _reason: p.data }));
     },
     editSociety: async (slug: string, patch: { tagline: string; description: string; meets: string }) => {
       const p = societyEditInput.safeParse(patch);

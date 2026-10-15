@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, CalendarPlus, Check, Clock, MapPin, Tag, Users } from "lucide-react";
+import { ArrowLeft, Ban, CalendarPlus, Check, Clock, MapPin, PencilLine, Tag, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
 import { useState } from "react";
@@ -8,8 +8,14 @@ import { downloadIcs } from "@/lib/ics";
 import { pageHead } from "@/lib/seo";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { EventCard } from "@/components/cards";
-import { Button } from "@/components/ui/button";
+import { EventDialog } from "@/components/event-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/events/$eventId")({
@@ -19,8 +25,9 @@ export const Route = createFileRoute("/_authenticated/events/$eventId")({
 
 function EventPage() {
   const { eventId } = Route.useParams();
-  const { getEvent, getSociety, isRegistered, registerForEvent, cancelRegistration, attendeeCount, eventAvailability, events, loaded } = useData();
+  const { getEvent, getSociety, isRegistered, registerForEvent, cancelRegistration, attendeeCount, eventAvailability, events, loaded, canManage } = useData();
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const e = getEvent(eventId);
   if (!e && !loaded) return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
   if (!e) {
@@ -36,7 +43,8 @@ function EventPage() {
   const count = attendeeCount(e);
   const availability = eventAvailability(e);
   const until = daysUntil(e.date);
-  const related = events.filter((x) => x.id !== e.id && (x.societyId === e.societyId || x.tags.some((t) => e.tags.includes(t)))).slice(0, 3);
+  const related = events.filter((x) => x.id !== e.id && !x.cancelled && (x.societyId === e.societyId || x.tags.some((t) => e.tags.includes(t)))).slice(0, 3);
+  const manage = canManage(e.societyId) && availability !== "past" && availability !== "cancelled";
 
   const toggle = async () => {
     if (busy) return;
@@ -60,6 +68,15 @@ function EventPage() {
             <h1 className="mt-5 text-3xl font-semibold sm:text-4xl">{e.title}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{e.category}, {until === 0 ? "today" : until > 0 ? `in ${until} day${until === 1 ? "" : "s"}` : "already happened"}</p>
           </div>
+          {e.cancelled && (
+            <div role="status" className="mt-6 flex gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-5">
+              <Ban className="size-5 shrink-0 text-destructive" />
+              <div>
+                <p className="font-semibold">{s.shortName} cancelled this event</p>
+                {e.cancelReason && <p className="mt-1 text-sm text-muted-foreground">{e.cancelReason}</p>}
+              </div>
+            </div>
+          )}
           <div className="mt-6 rounded-xl border bg-card p-6 shadow-soft">
             <h2 className="font-semibold">About this event</h2>
             <p className="mt-2 leading-relaxed text-muted-foreground">{e.description}</p>
@@ -74,16 +91,27 @@ function EventPage() {
               <li className="flex gap-3"><Users className="size-4 text-primary" /><span className="font-medium">{count} going{e.capacity ? `, ${Math.max(e.capacity - count, 0)} spots left` : ""}</span></li>
             </ul>
             {e.capacity && <Progress value={Math.min((count / e.capacity) * 100, 100)} className="mt-4 h-1.5" />}
-            <Button className="mt-5 w-full" size="lg" variant={reg ? "outline" : "default"} onClick={toggle} disabled={busy || availability === "past" || (!reg && availability === "full")}>
-              {availability === "past" ? (reg ? "Ended. You were registered" : "This event has ended")
+            <Button className="mt-5 w-full" size="lg" variant={reg ? "outline" : "default"} onClick={toggle} disabled={busy || availability === "past" || availability === "cancelled" || (!reg && availability === "full")}>
+              {availability === "cancelled" ? "Cancelled"
+                : availability === "past" ? (reg ? "Ended. You were registered" : "This event has ended")
                 : reg ? "Cancel registration" : availability === "full" ? "Event full" : "Register"}
             </Button>
-            {reg && availability !== "past" && <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-medium text-primary"><Check className="size-4" />You're registered</p>}
+            {availability === "registered" && <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-medium text-primary"><Check className="size-4" />You're registered</p>}
             {availability === "full" && !reg && <p className="mt-2 text-center text-xs text-muted-foreground">No spots left, and there's no waitlist.</p>}
-            {reg && availability !== "past" && (
+            {availability === "registered" && (
               <Button variant="ghost" className="mt-2 w-full" onClick={() => downloadIcs(e, s.name)}><CalendarPlus />Add to calendar (.ics)</Button>
             )}
           </div>
+          {manage && (
+            <div className="rounded-xl border bg-card p-5 shadow-soft">
+              <p className="text-sm font-semibold">Committee</p>
+              <div className="mt-3 flex flex-col gap-2">
+                <Button variant="outline" onClick={() => setEditing(true)}><PencilLine />Edit event</Button>
+                <CancelEventButton eventId={e.id} title={e.title} registered={count} />
+              </div>
+              <EventDialog open={editing} onClose={() => setEditing(false)} societyId={e.societyId} event={e} />
+            </div>
+          )}
         </aside>
       </div>
       {related.length > 0 && (
@@ -93,5 +121,34 @@ function EventPage() {
         </section>
       )}
     </div>
+  );
+}
+
+function CancelEventButton({ eventId, title, registered }: { eventId: string; title: string; registered: number }) {
+  const { cancelEvent } = useData();
+  const [reason, setReason] = useState("");
+  return (
+    <AlertDialog onOpenChange={(o) => o && setReason("")}>
+      <AlertDialogTrigger asChild><Button variant="outline" className="text-destructive hover:text-destructive"><Ban />Cancel event</Button></AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel {title}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {registered > 0 ? `The ${registered} ${registered === 1 ? "person" : "people"} registered and your members get a notification.` : "Your members get a notification."} The event stays listed as cancelled. This can't be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="cancel-reason">Reason (optional)</Label>
+          <Textarea id="cancel-reason" rows={3} maxLength={300} value={reason} onChange={(x) => setReason(x.target.value)} placeholder="For example: the room is no longer available." />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep event</AlertDialogCancel>
+          <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={async () => {
+            const o = await cancelEvent(eventId, reason);
+            if (o.ok) toast("Event cancelled"); else toast.error(o.error);
+          }}>Cancel event</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

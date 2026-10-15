@@ -50,6 +50,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
   const showTagline = !!s.tagline && !s.description.startsWith(s.tagline.replace(/[….\s]+$/, ""));
   const socAnn = announcements.filter((x) => x.societyId === s.id);
   const socEvents = events.filter((e) => e.societyId === s.id && e.date >= today);
+  const nextUp = socEvents.find((e) => !e.cancelled);
   const socChannels = channels.filter((c) => c.societyId === s.id);
   const [picked, setChannel] = useState<string | undefined>();
   const channel = picked ?? socChannels[0]?.id;
@@ -98,7 +99,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{x.body}</p>
               </div>
             ))}
-            {socEvents[0] && <div><p className="mb-3 text-sm font-semibold">Next up</p><div className="max-w-sm"><EventCard event={socEvents[0]} /></div></div>}
+            {nextUp && <div><p className="mb-3 text-sm font-semibold">Next up</p><div className="max-w-sm"><EventCard event={nextUp} /></div></div>}
           </div>
           <div className="space-y-4">
             <div className="rounded-xl border bg-card p-5 shadow-soft">

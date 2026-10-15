@@ -23,7 +23,8 @@ function EventsPage() {
   const [scope, setScope] = useState<"all" | "mine" | "registered">("all");
   const [view, setView] = useState<"grid" | "calendar">("grid");
   const upcoming = events.filter((e) => e.date >= todayIso());
-  const featured = upcoming.find((e) => e.featured) ?? upcoming[0];
+  const live = upcoming.filter((e) => !e.cancelled);
+  const featured = live.find((e) => e.featured) ?? live[0];
   const cats = ["All", ...Array.from(new Set(upcoming.map((e) => e.category)))];
   const joined = new Set(joinedSocieties.map((s) => s.id));
 

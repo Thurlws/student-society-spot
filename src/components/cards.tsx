@@ -37,7 +37,9 @@ export function EventCard({ event, compact = false }: { event: Event; compact?: 
         </div>
         <div className="flex items-center justify-between pt-2">
           <span className="flex items-center gap-1 text-xs text-muted-foreground"><Users className="size-3.5" />{event.capacity ? `${count} of ${event.capacity}` : `${count} going`}</span>
-          {availability === "registered" ? (
+          {availability === "cancelled" ? (
+            <Badge variant="outline" className="border-destructive/40 text-destructive">Cancelled</Badge>
+          ) : availability === "registered" ? (
             <Badge variant="soft"><Check className="size-3" />Registered</Badge>
           ) : availability === "full" ? (
             <Badge variant="outline">Full</Badge>

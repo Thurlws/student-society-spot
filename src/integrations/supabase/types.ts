@@ -501,6 +501,8 @@ export type Database = {
       }
       events: {
         Row: {
+          cancel_reason: string
+          cancelled_at: string | null
           capacity: number | null
           category: string
           created_at: string
@@ -516,6 +518,8 @@ export type Database = {
           venue: string
         }
         Insert: {
+          cancel_reason?: string
+          cancelled_at?: string | null
           capacity?: number | null
           category: string
           created_at?: string
@@ -531,6 +535,8 @@ export type Database = {
           venue: string
         }
         Update: {
+          cancel_reason?: string
+          cancelled_at?: string | null
           capacity?: number | null
           category?: string
           created_at?: string
@@ -1340,6 +1346,10 @@ export type Database = {
         Args: { _profile: string; _uid: string }
         Returns: boolean
       }
+      cancel_event: {
+        Args: { _event_id: string; _reason: string }
+        Returns: undefined
+      }
       cancel_membership_request: {
         Args: { _society_id: string }
         Returns: undefined
@@ -1484,6 +1494,20 @@ export type Database = {
           _title: string
         }
         Returns: string
+      }
+      update_event: {
+        Args: {
+          _capacity: number
+          _category: string
+          _date: string
+          _description: string
+          _end: string
+          _event_id: string
+          _start: string
+          _title: string
+          _venue: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

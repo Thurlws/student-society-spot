@@ -80,6 +80,9 @@ export interface Event {
   attendees: number;
   tags: string[];
   featured?: boolean;
+  /** Cancelled by the committee; kept so registered people can see why. */
+  cancelled?: boolean;
+  cancelReason?: string | undefined;
 }
 
 export interface Announcement {
