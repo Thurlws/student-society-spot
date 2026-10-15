@@ -32,7 +32,8 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
 
 - **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. There is no staging environment.
 - **Local:** `dev/supabase/config.toml`, run with `bun run db:start`. It replays all migrations in filename order, and Mailpit at http://127.0.0.1:54324 catches emails. `bun run db:check-sign-in` checks the sign-in email paths.
-- **CI:** `.github/workflows/ci.yml` runs typecheck, tests and build with Bun 1.4.2 and Node 24. Added in Phase 0; it hasn't run on GitHub yet.
+- **CI:** `.github/workflows/ci.yml` runs typecheck, tests and build with Bun 1.4.2 and Node 24 on pull requests and pushes to `main`.
+- **Other hosts:** not used yet. What changes when we leave Lovable is in [hosting.md](hosting.md).
 
 ## Gotchas
 

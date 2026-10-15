@@ -88,9 +88,9 @@ To add one by hand, create the next numbered file, add a matching entry to `driz
 
 ## Deploying
 
-The app is hosted by Lovable, which publishes from the GitHub branch it is connected to (`main`). A plain `bun run build` targets Cloudflare Workers (`.output/nitro.json` shows preset `cloudflare-module`).
+The app is hosted by Lovable, which publishes from the GitHub branch it is connected to (`main`). We plan to stay there until a university pilot provides infrastructure. [`context/hosting.md`](context/hosting.md) lists everything that changes when we leave.
 
-Older notes described deploying to Vercel. That hasn't been tested since the move to Lovable Cloud. It would at least need `SUPABASE_SERVICE_ROLE_KEY` and the LiveKit variables set in Vercel.
+The build picks its target from the environment: Cloudflare Workers by default, Vercel when built on Vercel, and a plain Node server with `NITRO_PRESET=node-server` (then `node .output/server/index.mjs`). On any host other than Lovable, set every server variable from the table above in the host's environment, because the built server doesn't read `.env`.
 
 ## Official TU Dublin society data
 
