@@ -6,6 +6,19 @@ import { supabase } from "@/integrations/supabase/client";
 export const ALLOWED_DOMAINS = ["mytudublin.ie", "tudublin.ie"];
 export const emailAllowed = (email: string) => ALLOWED_DOMAINS.includes(email.trim().toLowerCase().split("@")[1] ?? "");
 
+/** What to tell someone whose sign-in email request failed, from Supabase's error code. */
+export function signInError(e: { code?: string | undefined; message: string }) {
+  if (e.code === "over_email_send_rate_limit") {
+    const seconds = e.message.match(/(\d+) seconds/)?.[1];
+    return seconds
+      ? `You just asked for a link. Wait ${seconds} seconds, then try again.`
+      : "Too many sign-in emails have gone out in the last hour. Try again later.";
+  }
+  if (e.code === "over_request_rate_limit") return "Too many attempts from this network. Try again in a few minutes.";
+  if (/TU Dublin email/.test(e.message)) return e.message;
+  return "We couldn't send the sign-in link. Try again in a minute.";
+}
+
 export type Profile = { id: string; display_name: string; course: string; year: string; onboarded_at: string | null };
 export type CommitteeSeat = { society_id: string; slug: string; short_name: string; position: string };
 export type Access = { is_admin: boolean; committee: CommitteeSeat[] };

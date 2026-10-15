@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { pageHead } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { emailAllowed, useAuth } from "@/lib/auth";
+import { emailAllowed, signInError, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,31 +66,36 @@ function SocietyPreview() {
   );
 }
 
-function friendly(msg: string) {
-  return /database error|tu dublin/i.test(msg) ? "Please use your TU Dublin email (@mytudublin.ie)." : msg;
-}
-
 function SignInCard() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  // Matches Supabase's 60 s per-address cooldown, so "Resend" never hits it.
+  const [cooldown, setCooldown] = useState(0);
 
-  const sendLink = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (!cooldown) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const sendLink = async () => {
     setError("");
     if (!emailAllowed(email)) return setError("Please use your TU Dublin email (@mytudublin.ie).");
     setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { emailRedirectTo: window.location.origin } });
     setBusy(false);
-    if (error) setError(friendly(error.message));
-    else setSent(true);
+    if (error) return setError(signInError(error));
+    setSent(true);
+    setCooldown(60);
   };
 
   const microsoft = async () => {
     setError("");
     const r = await lovable.auth.signInWithOAuth("microsoft", { redirect_uri: window.location.origin });
-    if (r.error) setError(friendly(r.error.message ?? "Microsoft sign-in failed. Try your email instead."));
+    const msg = r.error?.message ?? "";
+    if (r.error) setError(/TU Dublin email/.test(msg) ? msg : "Microsoft sign-in failed. Try your email instead.");
   };
 
   if (sent)
@@ -98,13 +103,20 @@ function SignInCard() {
       <div className="rounded-2xl border bg-card p-6 shadow-lift">
         <Mail className="size-6 text-primary" />
         <h2 className="mt-3 font-semibold">Check your inbox</h2>
-        <p className="mt-1 text-sm text-muted-foreground">We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>. Open it on this device to continue.</p>
-        <Button variant="ghost" className="mt-4 px-0" onClick={() => setSent(false)}>Use a different email</Button>
+        <p className="mt-1 text-sm text-muted-foreground">We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>. It works for 10 minutes.</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Nothing after two minutes? Check your Junk folder. University mailboxes sometimes hold these emails in quarantine instead: look at <span className="font-medium text-foreground">security.microsoft.com/quarantine</span>.
+        </p>
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="outline" onClick={sendLink} disabled={busy || cooldown > 0}>{busy && <Loader2 className="animate-spin" />}Resend link{cooldown > 0 && ` (${cooldown}s)`}</Button>
+          <Button variant="ghost" onClick={() => { setSent(false); setError(""); }}>Use a different email</Button>
+        </div>
       </div>
     );
 
   return (
-    <form onSubmit={sendLink} className="space-y-3 rounded-2xl border bg-card p-6 shadow-lift">
+    <form onSubmit={(e) => { e.preventDefault(); void sendLink(); }} className="space-y-3 rounded-2xl border bg-card p-6 shadow-lift">
       <h2 className="font-semibold">Sign in with your university email</h2>
       <div className="space-y-1.5">
         <Label htmlFor="email">TU Dublin email</Label>
