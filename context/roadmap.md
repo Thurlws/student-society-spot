@@ -54,7 +54,9 @@ Effort in working days for one developer who knows the code: XS up to half a day
 | T0.1 Local Supabase stack replaying the migrations | Done 2026-10-15: `dev/supabase/`, `db:*` scripts; all 7 migrations apply; `db:check-sign-in` passes |
 | T0.2 Record Lovable Cloud auth settings and logs | Waiting on someone with Lovable access: checklist in [sign-in-email-bug.md](sign-in-email-bug.md) |
 | T0.3 Rewrite README | Done 2026-10-15 |
-| T0.4 CI: typecheck, tests, build | Workflow added 2026-10-15. Bun frozen-lockfile install checked locally; not yet run on GitHub |
+| T0.4 CI: typecheck, tests, build | Done 2026-10-15: passed on PR #7 and on the merge into `main` |
+
+Hosting: we stay on Lovable until a university pilot provides infrastructure. See [hosting.md](hosting.md).
 
 ### Phase 1: critical fixes
 
