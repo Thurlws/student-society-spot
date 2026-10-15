@@ -20,6 +20,7 @@ import { Route as AuthenticatedMySocietiesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocietyPulseRouteImport } from './routes/_authenticated/society-pulse'
+import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as AuthenticatedCallRoomIdRouteImport } from './routes/_authenticated/call.$roomId'
 import { Route as AuthenticatedCallsIndexRouteImport } from './routes/_authenticated/calls.index'
@@ -88,6 +89,11 @@ const AuthenticatedSocietyPulseRoute =
     path: '/society-pulse',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinCodeRoute = JoinCodeRouteImport.update({
   id: '/join/$code',
   path: '/join/$code',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/': typeof AuthenticatedIndexRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/call/$roomId': typeof AuthenticatedCallRoomIdRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
+    | '/auth/confirm'
     | '/join/$code'
     | '/call/$roomId'
     | '/events/$eventId'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
+    | '/auth/confirm'
     | '/join/$code'
     | '/'
     | '/call/$roomId'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/_authenticated/society-pulse'
+    | '/auth/confirm'
     | '/join/$code'
     | '/_authenticated/'
     | '/_authenticated/call/$roomId'
@@ -287,6 +299,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
   JoinCodeRoute: typeof JoinCodeRoute
 }
 
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/society-pulse'
       preLoaderRoute: typeof AuthenticatedSocietyPulseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/join/$code': {
       id: '/join/$code'
@@ -490,6 +510,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   WelcomeRoute: WelcomeRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
   JoinCodeRoute: JoinCodeRoute,
 }
 export const routeTree = rootRouteImport

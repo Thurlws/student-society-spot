@@ -25,3 +25,14 @@ email_sent = 100
 # production: new addresses get "Confirm signup", confirmed ones get "Magic link".
 enable_confirmations = true
 max_frequency = "60s"
+# Sign-in and confirmation links last 10 minutes. Production: Lovable Cloud → Auth settings → Email OTP expiration.
+otp_expiry = 600
+
+# The wording we want in production too (context/sign-in-email-bug.md). Links land on /auth/confirm.
+[auth.email.template.magic_link]
+subject = "Your SocConnect sign-in link"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your SocConnect account"
+content_path = "./supabase/templates/confirm-signup.html"

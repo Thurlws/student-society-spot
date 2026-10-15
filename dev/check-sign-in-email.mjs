@@ -33,11 +33,19 @@ let mails = await subjects(email);
 if (mails.length !== 1) fail(`new address: expected 1 email, got ${mails.length}`);
 console.log(`ok  new address gets "${mails[0].subject}"`);
 
-const text = (await (await fetch(`${MAIL}/api/v1/message/${mails[0].id}`)).json()).Text;
-const link = text.match(/http:\/\/127\.0\.0\.1:54321\/auth\/v1\/verify\?\S+/)?.[0];
-if (!link) fail("no confirmation link in the email");
-const confirmed = await fetch(link, { redirect: "manual" });
-if (!confirmed.headers.get("location")?.includes("access_token=")) fail("confirmation link gave no session");
+// The emails link to our /auth/confirm page, which calls verifyOtp({ token_hash, type }) on a button press.
+const verify = async (id) => {
+  const text = (await (await fetch(`${MAIL}/api/v1/message/${id}`)).json()).Text;
+  const tokenHash = text.match(/\/auth\/confirm\?token_hash=([^&\s]+)&type=email/)?.[1];
+  if (!tokenHash) fail("no /auth/confirm link in the email");
+  return fetch(`${API}/auth/v1/verify`, {
+    method: "POST",
+    headers: { apikey: key, "content-type": "application/json" },
+    body: JSON.stringify({ type: "email", token_hash: tokenHash }),
+  });
+};
+let verified = await verify(mails[0].id);
+if (!(await verified.json()).access_token) fail("confirmation link gave no session");
 console.log("ok  confirmation link signs the user in");
 
 res = await signIn(email);
@@ -45,6 +53,12 @@ if (!res.ok) fail(`returning user: HTTP ${res.status} ${await res.text()}`);
 mails = await subjects(email);
 if (mails.length !== 2) fail(`returning user: expected a second email, got ${mails.length} in total`);
 console.log(`ok  returning user gets "${mails[0].subject}"`);
+verified = await verify(mails[0].id);
+if (!(await verified.json()).access_token) fail("sign-in link gave no session");
+console.log("ok  sign-in link signs the user in");
+verified = await verify(mails[0].id);
+if (verified.ok) fail("a used sign-in link worked a second time");
+console.log("ok  a used link is refused");
 
 res = await signIn(email);
 if (res.status !== 429) fail(`immediate retry: expected HTTP 429, got ${res.status}`);
