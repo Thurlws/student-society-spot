@@ -85,6 +85,13 @@
       "when": 1792105644065,
       "tag": "0011_domain_check_on_email_change",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792105720174,
+      "tag": "0012_deletable_accounts",
+      "breakpoints": true
     }
   ]
 }
