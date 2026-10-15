@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#15212c">
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:28px">
+      <p style="margin:0 0 20px;font-size:18px;font-weight:bold">SocConnect</p>
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.5">Confirm your email to finish creating your SocConnect account, the app for TU Dublin societies. The link works once, for 10 minutes.</p>
+      <p style="margin:0 0 24px">
+        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email"
+           style="display:inline-block;background:#004c6c;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 20px;border-radius:6px">Confirm and sign in</a>
+      </p>
+      <p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:#566573">If the button doesn't work, copy this address into your browser:<br>{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email</p>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#566573">You're getting this because {{ .Email }} was used to sign up for SocConnect. If that wasn't you, ignore this email and no account will be created.</p>
+    </div>
+  </body>
+</html>

@@ -12,7 +12,7 @@ import type { CallRecap, Event, MembershipStatus, SupportRequest, SupportRequest
 
 /**
  * The app's data layer. Reads come from the database through one TanStack Query
- * (refreshed every 15s and on focus until realtime lands in Phase 5); every write is a
+ * (refreshed every 60s in visible tabs and on focus until realtime lands in Phase 5); every write is a
  * database function or an RLS-checked insert, so the browser is never trusted.
  */
 const EMPTY: AppData = {
@@ -37,7 +37,8 @@ function useDataValue() {
     queryKey: key,
     queryFn: () => loadAppData(uidAuth!, committeeUuids),
     enabled: !!uidAuth,
-    refetchInterval: 15_000,
+    // shortcut: polling reloads everything for each visible tab; move messages and notifications to realtime before a large pilot.
+    refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
   const data = q.data ?? EMPTY;

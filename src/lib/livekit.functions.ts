@@ -98,7 +98,17 @@ export const getGuestToken = createServerFn({ method: "POST" })
     return { ...token, name };
   });
 
-/** Used by captions: valid for guests holding a live invite code. */
-export async function inviteIsValid(code: string) {
-  return (await checkInvite(code)).ok;
+/**
+ * Used by guest captions: the creator of a still-valid invite (their AI quota pays), or null.
+ * Ignores the use limit, which only gates joining; guests already in the call keep captions.
+ */
+export async function inviteCreator(code: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: inv } = await supabaseAdmin
+    .from("call_invites")
+    .select("created_by, expires_at, call_rooms(societies(status))")
+    .eq("code_hash", await sha256(code))
+    .maybeSingle();
+  const status = (inv?.call_rooms as unknown as { societies: { status: string } } | null)?.societies.status;
+  return inv && status === "active" && new Date(inv.expires_at).getTime() >= Date.now() ? inv.created_by : null;
 }
