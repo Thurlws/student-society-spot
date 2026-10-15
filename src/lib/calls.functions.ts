@@ -41,9 +41,9 @@ export const summarizeCall = createServerFn({ method: "POST" })
     if (!room) throw new Error("That call doesn't exist.");
     const [{ data: joined }, { data: committee }] = await Promise.all([
       supabase.from("call_participants").select("id").eq("room_id", room.id).eq("user_id", userId).limit(1),
-      supabase.rpc("is_society_committee", { _society_id: room.society_id, _uid: userId }),
+      supabase.from("society_roles").select("id").eq("society_id", room.society_id).eq("user_id", userId).limit(1),
     ]);
-    if (!joined?.length && !committee) throw new Error("Only people who took part in this call can create its recap.");
+    if (!joined?.length && !committee?.length) throw new Error("Only people who took part in this call can create its recap.");
 
     const soc = room.societies as unknown as { name: string; short_name: string };
     let summary: CallSummary;
