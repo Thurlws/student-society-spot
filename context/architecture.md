@@ -5,7 +5,7 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
 ## Shape
 
 - **Browser to database, directly.** React 19 with TanStack Router talks to Supabase (REST and RPC) using the signed-in user's token. Row-level security (RLS) decides what each user can read or write.
-- **Reads:** one loader, `loadAppData` in `src/lib/api/fetch.ts` (22 queries), exposed through `useData()` in `src/lib/api/store.tsx`. It refetches every 15 s and on window focus (audit finding 5).
+- **Reads:** one loader, `loadAppData` in `src/lib/api/fetch.ts` (22 queries), exposed through `useData()` in `src/lib/api/store.tsx`. It refetches every 60 s in visible tabs and on window focus (audit finding 5 eased it from 15 s).
 - **Writes:** SQL functions (`join_society`, `decide_membership`, `register_for_event`, `create_event`, `submit_support_request`, `schedule_meeting`, `share_recap`, …) or plain inserts checked by RLS. Errors become `{ ok, error }` via `act()` in `store.tsx`.
 - **Server functions** (TanStack Start `createServerFn`), only where secrets are needed:
   - `src/lib/livekit.functions.ts`: call tokens, guest links (codes stored hashed)
