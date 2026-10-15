@@ -18,3 +18,4 @@ Design decisions that are already settled live in [`../AGENTS.md`](../AGENTS.md)
 - Cite code as `path:line` and say which commit or date the line numbers come from.
 - Never paste secrets, tokens, or students' personal data.
 - Git: small commits with one logical change each, no AI co-author trailers, and ask before pushing. Never rewrite pushed history; Lovable syncs from `main`.
+- The Lovable-connected repo is `Thurlws/student-society-spot`. Push here. `Thurlws/SocConnect-SC-` was a copy used until 2026-10-15; its history is merged in, and it no longer gets changes.
