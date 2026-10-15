@@ -9,7 +9,7 @@ import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
 import { ProfileForm } from "@/components/profile-form";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -142,7 +142,7 @@ function YourData() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={del} disabled={busy}>Delete my account</AlertDialogAction>
+            <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={del} disabled={busy}>Delete my account</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
