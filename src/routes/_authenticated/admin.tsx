@@ -53,7 +53,7 @@ function AdminPage() {
   const [editing, setEditing] = useState<SocietyRow | "new" | null>(null);
   const qc = useQueryClient();
 
-  if (!access.is_admin) return <EmptyState icon={ShieldCheck} title="Admins only" body="This page is for platform admins (TU Dublin staff accounts)." />;
+  if (!access.is_admin) return <EmptyState icon={ShieldCheck} title="Admins only" body="This page is for platform admins." />;
 
   const setStatus = async (s: SocietyRow, status: "active" | "archived") => {
     const { error } = await supabase.from("societies").update({ status }).eq("id", s.id);
