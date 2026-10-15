@@ -12,7 +12,7 @@ Line numbers are from commit `e83c5c6`.
 
 | # | Finding | Where | Task | Status |
 |---|---|---|---|---|
-| 1 | Returning users don't receive the sign-in email | see [sign-in-email-bug.md](sign-in-email-bug.md) | T0.2, T1.1 | Investigating |
+| 1 | Returning users don't receive the sign-in email | see [sign-in-email-bug.md](sign-in-email-bug.md) | T1.1 | Cause found 2026-10-15: Microsoft 365 quarantines mail from `no-reply@auth.lovable.cloud` as spam |
 | 2 | Every `@tudublin.ie` account becomes platform admin | `drizzle/migrations/0000_identity_roles_societies.sql:264-266` | T1.2 | Open |
 | 3 | SECURITY DEFINER helpers (`is_society_member`, `is_society_committee`, `has_role`, `society_visible`, `can_see_profile`) can be called through the API, so any student can probe membership of sensitive societies (GDPR Art. 9) | 0000:119-127, 0002:5-8, 0004:2-33 | T1.3 | Open |
 | 4 | AI caption transcription has no quota | `src/lib/calls.functions.ts:130-142` | T1.4 | Open |
@@ -52,7 +52,7 @@ Effort in working days for one developer who knows the code: XS up to half a day
 | Task | Status |
 |---|---|
 | T0.1 Local Supabase stack replaying the migrations | Done 2026-10-15: `dev/supabase/`, `db:*` scripts; all 7 migrations apply; `db:check-sign-in` passes |
-| T0.2 Record Lovable Cloud auth settings and logs | Waiting on someone with Lovable access: checklist in [sign-in-email-bug.md](sign-in-email-bug.md) |
+| T0.2 Find the sign-in email cause | Done 2026-10-15: the emails were in Microsoft 365 quarantine. Phase 0 is complete |
 | T0.3 Rewrite README | Done 2026-10-15 |
 | T0.4 CI: typecheck, tests, build | Done 2026-10-15: passed on Thurlws/SocConnect-SC-#7 and on that repo's `main` |
 
@@ -62,7 +62,7 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 | Task | Pri | Effort | Needs |
 |---|---|---|---|
-| T1.1 Sign-in: real error messages, resend countdown, then fix whatever T0.2 finds; consider 6-digit codes | P0 | S | T0.2 |
+| T1.1 Sign-in: custom sending domain in Lovable Cloud and an allow rule from TU Dublin IT; real error messages; resend countdown; optional 6-digit codes | P0 | S | A domain we own |
 | T1.2 Remove the staff-admin grant; review `user_roles` | P0 | XS | |
 | T1.3 Move security helpers to a schema the API doesn't expose; drop `pending` from `can_see_profile` | P0 | S-M | T0.1 |
 | T1.4 One quota function for all AI calls (including transcription); expire the AI block row | P1 | S | |
@@ -88,6 +88,6 @@ Realtime notifications, per-page loading and pagination, SSO per university, ema
 
 ## Milestones
 
-- **TU Dublin demo:** T0.2, T1.1, T1.2, T0.3, T2.4, plus T0.1 and T1.3 if real students use the live site. About 3 to 10 developer-days.
+- **TU Dublin demo:** T1.1, T1.2, T2.4, plus T1.3 if real students use the live site (Phase 0 is done). About 3 to 10 developer-days.
 - **Trinity or UCD demo:** add T2.1, T3.1-T3.3, T3.5. About 3 to 5 more developer-weeks.
 - **Limited pilot:** all of Phases 0 to 4. About 7 to 12 more developer-weeks plus time with the university's DPO and IT team.
