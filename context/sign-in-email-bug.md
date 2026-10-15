@@ -1,6 +1,6 @@
 # Returning users don't get the sign-in email
 
-**Status (2026-10-15):** open. App code and migrations ruled out locally. Waiting on someone with Lovable Cloud access to fill in the checklist below.
+**Status (2026-10-15):** open. App code and migrations ruled out locally. In production a returning user saw "Check your inbox", and nothing arrived in the inbox, Junk or spam. Waiting on someone with Lovable Cloud access to fill in the checklist below.
 
 ## Symptom
 
@@ -35,9 +35,11 @@ So with default settings our code sends the returning-user email. The difference
 ## Remaining suspects
 
 1. **Magic link template** in Lovable Cloud is broken, empty, or missing `{{ .ConfirmationURL }}`. Only returning users get this template, which matches the symptom best.
-2. **Delivery to Microsoft 365** (`mytudublin.ie`): the magic-link email has a different subject and body from the confirmation email and may be junked or quarantined.
-3. **Hourly cap or cooldown**: these return an error that the card displays. If users saw "Check your inbox", these are unlikely.
-4. **Custom auth email hook** (Lovable "custom emails"), if one is set up, failing for the magic-link type. Unverified; nothing in this repo configures one.
+2. **Lovable's email sending.** If Lovable sends auth emails through its own service (managed email or a send hook), Supabase can report success while the real send fails later. Lovable Cloud's email or auth logs would show it. Nothing in this repo configures a hook.
+3. **Microsoft 365 quarantine** (`mytudublin.ie`). Mail Microsoft treats as phishing goes to quarantine, not Junk, so an empty Junk folder doesn't rule it out. Check https://security.microsoft.com/quarantine, or ask TU Dublin IT for a message trace.
+4. ~~Hourly cap or cooldown.~~ Ruled out 2026-10-15: both return an error, and the card showed "Check your inbox".
+
+**Next test (no Lovable access needed):** someone who has never signed up tries a fresh `@mytudublin.ie` address. If their "Confirm signup" email arrives, the fault is specific to returning users (suspect 1 or 2). If it doesn't arrive either, Microsoft 365 is blocking these emails for everyone (suspect 3).
 
 Related but different: Microsoft Defender Safe Links can open single-use links before the student does, which gives "link expired" instead of "no email".
 
@@ -55,8 +57,8 @@ Needs someone signed in to the Lovable project. Fill in the answers here. Don't 
 | 6 | Auth settings | Email OTP expiration | |
 | 7 | Auth settings | Site URL and redirect URLs; is the published domain listed? | |
 | 8 | Auth logs | Reproduce once with a returning account: status of `POST /otp`, and any mail-send log line or error | |
-| 9 | Student's Outlook | Junk folder and quarantine notices for that sender | |
-| 10 | The sign-in card | Exact text shown after pressing the button | |
+| 9 | Student's Outlook | Junk folder and quarantine notices for that sender | 2026-10-15: not in inbox, Junk or spam. Quarantine not checked yet |
+| 10 | The sign-in card | Exact text shown after pressing the button | 2026-10-15: "Check your inbox. We sent a sign-in link to … Open it on this device to continue." |
 
 ## Fix plan once confirmed
 
