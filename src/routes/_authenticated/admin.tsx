@@ -347,12 +347,14 @@ function Committee({
       <form onSubmit={invite} className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Input
           type="email"
+          aria-label="Committee member email"
           placeholder={`name@${domain ?? "university.ie"}`}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Input
+          aria-label="Position"
           placeholder="Position, e.g. President"
           value={position}
           onChange={(e) => setPosition(e.target.value)}
@@ -733,8 +735,9 @@ function SocietyDialog({
         </DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Name</Label>
+            <Label htmlFor="soc-name">Name</Label>
             <Input
+              id="soc-name"
               value={f.name}
               onChange={(e) => set("name", e.target.value)}
               maxLength={100}
@@ -743,8 +746,9 @@ function SocietyDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Short name</Label>
+              <Label htmlFor="soc-short">Short name</Label>
               <Input
+                id="soc-short"
                 value={f.short_name}
                 onChange={(e) => set("short_name", e.target.value)}
                 maxLength={30}
@@ -752,8 +756,9 @@ function SocietyDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Address</Label>
+              <Label htmlFor="soc-slug">Address</Label>
               <Input
+                id="soc-slug"
                 placeholder={slugify(f.short_name || f.name) || "compsoc"}
                 value={f.slug}
                 onChange={(e) => set("slug", slugify(e.target.value))}
@@ -762,17 +767,18 @@ function SocietyDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Category</Label>
+              <Label htmlFor="soc-category">Category</Label>
               <Input
+                id="soc-category"
                 placeholder="e.g. Academic"
                 value={f.category}
                 onChange={(e) => set("category", e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Colour</Label>
+              <Label htmlFor="soc-accent">Colour</Label>
               <Select value={f.accent} onValueChange={(v) => set("accent", v as Accent)}>
-                <SelectTrigger>
+                <SelectTrigger id="soc-accent">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -786,16 +792,18 @@ function SocietyDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Tagline</Label>
+            <Label htmlFor="soc-tagline">Tagline</Label>
             <Input
+              id="soc-tagline"
               value={f.tagline}
               onChange={(e) => set("tagline", e.target.value)}
               maxLength={140}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Description</Label>
+            <Label htmlFor="soc-description">Description</Label>
             <Textarea
+              id="soc-description"
               rows={4}
               value={f.description}
               onChange={(e) => set("description", e.target.value)}
@@ -803,8 +811,9 @@ function SocietyDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>When it meets</Label>
+            <Label htmlFor="soc-meets">When it meets</Label>
             <Input
+              id="soc-meets"
               placeholder="e.g. Wednesdays 6pm, Room A12"
               value={f.meets}
               onChange={(e) => set("meets", e.target.value)}
