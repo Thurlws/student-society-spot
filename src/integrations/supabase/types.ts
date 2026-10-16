@@ -14,42 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      audit_log: {
-        Row: {
-          action: string
-          actor_id: string | null
-          actor_role: string
-          at: string
-          details: Json
-          id: number
-          society_id: string | null
-          subject_id: string | null
-          university_id: string | null
-        }
-        Insert: {
-          action: string
-          actor_id?: string | null
-          actor_role: string
-          at?: string
-          details?: Json
-          id?: never
-          society_id?: string | null
-          subject_id?: string | null
-          university_id?: string | null
-        }
-        Update: {
-          action?: string
-          actor_id?: string | null
-          actor_role?: string
-          at?: string
-          details?: Json
-          id?: never
-          society_id?: string | null
-          subject_id?: string | null
-          university_id?: string | null
-        }
-        Relationships: []
-      }
       ai_usage: {
         Row: {
           created_at: string
@@ -133,6 +97,42 @@ export type Database = {
             referencedColumns: ["society_id"]
           },
         ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          at: string
+          details: Json
+          id: number
+          society_id: string | null
+          subject_id: string | null
+          university_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role: string
+          at?: string
+          details?: Json
+          id?: never
+          society_id?: string | null
+          subject_id?: string | null
+          university_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          at?: string
+          details?: Json
+          id?: never
+          society_id?: string | null
+          subject_id?: string | null
+          university_id?: string | null
+        }
+        Relationships: []
       }
       call_invites: {
         Row: {
@@ -701,6 +701,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "societies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "society_member_counts"
+            referencedColumns: ["society_id"]
           },
         ]
       }
@@ -1596,10 +1603,6 @@ export type Database = {
         Args: { _assignee: string; _id: string }
         Returns: undefined
       }
-      can_see_profile: {
-        Args: { _profile: string; _uid: string }
-        Returns: boolean
-      }
       cancel_event: {
         Args: { _event_id: string; _reason: string }
         Returns: undefined
@@ -1635,25 +1638,16 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
-      delete_message: { Args: { _message_id: string; _reason?: string }; Returns: undefined }
+      delete_message: {
+        Args: { _message_id: string; _reason?: string }
+        Returns: undefined
+      }
       dismiss_message_reports: {
         Args: { _message_id: string }
         Returns: undefined
       }
       email_domain_allowed: { Args: { _email: string }; Returns: boolean }
-      nightly_job_runs: { Args: never; Returns: Json }
-      find_people: {
-        Args: { _query: string; _university_id: string }
-        Returns: {
-          course: string
-          display_name: string
-          joined_at: string
-          suspended_at: string | null
-          suspension_reason: string
-          user_id: string
-          year: string
-        }[]
-      }
+      end_lapsed_sessions: { Args: never; Returns: number }
       event_attendee_counts: {
         Args: never
         Returns: {
@@ -1661,28 +1655,26 @@ export type Database = {
           event_id: string
         }[]
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
+      find_people: {
+        Args: { _query: string; _university_id: string }
+        Returns: {
+          course: string
+          display_name: string
+          joined_at: string
+          suspended_at: string
+          suspension_reason: string
+          user_id: string
+          year: string
+        }[]
       }
       import_societies: {
         Args: { _rows: Json; _university_id: string }
         Returns: Json
       }
-      is_society_committee: {
-        Args: { _society_id: string; _uid: string }
-        Returns: boolean
-      }
-      is_society_member: {
-        Args: { _society_id: string; _uid: string }
-        Returns: boolean
-      }
       join_society: { Args: { _society_id: string }; Returns: string }
       leave_society: { Args: { _society_id: string }; Returns: undefined }
       my_access: { Args: never; Returns: Json }
+      nightly_job_runs: { Args: never; Returns: Json }
       notify_members: {
         Args: {
           _body: string
@@ -1706,6 +1698,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      purge_expired_data: { Args: never; Returns: Json }
       purge_old_transcripts: { Args: never; Returns: number }
       recommend_societies: {
         Args: never
@@ -1763,10 +1756,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      society_visible: {
-        Args: { _society_id: string; _uid: string }
-        Returns: boolean
-      }
       submit_support_request: {
         Args: {
           _category: string
@@ -1777,7 +1766,10 @@ export type Database = {
         }
         Returns: string
       }
-      suspend_user: { Args: { _reason: string; _user_id: string }; Returns: undefined }
+      suspend_user: {
+        Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
       update_event: {
         Args: {
           _capacity: number
