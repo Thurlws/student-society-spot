@@ -183,6 +183,13 @@
       "when": 1792118503742,
       "tag": "0025_suspension",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792119119684,
+      "tag": "0026_retention",
+      "breakpoints": true
     }
   ]
 }
