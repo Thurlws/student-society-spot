@@ -16,7 +16,7 @@ export const Route = createFileRoute("/welcome")({
   head: () =>
     pageHead(
       "Welcome",
-      "Every TU Dublin society in one place. Join societies, register for events and get their announcements.",
+      "Your university's societies in one place. Join societies, register for events and get their announcements.",
     ),
   component: Welcome,
 });
@@ -228,12 +228,12 @@ function SignInCard() {
     >
       <h2 className="font-semibold">Sign in with your university email</h2>
       <div className="space-y-1.5">
-        <Label htmlFor="email">TU Dublin email</Label>
+        <Label htmlFor="email">University email</Label>
         <Input
           id="email"
           type="email"
           autoComplete="email"
-          placeholder="you@mytudublin.ie"
+          placeholder="you@university.ie"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -255,9 +255,7 @@ function SignInCard() {
         </svg>
         Sign in with Microsoft
       </Button>
-      <p className="text-xs text-muted-foreground">
-        Use your @mytudublin.ie or @tudublin.ie address.
-      </p>
+      <p className="text-xs text-muted-foreground">Use the address your university gave you.</p>
     </form>
   );
 }
@@ -282,7 +280,7 @@ function Welcome() {
       <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-8 lg:grid-cols-2 lg:pt-14">
         <div>
           <h1 className="max-w-[11ch] text-4xl font-semibold leading-[1.02] tracking-[-0.035em] sm:text-6xl">
-            Every TU Dublin society in one place
+            Your university's societies in one place
           </h1>
           <p className="mt-6 max-w-lg text-lg text-muted-foreground">
             Browse the societies, join the ones you like and register for their events.
@@ -308,7 +306,7 @@ function Welcome() {
         </ul>
       </section>
       <footer className="mx-auto max-w-7xl px-6 py-8 text-xs text-muted-foreground">
-        SocConnect, for TU Dublin societies.
+        SocConnect, for university societies.
       </footer>
     </div>
   );
