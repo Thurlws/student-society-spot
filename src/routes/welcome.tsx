@@ -157,7 +157,10 @@ function SignInCard() {
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaFailed, setCaptchaFailed] = useState(false);
   const turnstile = useRef<TurnstileHandle>(null);
-  const waitingForCheck = !!TURNSTILE_SITE_KEY && !captcha;
+  // Wait for the token, unless the check couldn't load (a blocker, or an address Cloudflare
+  // doesn't know, like Lovable's preview): then send without one and let Supabase Auth decide,
+  // since it's the one that refuses requests without a valid token once enforcement is on.
+  const waitingForCheck = !!TURNSTILE_SITE_KEY && !captcha && !captchaFailed;
   useEffect(() => {
     const typed = emailInput.current?.value;
     if (typed) setEmail(typed);
@@ -222,13 +225,13 @@ function SignInCard() {
         }}
         onError={() => setCaptchaFailed(true)}
       />
-      {waitingForCheck && !captchaFailed && hydrated && (
+      {waitingForCheck && hydrated && (
         <p className="text-xs text-muted-foreground">Checking you're not a bot…</p>
       )}
       {captchaFailed && (
         <p className="text-xs text-destructive">
-          The check that you're not a bot didn't work. Reload the page; if you use a blocker, allow
-          challenges.cloudflare.com.
+          The check that you're not a bot didn't load. You can still try; if sign-in is refused,
+          reload the page, or allow challenges.cloudflare.com if you use a blocker.
         </p>
       )}
     </>
