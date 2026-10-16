@@ -145,9 +145,9 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     societies, societyUuid, slugOf, committeeIds, events, memberships, requests, resolvedRequests, supportRequests, channels,
     recommendations: must(recommendationRes),
     registrations: must(regs).map((r) => r.event_id),
-    announcements: (must(ann) as { id: string; society_id: string; title: string; body: string; pinned: boolean; created_at: string; profiles: { display_name: string } | null }[])
+    announcements: (must(ann) as { id: string; society_id: string; title: string; body: string; pinned: boolean; created_at: string; edited_at: string | null; profiles: { display_name: string } | null }[])
       .filter((a) => slugOf[a.society_id])
-      .map((a) => ({ id: a.id, societyId: slugOf[a.society_id]!, author: name(a.profiles), title: a.title, body: a.body, createdAt: a.created_at, pinned: a.pinned })),
+      .map((a) => ({ id: a.id, societyId: slugOf[a.society_id]!, author: name(a.profiles), title: a.title, body: a.body, createdAt: a.created_at, pinned: a.pinned, editedAt: a.edited_at ?? undefined })),
     messages: (must(msg) as { id: string; channel_id: string; body: string; created_at: string; profiles: { display_name: string } | null }[])
       .map((m) => ({ id: m.id, channelId: m.channel_id, author: name(m.profiles), body: m.body, createdAt: m.created_at })).reverse(),
     resources: must(res).filter((r) => slugOf[r.society_id]).map((r) => ({ id: r.id, societyId: slugOf[r.society_id]!, title: r.title, kind: r.kind as Resource["kind"], description: r.description, url: r.url })),

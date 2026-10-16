@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, FileText, Hash, Lock, Megaphone, MessageSquarePlus, Pin, Send, CalendarClock, Users, Link2, ClipboardList, BookOpen } from "lucide-react";
+import { ArrowLeft, FileText, Hash, Lock, Megaphone, MessageSquarePlus, Pin, Send, CalendarClock, Users, Link2, ClipboardList, BookOpen, PencilLine, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useData } from "@/lib/api/store";
 import { todayIso } from "@/lib/format";
@@ -13,9 +13,14 @@ import { NewRequestDialog } from "@/components/support-requests";
 import { MeetingCard, RecapCard, RoomCard, ScheduleCallDialog } from "@/components/calls";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OfficialInfo } from "@/components/official-info";
+import { AnnouncementDialog } from "@/components/announcement-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import type { Announcement } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/societies/$societyId")({
   head: () => pageHead("Society", "A student society on SocConnect."),
@@ -41,14 +46,17 @@ function SocietyRoute() {
 
 function SocietyPage({ societyId }: { societyId: string }) {
   const hash = useRouterState({ select: s => s.location.hash });
-  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, channels, resources, rooms } = useData();
+  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, channels, resources, rooms, canManage } = useData();
   const s = getSociety(societyId)!;
   const today = todayIso();
   const isMember = membership(s.id) === "member";
   const a = accentClasses[s.accent];
   // Imported taglines are often the description's first sentence cut short; don't print it twice.
   const showTagline = !!s.tagline && !s.description.startsWith(s.tagline.replace(/[….\s]+$/, ""));
-  const socAnn = announcements.filter((x) => x.societyId === s.id);
+  // Pinned first, then newest first (the order they arrive in).
+  const socAnn = announcements.filter((x) => x.societyId === s.id).sort((x, y) => Number(!!y.pinned) - Number(!!x.pinned));
+  // Kept after closing so the dialog doesn't switch to "New announcement" while it fades out.
+  const [editingAnn, setEditingAnn] = useState<{ open: boolean; announcement?: Announcement }>({ open: false });
   const socEvents = events.filter((e) => e.societyId === s.id && e.date >= today);
   const nextUp = socEvents.find((e) => !e.cancelled);
   const socChannels = channels.filter((c) => c.societyId === s.id);
@@ -132,14 +140,23 @@ function SocietyPage({ societyId }: { societyId: string }) {
           {socAnn.length === 0 && <EmptyState icon={Megaphone} title="No announcements yet" body="The committee hasn't posted anything yet." />}
           {socAnn.map((x) => (
             <article key={x.id} id={`announcement-${x.id}`} className="scroll-mt-20 rounded-xl border bg-card p-5 shadow-soft">
-              <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Megaphone className={cn("size-3.5", a.text)} />{x.author}, {timeAgo(x.createdAt)}
-                {x.pinned && <span className="flex items-center gap-1 font-medium text-primary"><Pin className="size-3" />Pinned</span>}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Megaphone className={cn("size-3.5", a.text)} />{x.author}, {timeAgo(x.createdAt)}{x.editedAt && ", edited"}
+                  {x.pinned && <span className="flex items-center gap-1 font-medium text-primary"><Pin className="size-3" />Pinned</span>}
+                </p>
+                {canManage(s.id) && (
+                  <div className="-mr-2 -mt-2 flex shrink-0">
+                    <Button size="icon" variant="ghost" aria-label={`Edit ${x.title}`} onClick={() => setEditingAnn({ open: true, announcement: x })}><PencilLine /></Button>
+                    <DeleteAnnouncementButton announcement={x} />
+                  </div>
+                )}
+              </div>
               <h3 className="mt-2 font-semibold">{x.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{x.body}</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{x.body}</p>
             </article>
           ))}
+          <AnnouncementDialog open={editingAnn.open} onClose={() => setEditingAnn({ ...editingAnn, open: false })} societyId={s.id} announcement={editingAnn.announcement} />
         </TabsContent>
 
         <TabsContent value="discussions" className="mt-6">
@@ -237,5 +254,27 @@ function SocietyPage({ societyId }: { societyId: string }) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function DeleteAnnouncementButton({ announcement }: { announcement: Announcement }) {
+  const { deleteAnnouncement } = useData();
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild><Button size="icon" variant="ghost" aria-label={`Delete ${announcement.title}`}><Trash2 /></Button></AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
+          <AlertDialogDescription>"{announcement.title}" disappears from the society page and members' feeds. It can't be undone.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep it</AlertDialogCancel>
+          <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={async () => {
+            const o = await deleteAnnouncement(announcement.id);
+            if (o.ok) toast("Announcement deleted"); else toast.error(o.error);
+          }}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

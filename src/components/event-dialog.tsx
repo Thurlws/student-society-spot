@@ -19,7 +19,7 @@ const fromEvent = (e: Event) => ({
 });
 
 /** Creates an event for a society, or edits `event` when given. */
-export function EventDialog({ open, onClose, societyId, event }: { open: boolean; onClose: () => void; societyId: string; event?: Event }) {
+export function EventDialog({ open, onClose, societyId, event }: { open: boolean; onClose: () => void; societyId: string; event?: Event | undefined }) {
   const { createEvent, updateEvent } = useData();
   const navigate = useNavigate();
   const [f, setF] = useState(() => (event ? fromEvent(event) : blank()));

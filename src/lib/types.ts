@@ -93,6 +93,8 @@ export interface Announcement {
   body: string;
   createdAt: string; // ISO datetime
   pinned?: boolean;
+  /** Set when the committee changed the wording after posting. */
+  editedAt?: string | undefined;
 }
 
 export interface DiscussionChannel {

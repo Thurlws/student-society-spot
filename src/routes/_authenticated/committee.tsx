@@ -10,12 +10,12 @@ import { PageHeader, EmptyState } from "@/components/cards";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { CommitteeRequestsSummary } from "@/components/support-requests";
 import { EventDialog } from "@/components/event-dialog";
+import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/committee")({
@@ -145,34 +145,6 @@ function Committee() {
       <EventDialog open={modal === "event"} onClose={() => setModal(null)} societyId={s.id} />
       <EditDialog open={modal === "edit"} onClose={() => setModal(null)} societyId={s.id} />
     </div>
-  );
-}
-
-function AnnouncementDialog({ open, onClose, societyId }: { open: boolean; onClose: () => void; societyId: string }) {
-  const { postAnnouncement } = useData();
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [pinned, setPinned] = useState(false);
-  const [err, setErr] = useState("");
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>New announcement</DialogTitle><DialogDescription>Shown on the society page, members' feeds and their in-app notifications.</DialogDescription></DialogHeader>
-        <form className="space-y-4" onSubmit={async (e) => {
-          e.preventDefault();
-          const o = await postAnnouncement(societyId, { title, body, pinned });
-          if (!o.ok) { setErr(o.error); return; }
-          toast.success("Announcement published");
-          setTitle(""); setBody(""); setPinned(false); setErr(""); onClose();
-        }}>
-          <div className="space-y-1.5"><Label htmlFor="at">Title</Label><Input id="at" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} /></div>
-          <div className="space-y-1.5"><Label htmlFor="ab">Message</Label><Textarea id="ab" rows={5} value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} /></div>
-          <div className="flex items-center gap-2"><Switch id="ap" checked={pinned} onCheckedChange={setPinned} /><Label htmlFor="ap">Pin to top</Label></div>
-          {err && <p className="text-sm text-destructive">{err}</p>}
-          <DialogFooter><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit">Publish</Button></DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

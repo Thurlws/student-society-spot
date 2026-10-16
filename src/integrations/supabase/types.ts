@@ -48,6 +48,7 @@ export type Database = {
           author_id: string | null
           body: string
           created_at: string
+          edited_at: string | null
           id: string
           pinned: boolean
           society_id: string
@@ -57,6 +58,7 @@ export type Database = {
           author_id?: string | null
           body: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           pinned?: boolean
           society_id: string
@@ -66,6 +68,7 @@ export type Database = {
           author_id?: string | null
           body?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           pinned?: boolean
           society_id?: string
