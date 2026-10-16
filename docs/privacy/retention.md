@@ -30,6 +30,7 @@ To confirm with the providers ([sub-processors.md](sub-processors.md)):
 
 - **Backups** of the Lovable Cloud database: how often, how long they're kept, and whether deleted data can be restored from them.
 - **Request logs** at the hosting provider and at Supabase Auth (`auth.audit_log_entries`).
+- **Error reports and server logs** in Sentry: kept for its plan's retention period.
 - **AI requests** at the Lovable gateway and OpenAI.
 - **Sign-in emails** in the email provider's logs and in people's mailboxes.
 
