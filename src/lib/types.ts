@@ -143,7 +143,8 @@ export interface Notification {
   body: string;
   createdAt: string;
   read: boolean;
-  link?: { to: string; params?: Record<string, string> } | undefined;
+  link?:
+    { to: string; params?: Record<string, string>; search?: Record<string, string> } | undefined;
 }
 
 export interface CollaborationProposal {
