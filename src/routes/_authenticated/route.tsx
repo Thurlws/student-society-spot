@@ -12,9 +12,12 @@ import { SuspendedNotice } from "@/components/suspended-notice";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  // The stored session decides where to go; the database checks the token on every request.
+  // Asking the auth server here (getUser) delayed every page change, and a network blip sent
+  // signed-in people back to /welcome.
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/welcome" });
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/welcome" });
   },
   component: Gate,
 });
