@@ -26,6 +26,7 @@ import { PageHeader, EmptyState } from "@/components/cards";
 import { ReportedMessages } from "@/components/moderation";
 import { ActivityLog } from "@/components/activity-log";
 import { PeopleAdmin } from "@/components/people-admin";
+import { SystemPanel } from "@/components/system-status";
 import { SocietyImportDialog } from "@/components/society-import-dialog";
 import { SocietyAvatar } from "@/components/society-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +62,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const TABS = ["societies", "reports", "people", "activity", "university"] as const;
+const TABS = ["societies", "reports", "people", "activity", "university", "system"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -184,9 +185,11 @@ function AdminPage() {
       />
     );
 
-  // The University tab is for platform admins; anyone else lands on Societies.
+  // The University and System tabs are for platform admins; anyone else lands on Societies.
   const tab: Tab =
-    search.tab === "university" && !access.is_admin ? "societies" : (search.tab ?? "societies");
+    (search.tab === "university" || search.tab === "system") && !access.is_admin
+      ? "societies"
+      : (search.tab ?? "societies");
   const openReports = new Set(
     messageReports
       .filter((r) => !r.dismissed && (access.is_admin || canManage(r.societyId)))
@@ -239,6 +242,7 @@ function AdminPage() {
           <AdminTab value="people" label="People" />
           <AdminTab value="activity" label="Activity" />
           {access.is_admin && <AdminTab value="university" label="University" />}
+          {access.is_admin && <AdminTab value="system" label="System" />}
         </TabsList>
 
         <TabsContent value="societies" className="mt-6">
@@ -280,6 +284,11 @@ function AdminPage() {
                 onCreated={setPicked}
               />
             )}
+          </TabsContent>
+        )}
+        {access.is_admin && (
+          <TabsContent value="system" className="mt-6">
+            <SystemPanel />
           </TabsContent>
         )}
       </Tabs>

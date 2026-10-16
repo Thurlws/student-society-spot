@@ -29,6 +29,7 @@ from (values
   ('0029 society identity', coalesce(pg_get_functiondef(to_regprocedure('public.guard_society_update()')) like '%name, category, logo or banner%', false)),
   ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%')),
   ('0031 display names', to_regprocedure('private.check_display_name()') is not null),
-  ('0032 removal notices', to_regprocedure('public.delete_message(uuid, text)') is not null)
+  ('0032 removal notices', to_regprocedure('public.delete_message(uuid, text)') is not null),
+  ('0033 nightly job runs', to_regprocedure('public.nightly_job_runs()') is not null)
 ) as m(migration, applied)
 order by m.migration;
