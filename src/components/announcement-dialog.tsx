@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
@@ -36,6 +37,7 @@ export function AnnouncementDialog({
   });
   const [f, setF] = useState(saved);
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   // Start from the saved values each time the dialog opens.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -60,9 +62,11 @@ export function AnnouncementDialog({
           className="space-y-4"
           onSubmit={async (e) => {
             e.preventDefault();
+            setBusy(true);
             const o = announcement
               ? await editAnnouncement(announcement.id, f)
               : await postAnnouncement(societyId, f);
+            setBusy(false);
             if (!o.ok) {
               setErr(o.error);
               return;
@@ -104,7 +108,10 @@ export function AnnouncementDialog({
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">{announcement ? "Save changes" : "Publish"}</Button>
+            <Button type="submit" disabled={busy}>
+              {busy && <Loader2 className="animate-spin" />}
+              {announcement ? "Save changes" : "Publish"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

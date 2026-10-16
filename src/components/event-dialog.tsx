@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
@@ -62,6 +63,7 @@ export function EventDialog({
   const navigate = useNavigate();
   const [f, setF] = useState(() => (event ? fromEvent(event) : blank()));
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   // Start from the saved values each time the dialog opens.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -99,9 +101,11 @@ export function EventDialog({
               category: f.category as EventInput["category"],
               capacity: f.capacity.trim() === "" ? undefined : Number(f.capacity),
             };
+            setBusy(true);
             const o = event
               ? await updateEvent(event.id, input)
               : await createEvent(societyId, input);
+            setBusy(false);
             if (!o.ok) {
               setErr(o.error);
               return;
@@ -178,7 +182,10 @@ export function EventDialog({
             <Button type="button" variant="ghost" onClick={onClose}>
               {event ? "Keep as is" : "Cancel"}
             </Button>
-            <Button type="submit">{event ? "Save changes" : "Publish event"}</Button>
+            <Button type="submit" disabled={busy}>
+              {busy && <Loader2 className="animate-spin" />}
+              {event ? "Save changes" : "Publish event"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
