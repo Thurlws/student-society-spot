@@ -14,9 +14,14 @@ export default async function globalSetup() {
   check(await admin.from("societies").delete().like("slug", "e2e-%"), "delete old societies");
   await fetch(`${MAILPIT}/api/v1/messages`, { method: "DELETE" });
 
+  const tud = await admin.from("universities").select("id").eq("slug", "tudublin").single();
+  check(tud, "find TU Dublin");
+  const university = tud.data!.id;
+
   check(
     await admin.from("societies").insert([
       {
+        university_id: university,
         slug: societies.open.slug,
         name: societies.open.name,
         short_name: societies.open.shortName,
@@ -26,6 +31,7 @@ export default async function globalSetup() {
         requires_approval: false,
       },
       {
+        university_id: university,
         slug: societies.approval.slug,
         name: societies.approval.name,
         short_name: societies.approval.shortName,
