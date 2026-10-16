@@ -34,7 +34,13 @@ export type CommitteeSeat = {
   short_name: string;
   position: string;
 };
-export type Access = { is_admin: boolean; committee: CommitteeSeat[] };
+export type University = { id: string; slug: string; name: string; short_name: string };
+export type Access = {
+  is_admin: boolean;
+  university: University | null;
+  university_admin: boolean;
+  committee: CommitteeSeat[];
+};
 
 type AuthValue = {
   ready: boolean;
@@ -47,7 +53,12 @@ type AuthValue = {
   signOut: () => Promise<void>;
 };
 
-const NO_ACCESS: Access = { is_admin: false, committee: [] };
+const NO_ACCESS: Access = {
+  is_admin: false,
+  university: null,
+  university_admin: false,
+  committee: [],
+};
 const Ctx = createContext<AuthValue | null>(null);
 const SIGNED_OUT: AuthValue = {
   ready: false,

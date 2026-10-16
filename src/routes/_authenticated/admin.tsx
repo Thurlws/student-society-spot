@@ -73,16 +73,18 @@ const slugify = (v: string) =>
     .replace(/^-|-$/g, "")
     .slice(0, 40);
 
-function useAdminData() {
+function useAdminData(universityId: string) {
   return useQuery({
-    queryKey: ["admin"],
+    queryKey: ["admin", universityId],
+    enabled: !!universityId,
     queryFn: async () => {
-      const [s, r, i] = await Promise.all([
+      const [s, r, i, d] = await Promise.all([
         supabase
           .from("societies")
           .select(
             "id, slug, name, short_name, category, tagline, description, accent, requires_approval, meets, status",
           )
+          .eq("university_id", universityId)
           .order("name"),
         supabase
           .from("society_roles")
@@ -91,12 +93,18 @@ function useAdminData() {
           .from("role_invites")
           .select("id, email, society_id, position")
           .is("claimed_at", null),
+        supabase
+          .from("university_domains")
+          .select("domain")
+          .eq("university_id", universityId)
+          .order("domain"),
       ]);
       if (s.error) throw s.error;
       return {
         societies: (s.data ?? []) as SocietyRow[],
         roles: (r.data ?? []) as unknown as RoleRow[],
         invites: (i.data ?? []) as InviteRow[],
+        domains: (d.data ?? []).map((x) => x.domain),
       };
     },
   });
@@ -104,13 +112,28 @@ function useAdminData() {
 
 function AdminPage() {
   const { access } = useAuth();
-  const { data, isLoading } = useAdminData();
+  // Platform admins pick a university; university admins manage their own.
+  const { data: universities } = useQuery({
+    queryKey: ["admin", "universities"],
+    enabled: access.is_admin,
+    queryFn: async () =>
+      (await supabase.from("universities").select("id, slug, name, short_name").order("name"))
+        .data ?? [],
+  });
+  const [picked, setPicked] = useState<string>();
+  const universityId = picked ?? access.university?.id ?? universities?.[0]?.id ?? "";
+  const university = universities?.find((u) => u.id === universityId) ?? access.university;
+  const { data, isLoading } = useAdminData(universityId);
   const [editing, setEditing] = useState<SocietyRow | "new" | null>(null);
   const qc = useQueryClient();
 
-  if (!access.is_admin)
+  if (!access.is_admin && !access.university_admin)
     return (
-      <EmptyState icon={ShieldCheck} title="Admins only" body="This page is for platform admins." />
+      <EmptyState
+        icon={ShieldCheck}
+        title="Admins only"
+        body="This page is for platform and university admins."
+      />
     );
 
   const setStatus = async (s: SocietyRow, status: "active" | "archived") => {
@@ -124,12 +147,28 @@ function AdminPage() {
     <div className="space-y-6">
       <PageHeader
         title="Admin"
-        subtitle="Add your university's societies and choose who runs them."
+        subtitle={`Add ${university?.short_name ?? "your university's"} societies and choose who runs them.`}
         actions={
-          <Button onClick={() => setEditing("new")}>
-            <Plus />
-            New society
-          </Button>
+          <>
+            {access.is_admin && universities && (
+              <Select value={universityId} onValueChange={setPicked}>
+                <SelectTrigger className="w-56" aria-label="University">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {universities.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.short_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button onClick={() => setEditing("new")} disabled={!universityId}>
+              <Plus />
+              New society
+            </Button>
+          </>
         }
       />
       <ReportedMessages />
@@ -171,6 +210,7 @@ function AdminPage() {
           </div>
           <Committee
             society={s}
+            domain={data.domains[0]}
             roles={data.roles.filter((r) => r.society_id === s.id)}
             invites={data.invites.filter((i) => i.society_id === s.id)}
           />
@@ -179,6 +219,7 @@ function AdminPage() {
       {editing && (
         <SocietyDialog
           society={editing === "new" ? null : editing}
+          universityId={universityId}
           onClose={() => setEditing(null)}
         />
       )}
@@ -188,10 +229,12 @@ function AdminPage() {
 
 function Committee({
   society,
+  domain,
   roles,
   invites,
 }: {
   society: SocietyRow;
+  domain: string | undefined;
   roles: RoleRow[];
   invites: InviteRow[];
 }) {
@@ -205,8 +248,6 @@ function Committee({
   const invite = async (e: React.FormEvent) => {
     e.preventDefault();
     const addr = email.trim().toLowerCase();
-    if (!/^[^@\s]+@(mytudublin\.ie|tudublin\.ie)$/.test(addr))
-      return void toast.error("Use a TU Dublin email address.");
     setBusy(true);
     const { error } = await supabase.from("role_invites").insert({
       email: addr,
@@ -274,7 +315,7 @@ function Committee({
       <form onSubmit={invite} className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Input
           type="email"
-          placeholder="name@mytudublin.ie"
+          placeholder={`name@${domain ?? "university.ie"}`}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -293,7 +334,15 @@ function Committee({
   );
 }
 
-function SocietyDialog({ society, onClose }: { society: SocietyRow | null; onClose: () => void }) {
+function SocietyDialog({
+  society,
+  universityId,
+  onClose,
+}: {
+  society: SocietyRow | null;
+  universityId: string;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const [f, setF] = useState({
     name: society?.name ?? "",
@@ -324,7 +373,7 @@ function SocietyDialog({ society, onClose }: { society: SocietyRow | null; onClo
     };
     const { error } = society
       ? await supabase.from("societies").update(row).eq("id", society.id)
-      : await supabase.from("societies").insert(row);
+      : await supabase.from("societies").insert({ ...row, university_id: universityId });
     setBusy(false);
     if (error)
       return void toast.error(
