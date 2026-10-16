@@ -134,6 +134,13 @@
       "when": 1792113369856,
       "tag": "0018_events_only_through_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792113369885,
+      "tag": "0019_announcement_insert_columns",
+      "breakpoints": true
     }
   ]
 }
