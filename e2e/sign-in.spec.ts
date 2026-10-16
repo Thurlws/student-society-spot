@@ -8,7 +8,7 @@ test("a new student confirms their address, sets up a profile and lands on the h
   expect(mail.subject).toBe("Confirm your SocConnect account");
   await expect(page).toHaveURL(/\/onboarding$/);
   await page.getByRole("button", { name: "Technology" }).click();
-  await page.getByLabel("Display name").fill("Nia Newcomer");
+  await page.getByLabel("What should people call you?").fill("Nia Newcomer");
   await page.getByLabel("Year").selectOption("Year 1");
   await page.getByRole("button", { name: "Finish and continue" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Nia.");

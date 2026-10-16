@@ -27,6 +27,7 @@ from (values
   ('0027 sign-in health', to_regprocedure('public.sign_in_health()') is not null),
   ('0028 society import', to_regprocedure('public.import_societies(uuid, jsonb)') is not null),
   ('0029 society identity', coalesce(pg_get_functiondef(to_regprocedure('public.guard_society_update()')) like '%name, category, logo or banner%', false)),
-  ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%'))
+  ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%')),
+  ('0031 display names', to_regprocedure('private.check_display_name()') is not null)
 ) as m(migration, applied)
 order by m.migration;

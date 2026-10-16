@@ -100,7 +100,7 @@ function useDataValue() {
   const loaded = !!q.data || !!q.error;
 
   const committeeSlugs = auth.access.committee.map((c) => c.slug);
-  const name = auth.profile?.display_name || auth.email.split("@")[0] || "You";
+  const name = auth.profile?.display_name.trim() || "You";
   const user: User = {
     id: uidAuth ?? "signed-out",
     name,
