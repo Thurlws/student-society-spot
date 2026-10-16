@@ -141,6 +141,13 @@
       "when": 1792113369885,
       "tag": "0019_announcement_insert_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792113369915,
+      "tag": "0020_recap_host_still_member",
+      "breakpoints": true
     }
   ]
 }
