@@ -120,7 +120,7 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 **Rollout checklist (production):**
 
 1. Merge `phase-1` and Phase 2 (both done 2026-10-16), then `phase-2-followups`.
-2. Make sure migrations 0007 to 0020 are applied to Lovable Cloud **at the same time as the code is published**. Phase 2's code reads columns and calls functions from 0014 to 0016 (`cancelled_at`, `edited_at`, `message_reports`), so the data load fails without them. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. We still haven't seen how Lovable treats migrations that arrive from GitHub; if they aren't applied, ask Lovable to apply the pending migrations in `drizzle/migrations`.
+2. Make sure migrations 0007 to 0020 are applied to Lovable Cloud **at the same time as the code is published**. Phase 2's code reads columns and calls functions from 0014 to 0016 (`cancelled_at`, `edited_at`, `message_reports`), so the data load fails without them. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. Lovable doesn't apply migrations that arrive from GitHub (found 2026-10-16): apply them with `dev/supabase/apply-0007-0030.sql` in the SQL editor.
 3. Check in Lovable Cloud's SQL editor: `select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private';` should list the 5 helpers.
 4. Review platform admins: `select u.email from public.user_roles r join auth.users u on u.id = r.user_id;` and delete rows for anyone who shouldn't be one.
 5. Sign-in setup (needs the domain): see the checklist in [sign-in-email-bug.md](sign-in-email-bug.md).
@@ -184,7 +184,7 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 | One go-live checklist | Done: [go-live.md](go-live.md) |
 | Demo runbook | Done: [demo.md](demo.md) |
 
-Checked on 2026-10-16 with a public request, as the welcome page makes: production has `email_domain_allowed`, so migrations up to at least 0022 reached Lovable Cloud. The full answer still needs `check-migrations.sql` in the SQL editor.
+**Production has none of migrations 0007 to 0030** (2026-10-16, `check-migrations.sql` run by the owner in Lovable's SQL editor). Lovable doesn't apply migration files that arrive from GitHub; it only applies changes its own agent makes. That answers the open question about how Lovable treats our migrations. `dev/supabase/apply-0007-0030.sql` applies all of them in one transaction (rehearsed on a local copy at 0006 with sample data: every check says yes and all 1,820 database tests pass). From now on, every new migration is applied by pasting it into the SQL editor. An earlier note here said production had 0022 because it answered `email_domain_allowed`; that was wrong, since 0000 already defined that function.
 
 ### Phase 5: when demand justifies it
 
