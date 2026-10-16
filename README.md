@@ -94,6 +94,8 @@ They always start their own dev server pointed at the local database, and refuse
 | `SUPABASE_SERVICE_ROLE_KEY` | Lovable Cloud secrets | Server functions that bypass row-level security: call tokens, recaps, AI quotas |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Hosting environment | Live video calls. Without them, calls show "not available". |
 | `LOVABLE_API_KEY` | Provided by Lovable hosting | AI recaps, captions and recommendations. Without it, recaps fall back to a keyword summary. |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT` | Lovable Cloud secrets | Server and browser errors to an EU error tracker ([`context/monitoring.md`](context/monitoring.md)). Without them, errors only reach the server log. |
+| `MONITORING_TOKEN` | Lovable Cloud secrets | Lets an uptime monitor read `/api/health/sign-in` and send a test alert. `/api/health` itself is public. |
 
 `.env` is committed on purpose: published builds read it and break without it. It must only ever hold public values. Put secrets and local overrides in `.env.local`. [`.env.example`](.env.example) lists the server-only variables.
 

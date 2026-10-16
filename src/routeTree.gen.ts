@@ -21,6 +21,7 @@ import { Route as AuthenticatedMySocietiesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocietyPulseRouteImport } from './routes/_authenticated/society-pulse'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as AuthenticatedCallRoomIdRouteImport } from './routes/_authenticated/call.$roomId'
@@ -32,6 +33,8 @@ import { Route as AuthenticatedRequestsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedRequestsRequestIdRouteImport } from './routes/_authenticated/requests.$requestId'
 import { Route as AuthenticatedSocietiesIndexRouteImport } from './routes/_authenticated/societies.index'
 import { Route as AuthenticatedSocietiesSocietyIdRouteImport } from './routes/_authenticated/societies.$societyId'
+import { Route as ApiHealthSignInRouteImport } from './routes/api/health_.sign-in'
+import { Route as ApiHealthTestAlertRouteImport } from './routes/api/health_.test-alert'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -95,6 +98,11 @@ const AuthenticatedSocietyPulseRoute =
     path: '/society-pulse',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthConfirmRoute = AuthConfirmRouteImport.update({
   id: '/auth/confirm',
   path: '/auth/confirm',
@@ -157,6 +165,16 @@ const AuthenticatedSocietiesSocietyIdRoute =
     path: '/societies/$societyId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiHealthSignInRoute = ApiHealthSignInRouteImport.update({
+  id: '/api/health_/sign-in',
+  path: '/api/health/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthTestAlertRoute = ApiHealthTestAlertRouteImport.update({
+  id: '/api/health_/test-alert',
+  path: '/api/health/test-alert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -170,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/call/$roomId': typeof AuthenticatedCallRoomIdRoute
@@ -177,6 +196,8 @@ export interface FileRoutesByFullPath {
   '/recaps/$recapId': typeof AuthenticatedRecapsRecapIdRoute
   '/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
+  '/api/health/sign-in': typeof ApiHealthSignInRoute
+  '/api/health/test-alert': typeof ApiHealthTestAlertRoute
   '/calls/': typeof AuthenticatedCallsIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/requests/': typeof AuthenticatedRequestsIndexRoute
@@ -193,6 +214,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -201,6 +223,8 @@ export interface FileRoutesByTo {
   '/recaps/$recapId': typeof AuthenticatedRecapsRecapIdRoute
   '/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
+  '/api/health/sign-in': typeof ApiHealthSignInRoute
+  '/api/health/test-alert': typeof ApiHealthTestAlertRoute
   '/calls': typeof AuthenticatedCallsIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/requests': typeof AuthenticatedRequestsIndexRoute
@@ -219,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/society-pulse': typeof AuthenticatedSocietyPulseRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/join/$code': typeof JoinCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -227,6 +252,8 @@ export interface FileRoutesById {
   '/_authenticated/recaps/$recapId': typeof AuthenticatedRecapsRecapIdRoute
   '/_authenticated/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/_authenticated/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
+  '/api/health_/sign-in': typeof ApiHealthSignInRoute
+  '/api/health_/test-alert': typeof ApiHealthTestAlertRoute
   '/_authenticated/calls/': typeof AuthenticatedCallsIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/requests/': typeof AuthenticatedRequestsIndexRoute
@@ -246,6 +273,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
+    | '/api/health'
     | '/auth/confirm'
     | '/join/$code'
     | '/call/$roomId'
@@ -253,6 +281,8 @@ export interface FileRouteTypes {
     | '/recaps/$recapId'
     | '/requests/$requestId'
     | '/societies/$societyId'
+    | '/api/health/sign-in'
+    | '/api/health/test-alert'
     | '/calls/'
     | '/events/'
     | '/requests/'
@@ -269,6 +299,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/society-pulse'
+    | '/api/health'
     | '/auth/confirm'
     | '/join/$code'
     | '/'
@@ -277,6 +308,8 @@ export interface FileRouteTypes {
     | '/recaps/$recapId'
     | '/requests/$requestId'
     | '/societies/$societyId'
+    | '/api/health/sign-in'
+    | '/api/health/test-alert'
     | '/calls'
     | '/events'
     | '/requests'
@@ -294,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/_authenticated/society-pulse'
+    | '/api/health'
     | '/auth/confirm'
     | '/join/$code'
     | '/_authenticated/'
@@ -302,6 +336,8 @@ export interface FileRouteTypes {
     | '/_authenticated/recaps/$recapId'
     | '/_authenticated/requests/$requestId'
     | '/_authenticated/societies/$societyId'
+    | '/api/health_/sign-in'
+    | '/api/health_/test-alert'
     | '/_authenticated/calls/'
     | '/_authenticated/events/'
     | '/_authenticated/requests/'
@@ -312,8 +348,11 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   WelcomeRoute: typeof WelcomeRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   JoinCodeRoute: typeof JoinCodeRoute
+  ApiHealthSignInRoute: typeof ApiHealthSignInRoute
+  ApiHealthTestAlertRoute: typeof ApiHealthTestAlertRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -402,6 +441,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSocietyPulseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/confirm': {
       id: '/auth/confirm'
       path: '/auth/confirm'
@@ -479,6 +525,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSocietiesSocietyIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/health_/sign-in': {
+      id: '/api/health_/sign-in'
+      path: '/api/health/sign-in'
+      fullPath: '/api/health/sign-in'
+      preLoaderRoute: typeof ApiHealthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health_/test-alert': {
+      id: '/api/health_/test-alert'
+      path: '/api/health/test-alert'
+      fullPath: '/api/health/test-alert'
+      preLoaderRoute: typeof ApiHealthTestAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -531,8 +591,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   WelcomeRoute: WelcomeRoute,
+  ApiHealthRoute: ApiHealthRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   JoinCodeRoute: JoinCodeRoute,
+  ApiHealthSignInRoute: ApiHealthSignInRoute,
+  ApiHealthTestAlertRoute: ApiHealthTestAlertRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
