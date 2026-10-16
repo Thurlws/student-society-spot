@@ -1,4 +1,4 @@
-import { Flag, MoreHorizontal, ShieldAlert, Trash2 } from "lucide-react";
+import { Flag, Loader2, MoreHorizontal, ShieldAlert, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
@@ -46,6 +46,7 @@ export function MessageActions({
   const { user, canManage, isAdmin, deleteMessage, reportMessage, messageReports } = useData();
   const [dialog, setDialog] = useState<null | "delete" | "report">(null);
   const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
   const own = message.authorId === user.id;
   const moderator = canManage(societyId) || isAdmin;
   const reported = messageReports.some((r) => r.messageId === message.id && r.reportedByMe);
@@ -124,7 +125,9 @@ export function MessageActions({
             className="space-y-3"
             onSubmit={async (e) => {
               e.preventDefault();
+              setBusy(true);
               const o = await reportMessage(message.id, reason);
+              setBusy(false);
               if (!o.ok) {
                 toast.error(o.error);
                 return;
@@ -150,7 +153,10 @@ export function MessageActions({
               <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
                 Cancel
               </Button>
-              <Button type="submit">Send report</Button>
+              <Button type="submit" disabled={busy}>
+                {busy && <Loader2 className="animate-spin" />}
+                Send report
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
