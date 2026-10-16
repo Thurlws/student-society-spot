@@ -26,30 +26,40 @@ function Confirm() {
   const { token_hash, type } = Route.useSearch();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(token_hash ? "" : "This sign-in link is incomplete. Ask for a new one.");
+  const [error, setError] = useState(
+    token_hash ? "" : "This sign-in link is incomplete. Ask for a new one.",
+  );
 
   const confirm = async () => {
     setBusy(true);
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (!error) return void navigate({ to: "/" });
     setBusy(false);
-    setError(error.code === "otp_expired"
-      ? "This link has expired or was already used. Links work once, for 10 minutes."
-      : "We couldn't sign you in with this link. Ask for a new one.");
+    setError(
+      error.code === "otp_expired"
+        ? "This link has expired or was already used. Links work once, for 10 minutes."
+        : "We couldn't sign you in with this link. Ask for a new one.",
+    );
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow-lift">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-brand text-primary-foreground"><Waypoints className="size-4" /></span>
+        <span className="flex size-8 items-center justify-center rounded-lg bg-brand text-primary-foreground">
+          <Waypoints className="size-4" />
+        </span>
         <h1 className="text-xl font-semibold">Sign in to SocConnect</h1>
         {error ? (
           <>
             <p className="text-sm text-destructive">{error}</p>
-            <Button asChild className="w-full"><Link to="/welcome">Get a new link</Link></Button>
+            <Button asChild className="w-full">
+              <Link to="/welcome">Get a new link</Link>
+            </Button>
           </>
         ) : (
-          <Button className="w-full" onClick={confirm} disabled={busy}>{busy && <Loader2 className="animate-spin" />}Continue</Button>
+          <Button className="w-full" onClick={confirm} disabled={busy}>
+            {busy && <Loader2 className="animate-spin" />}Continue
+          </Button>
         )}
       </div>
     </div>

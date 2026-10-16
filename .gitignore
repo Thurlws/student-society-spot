@@ -44,3 +44,8 @@ supabase/.temp/
 dev/supabase/.temp/
 dev/supabase/.branches/
 dev/supabase/snippets/
+
+# Playwright (e2e/)
+e2e/.auth/
+playwright-report/
+test-results/

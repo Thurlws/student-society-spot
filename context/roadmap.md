@@ -26,11 +26,11 @@ Line numbers are from commit `e83c5c6`. "Fixed in code" means merged code and mi
 | # | Finding | Where | Task | Status |
 |---|---|---|---|---|
 | 9 | `friendly()` turns server errors into "use your TU Dublin email" | `src/routes/welcome.tsx:69-71` | T1.1 | Fixed 2026-10-16 (`signInError` in `src/lib/auth.tsx`) |
-| 10 | No tests for any database rule | `src/test/`, migrations | T2.1 | Started: pgTAP tests in `dev/supabase/tests` cover the Phase 1 changes (`bun run db:test`) |
+| 10 | No tests for any database rule | `src/test/`, migrations | T2.1 | Fixed 2026-10-16: role-by-table permission matrix, function rule tests, CI job |
 | 11 | AI "all" block row in `society_ai_state` never expires | `src/lib/society-ai.functions.ts:8-25` | T1.4 | Fixed: expires after 15 minutes |
 | 12 | A pending join request reveals the society's member profiles | 0004:21-23 | T1.3 | Fixed in code (migration 0008) |
 | 13 | Recap quota check is racy and duplicates `reserve_society_ai` | `src/lib/calls.functions.ts:21-28` | T1.4 | Fixed in code (migration 0009) |
-| 14 | No message moderation; no edit or cancel for events and announcements | 0001:88-94, `src/lib/api/store.tsx` | T2.2, T2.3 | Open |
+| 14 | No message moderation; no edit or cancel for events and announcements | 0001:88-94, `src/lib/api/store.tsx` | T2.2, T2.3 | Fixed in code 2026-10-16 (migrations 0014-0016) |
 | 15 | Missing indexes on `user_id` lookups and announcements by society and date | 0000, 0001 | T1.5 | Fixed in code (migration 0010) |
 | 16 | README described the old browser-only demo | `README.md` | T0.3 | Fixed 2026-10-15 |
 | 17 | Committees can rename their society or change its logo | 0006:19-33 | Later | Open |
@@ -40,10 +40,24 @@ Line numbers are from commit `e83c5c6`. "Fixed in code" means merged code and mi
 | # | Finding | Where | Status |
 |---|---|---|---|
 | 18 | `getUser()` network call on every navigation | `src/routes/_authenticated/route.tsx:8-11` | Open |
-| 19 | "(demo figure)" and demo calendar ids on real data | `societies.$societyId.tsx:228`, `src/lib/ics.ts:21-23` | Open (T2.4) |
-| 20 | 25 unused shadcn components (3,118 lines) and about 20 packages only they use. Keep `input-otp` | `src/components/ui/` | Open (T2.6) |
+| 19 | "(demo figure)" and demo calendar ids on real data | `societies.$societyId.tsx:228`, `src/lib/ics.ts:21-23` | Fixed 2026-10-16 (T2.4) |
+| 20 | 25 unused shadcn components (3,118 lines) and about 20 packages only they use. Keep `input-otp` | `src/components/ui/` | Fixed 2026-10-16 (T2.6): 28 components and 23 packages removed |
 
 Found while fixing: guest captions stopped for everyone once a guest link's last allowed guest joined. Fixed with T1.4.
+
+### Found in Phase 2 (2026-10-16)
+
+Line numbers are from commit `566c72c`.
+
+| # | Finding | Where | Status |
+|---|---|---|---|
+| 21 | Anyone with a recap's id could share a drop-in room's private recap into the society's general channel: those rooms have no host, and `host_id = auth.uid()` was null, so the check never refused | 0008 `share_recap` | Fixed in code (0013). Found by the permission matrix |
+| 22 | Committees could change an announcement's author or date (the audit's "left out" list) | 0001:63 | Fixed in code (0015) |
+| 23 | `register_for_event` took registrations for events the caller can't see, such as an archived society's | 0001 `register_for_event` | Fixed in code (0014) |
+| 24 | A committee member on two societies could save one society's profile text over the other: the edit form kept the first society's text after switching | `committee.tsx` `EditDialog` | Fixed 2026-10-16 |
+| 25 | Picking interests during onboarding could replace the name being typed with the start of the email address | `src/components/profile-form.tsx` | Fixed 2026-10-16. Found by the sign-up journey |
+| 26 | Text typed into the sign-in form before the page finishes loading is lost, and pressing Continue on `/auth/confirm` that early does nothing. Only noticeable on slow connections | `welcome.tsx`, `auth.confirm.tsx` | Open (nice to have) |
+| 27 | Any signed-in user can save any proposal id, and the error for an unknown id tells them whether it exists | 0001 `saved_proposals` | Open (minor) |
 
 ## Phases
 
@@ -64,7 +78,7 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 | Task | Status |
 |---|---|
-| T1.1 Sign-in | Code done: real error messages, resend countdown, quarantine hint, `/auth/confirm` page, new email wording, 10-minute links (local). Waiting on: custom sending domain, templates and expiry in Lovable Cloud, an allow rule from TU Dublin IT |
+| T1.1 Sign-in | Code done: real error messages, resend countdown, quarantine hint, `/auth/confirm` page, new email wording, 10-minute links (production setting changed by the owner 2026-10-16). Waiting on: custom sending domain, templates in Lovable Cloud, an allow rule from TU Dublin IT |
 | T1.2 No admin by email domain | Done (0007). Review existing admins in production |
 | T1.3 Hide permission helpers; pending requests | Done (0008) |
 | T1.4 AI quotas, block expiry | Done (0009) |
@@ -74,15 +88,22 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 **Rollout checklist (production):**
 
-1. Merge `phase-1`.
-2. Make sure migrations 0007 to 0012 are applied to Lovable Cloud **at the same time as the code is published**. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. We still haven't seen how Lovable treats migrations that arrive from GitHub; if they aren't applied, ask Lovable to apply the pending migrations in `drizzle/migrations`.
+1. Merge `phase-1` (done 2026-10-16), then the Phase 2 branch.
+2. Make sure migrations 0007 to 0016 are applied to Lovable Cloud **at the same time as the code is published**. Phase 2's code reads columns and calls functions from 0014 to 0016 (`cancelled_at`, `edited_at`, `message_reports`), so the data load fails without them. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. We still haven't seen how Lovable treats migrations that arrive from GitHub; if they aren't applied, ask Lovable to apply the pending migrations in `drizzle/migrations`.
 3. Check in Lovable Cloud's SQL editor: `select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private';` should list the 5 helpers.
 4. Review platform admins: `select u.email from public.user_roles r join auth.users u on u.id = r.user_id;` and delete rows for anyone who shouldn't be one.
 5. Sign-in setup (needs the domain): see the checklist in [sign-in-email-bug.md](sign-in-email-bug.md).
 
-### Phase 2: core and tests
+### Phase 2: core and tests (code done 2026-10-16, branch `claude/zen-fermi-bzwqu9`)
 
-T2.1 database test suite, a role-by-table permission matrix (P0, M; started in `dev/supabase/tests`). T2.2 edit and cancel events and announcements (P1, M). T2.3 message moderation (P1, S-M). T2.4 remove demo labels (P2, XS). T2.5 Playwright journeys in CI, plus a CI job for `db:test` (P1, M). T2.6 lean cleanup and a Prettier pass (P3, XS).
+| Task | Status |
+|---|---|
+| T2.1 Database tests | Done: `permission_matrix.test.sql` runs every table and function as seven kinds of user (signed out, student, applicant, member, committee, another society's committee, platform admin) and guards against tables without RLS, open read policies and new callable owner-rights functions. Rule tests for the write functions. CI job `database`. Breaking a policy turns CI red (checked) |
+| T2.2 Edit and cancel | Done (0014, 0015): committees edit and cancel events (registered people are notified of time or place changes; members and registered people of cancellations; cancelled events refuse registrations) and edit or delete announcements (wording and pin only, marked "edited"). Pinned announcements now come first |
+| T2.3 Moderation | Done (0016): authors delete their own messages; the committee and platform admins remove any; members report a message to the committee, which gets a notification and a queue on its dashboard; admins see every open report on `/admin`. A student can't delete someone else's message (tested) |
+| T2.4 Demo labels | Done |
+| T2.5 Browser journeys | Done: Playwright in `e2e/` against the local stack, with sign-in through Mailpit: new and returning sign-in, join and approve, events, announcements, moderation, the committee's society picker. CI job `journeys` |
+| T2.6 Lean cleanup | Done: 28 unused UI components and 23 packages removed; Prettier run once; lint in CI |
 
 ### Phase 3: multi-university
 
@@ -98,6 +119,6 @@ Realtime notifications, per-page loading and pagination, SSO per university, ema
 
 ## Milestones
 
-- **TU Dublin demo:** finish T1.1 (domain and templates), roll out Phase 1, then T2.4.
+- **TU Dublin demo:** finish T1.1 (domain and templates), then roll out Phases 1 and 2 (T2.4 is done).
 - **Trinity or UCD demo:** add T2.1, T3.1-T3.3, T3.5. About 3 to 5 more developer-weeks.
 - **Limited pilot:** all of Phases 0 to 4. About 7 to 12 more developer-weeks plus time with the university's DPO and IT team.

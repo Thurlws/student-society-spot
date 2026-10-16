@@ -7,7 +7,8 @@ const API = "http://127.0.0.1:54321";
 const MAIL = "http://127.0.0.1:54324";
 const env = execSync("npm run -s supabase -- status -o env", { encoding: "utf8" });
 const key = env.match(/^PUBLISHABLE_KEY="?([^"\n]+)/m)?.[1];
-if (!key) throw new Error("No local publishable key. Is the stack running? Try `npm run db:start`.");
+if (!key)
+  throw new Error("No local publishable key. Is the stack running? Try `npm run db:start`.");
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const signIn = (email) =>
@@ -51,7 +52,8 @@ console.log("ok  confirmation link signs the user in");
 res = await signIn(email);
 if (!res.ok) fail(`returning user: HTTP ${res.status} ${await res.text()}`);
 mails = await subjects(email);
-if (mails.length !== 2) fail(`returning user: expected a second email, got ${mails.length} in total`);
+if (mails.length !== 2)
+  fail(`returning user: expected a second email, got ${mails.length} in total`);
 console.log(`ok  returning user gets "${mails[0].subject}"`);
 verified = await verify(mails[0].id);
 if (!(await verified.json()).access_token) fail("sign-in link gave no session");

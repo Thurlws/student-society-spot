@@ -11,19 +11,31 @@ import courses from "@/data/tud-courses.json";
 const years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate", "Staff"];
 
 /** Display name, course and year — saved to the signed-in person's own profile. */
-export function ProfileForm({ submitLabel = "Save profile", onSaved, finishOnboarding }: { submitLabel?: string; onSaved?: () => void; finishOnboarding?: boolean }) {
+export function ProfileForm({
+  submitLabel = "Save profile",
+  onSaved,
+  finishOnboarding,
+}: {
+  submitLabel?: string;
+  onSaved?: () => void;
+  finishOnboarding?: boolean;
+}) {
   const { profile, session, refresh } = useAuth();
   const [name, setName] = useState("");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [busy, setBusy] = useState(false);
+  const [filled, setFilled] = useState(false);
 
+  // Fill in the saved details once. The profile refreshes when interests change on the same
+  // page, and refilling then would wipe whatever the person had typed meanwhile.
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || filled) return;
     setName(profile.display_name);
     setCourse(profile.course);
     setYear(profile.year);
-  }, [profile]);
+    setFilled(true);
+  }, [profile, filled]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,23 +62,53 @@ export function ProfileForm({ submitLabel = "Save profile", onSaved, finishOnboa
     <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
       <div className="space-y-1.5 sm:col-span-3">
         <Label htmlFor="pf-name">Display name</Label>
-        <Input id="pf-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
+        <Input
+          id="pf-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={80}
+          required
+        />
       </div>
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="pf-course">Course</Label>
-        <Input id="pf-course" list="tud-courses" placeholder="Search course code or name" value={course} onChange={(e) => setCourse(e.target.value)} maxLength={120} autoComplete="off" />
-        <datalist id="tud-courses">{courses.map((c) => <option key={c.code} value={`${c.code} — ${c.name}`} />)}</datalist>
+        <Input
+          id="pf-course"
+          list="tud-courses"
+          placeholder="Search course code or name"
+          value={course}
+          onChange={(e) => setCourse(e.target.value)}
+          maxLength={120}
+          autoComplete="off"
+        />
+        <datalist id="tud-courses">
+          {courses.map((c) => (
+            <option key={c.code} value={`${c.code} — ${c.name}`} />
+          ))}
+        </datalist>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="pf-year">Year</Label>
-        <select id="pf-year" value={year} onChange={(e) => setYear(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <select
+          id="pf-year"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <option value="">Select year</option>
           {year && !years.includes(year) && <option value={year}>{year}</option>}
-          {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
         </select>
       </div>
       <div className="sm:col-span-3">
-        <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />}{submitLabel}</Button>
+        <Button type="submit" disabled={busy}>
+          {busy && <Loader2 className="animate-spin" />}
+          {submitLabel}
+        </Button>
       </div>
     </form>
   );

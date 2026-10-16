@@ -1,5 +1,8 @@
 /** Scripted lines used only by tests. */
-export function callScript(societyName: string, others: string[]): { speaker: string; text: string }[] {
+export function callScript(
+  societyName: string,
+  others: string[],
+): { speaker: string; text: string }[] {
   const [a = "Priya Nair", b = "Sam Okafor", c = a] = others;
   return [
     { speaker: a, text: `Hey everyone! Good to see the ${societyName} crew.` },
