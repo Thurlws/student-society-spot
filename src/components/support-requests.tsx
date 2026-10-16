@@ -330,9 +330,7 @@ export function CommitteeRequestsSummary({ societyId }: { societyId: string }) {
           </p>
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link to="/inbox">
-            Open inbox
-          </Link>
+          <Link to="/inbox">Open inbox</Link>
         </Button>
       </div>
       <div className="mt-4 space-y-2">

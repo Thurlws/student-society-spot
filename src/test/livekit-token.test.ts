@@ -33,6 +33,8 @@ describe("LiveKit call tokens", () => {
       canPublishData: true,
     });
     expect(claims.sub).toBe("u-1-aaa");
-    expect((decodeJwt(a.token) as { exp: number; nbf?: number; iat?: number }).exp).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 3600 + 5);
+    expect(
+      (decodeJwt(a.token) as { exp: number; nbf?: number; iat?: number }).exp,
+    ).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 3600 + 5);
   });
 });

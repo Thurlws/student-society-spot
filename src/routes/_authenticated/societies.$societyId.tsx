@@ -1,5 +1,21 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, FileText, Hash, Lock, Megaphone, MessageSquarePlus, Pin, Send, CalendarClock, Users, Link2, ClipboardList, BookOpen, PencilLine, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Hash,
+  Lock,
+  Megaphone,
+  MessageSquarePlus,
+  Pin,
+  Send,
+  CalendarClock,
+  Users,
+  Link2,
+  ClipboardList,
+  BookOpen,
+  PencilLine,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { useData } from "@/lib/api/store";
 import { todayIso } from "@/lib/format";
@@ -19,7 +35,15 @@ import { OfficialInfo } from "@/components/official-info";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { MessageActions } from "@/components/moderation";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Announcement } from "@/lib/types";
 
@@ -34,11 +58,14 @@ function SocietyRoute() {
   const { societyId } = Route.useParams();
   const { getSociety, loaded } = useData();
   if (!getSociety(societyId)) {
-    if (!loaded) return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
+    if (!loaded)
+      return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
     return (
       <div className="py-20 text-center">
         <h1 className="text-xl font-semibold">Society not found</h1>
-        <Link to="/societies" className="mt-4 inline-block text-primary">Back to societies</Link>
+        <Link to="/societies" className="mt-4 inline-block text-primary">
+          Back to societies
+        </Link>
       </div>
     );
   }
@@ -46,8 +73,22 @@ function SocietyRoute() {
 }
 
 function SocietyPage({ societyId }: { societyId: string }) {
-  const hash = useRouterState({ select: s => s.location.hash });
-  const { getSociety, membership, announcements, events, messages, postMessage, user, meetings, recaps, channels, resources, rooms, canManage } = useData();
+  const hash = useRouterState({ select: (s) => s.location.hash });
+  const {
+    getSociety,
+    membership,
+    announcements,
+    events,
+    messages,
+    postMessage,
+    user,
+    meetings,
+    recaps,
+    channels,
+    resources,
+    rooms,
+    canManage,
+  } = useData();
   const s = getSociety(societyId)!;
   const today = todayIso();
   const isMember = membership(s.id) === "member";
@@ -55,9 +96,13 @@ function SocietyPage({ societyId }: { societyId: string }) {
   // Imported taglines are often the description's first sentence cut short; don't print it twice.
   const showTagline = !!s.tagline && !s.description.startsWith(s.tagline.replace(/[….\s]+$/, ""));
   // Pinned first, then newest first (the order they arrive in).
-  const socAnn = announcements.filter((x) => x.societyId === s.id).sort((x, y) => Number(!!y.pinned) - Number(!!x.pinned));
+  const socAnn = announcements
+    .filter((x) => x.societyId === s.id)
+    .sort((x, y) => Number(!!y.pinned) - Number(!!x.pinned));
   // Kept after closing so the dialog doesn't switch to "New announcement" while it fades out.
-  const [editingAnn, setEditingAnn] = useState<{ open: boolean; announcement?: Announcement }>({ open: false });
+  const [editingAnn, setEditingAnn] = useState<{ open: boolean; announcement?: Announcement }>({
+    open: false,
+  });
   const socEvents = events.filter((e) => e.societyId === s.id && e.date >= today);
   const nextUp = socEvents.find((e) => !e.cancelled);
   const socChannels = channels.filter((c) => c.societyId === s.id);
@@ -66,89 +111,197 @@ function SocietyPage({ societyId }: { societyId: string }) {
   const [draft, setDraft] = useState("");
   const socRes = resources.filter((r) => r.societyId === s.id);
   // Member lists stay private; show the committee and you.
-  const shownMembers = [...new Set([...s.committee.map((c) => c.name), ...(isMember ? [user.name] : [])])];
+  const shownMembers = [
+    ...new Set([...s.committee.map((c) => c.name), ...(isMember ? [user.name] : [])]),
+  ];
 
   const MembersOnly = ({ what }: { what: string }) => (
-    <EmptyState icon={Lock} title={`${what} are for members`} body={`Join ${s.shortName} to take part.`} action={<JoinButton society={s} />} />
+    <EmptyState
+      icon={Lock}
+      title={`${what} are for members`}
+      body={`Join ${s.shortName} to take part.`}
+      action={<JoinButton society={s} />}
+    />
   );
 
   return (
     <div>
-      <Link to="/societies" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />All societies</Link>
+      <Link
+        to="/societies"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        All societies
+      </Link>
       <div className="overflow-hidden rounded-2xl border bg-card shadow-soft">
         <SocietyBanner society={s} className="h-28 sm:h-36" />
         <div className="px-6 pb-6">
           <div className="flex items-start justify-between gap-4">
             <SocietyAvatar society={s} size="lg" className="-mt-8 border-4 border-card bg-card" />
-            <div className="pt-4"><JoinButton society={s} size="default" /></div>
+            <div className="pt-4">
+              <JoinButton society={s} size="default" />
+            </div>
           </div>
           <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">{s.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{[s.category, s.campus && `${s.campus} campus`, `${s.memberCount} members`].filter(Boolean).join(", ")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {[s.category, s.campus && `${s.campus} campus`, `${s.memberCount} members`]
+              .filter(Boolean)
+              .join(", ")}
+          </p>
         </div>
       </div>
 
-      <Tabs key={hash.startsWith("announcement-") ? "announcement" : "overview"} defaultValue={hash.startsWith("announcement-") ? "announcements" : "overview"} className="mt-6">
+      <Tabs
+        key={hash.startsWith("announcement-") ? "announcement" : "overview"}
+        defaultValue={hash.startsWith("announcement-") ? "announcements" : "overview"}
+        className="mt-6"
+      >
         <TabsList className="h-auto flex-wrap justify-start bg-transparent p-0">
-          {["overview", "announcements", "discussions", "calls", "events", "resources", "members"].map((t) => (
-            <TabsTrigger key={t} value={t} className="rounded-full capitalize data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none">{t}</TabsTrigger>
+          {[
+            "overview",
+            "announcements",
+            "discussions",
+            "calls",
+            "events",
+            "resources",
+            "members",
+          ].map((t) => (
+            <TabsTrigger
+              key={t}
+              value={t}
+              className="rounded-full capitalize data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+            >
+              {t}
+            </TabsTrigger>
           ))}
         </TabsList>
 
         <TabsContent value="overview" className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <div className="rounded-xl border bg-card p-6 shadow-soft">
-              {showTagline && <p className={cn("mb-3 text-sm font-semibold", a.text)}>{s.tagline}</p>}
-              <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{s.description || "This society hasn't published a description yet."}</p>
-              {s.meets && !s.extraSections?.some((x) => x.title === "Meetings") && <p className="mt-4 text-sm"><span className="font-semibold">Meets: </span><span className="text-muted-foreground">{s.meets}</span></p>}
-              {s.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{s.tags.map((t) => <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{t}</span>)}</div>}
+              {showTagline && (
+                <p className={cn("mb-3 text-sm font-semibold", a.text)}>{s.tagline}</p>
+              )}
+              <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                {s.description || "This society hasn't published a description yet."}
+              </p>
+              {s.meets && !s.extraSections?.some((x) => x.title === "Meetings") && (
+                <p className="mt-4 text-sm">
+                  <span className="font-semibold">Meets: </span>
+                  <span className="text-muted-foreground">{s.meets}</span>
+                </p>
+              )}
+              {s.tags.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {s.tags.map((t) => (
+                    <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             {(s.extraSections ?? []).map((x) => (
               <div key={x.title} className="rounded-xl border bg-card p-6 shadow-soft">
                 <p className="text-sm font-semibold">{x.title}</p>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{x.body}</p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                  {x.body}
+                </p>
               </div>
             ))}
-            {nextUp && <div><p className="mb-3 text-sm font-semibold">Next up</p><div className="max-w-sm"><EventCard event={nextUp} /></div></div>}
+            {nextUp && (
+              <div>
+                <p className="mb-3 text-sm font-semibold">Next up</p>
+                <div className="max-w-sm">
+                  <EventCard event={nextUp} />
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-4">
             <div className="rounded-xl border bg-card p-5 shadow-soft">
               <p className="text-sm font-semibold">Committee</p>
-              {s.committee.length === 0 && <p className="mt-2 text-xs text-muted-foreground">No committee members on SocConnect yet.</p>}
+              {s.committee.length === 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  No committee members on SocConnect yet.
+                </p>
+              )}
               <ul className="mt-3 space-y-3">
                 {s.committee.map((c) => (
                   <li key={c.name} className="flex items-center gap-3">
-                    <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">{c.name.split(" ").map((p) => p[0]).join("")}</span>
-                    <span><span className="block text-sm font-medium">{c.name}</span><span className="block text-xs text-muted-foreground">{c.position}</span></span>
+                    <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                      {c.name
+                        .split(" ")
+                        .map((p) => p[0])
+                        .join("")}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-medium">{c.name}</span>
+                      <span className="block text-xs text-muted-foreground">{c.position}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
               {isMember && (
                 <NewRequestDialog
                   defaultSocietyId={s.id}
-                  trigger={<Button variant="outline" size="sm" className="mt-4 w-full"><MessageSquarePlus />Contact committee</Button>}
+                  trigger={
+                    <Button variant="outline" size="sm" className="mt-4 w-full">
+                      <MessageSquarePlus />
+                      Contact committee
+                    </Button>
+                  }
                 />
               )}
             </div>
             <OfficialInfo society={s} />
             <div className="rounded-xl border bg-card p-5 text-sm shadow-soft">
               <p className="font-semibold">Joining</p>
-              <p className="mt-1 text-muted-foreground">{s.requiresApproval ? "Membership requests are reviewed by the committee." : "Open to all students. You're in as soon as you join."}</p>
+              <p className="mt-1 text-muted-foreground">
+                {s.requiresApproval
+                  ? "Membership requests are reviewed by the committee."
+                  : "Open to all students. You're in as soon as you join."}
+              </p>
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="announcements" className="mt-6 space-y-3">
-          {socAnn.length === 0 && <EmptyState icon={Megaphone} title="No announcements yet" body="The committee hasn't posted anything yet." />}
+          {socAnn.length === 0 && (
+            <EmptyState
+              icon={Megaphone}
+              title="No announcements yet"
+              body="The committee hasn't posted anything yet."
+            />
+          )}
           {socAnn.map((x) => (
-            <article key={x.id} id={`announcement-${x.id}`} className="scroll-mt-20 rounded-xl border bg-card p-5 shadow-soft">
+            <article
+              key={x.id}
+              id={`announcement-${x.id}`}
+              className="scroll-mt-20 rounded-xl border bg-card p-5 shadow-soft"
+            >
               <div className="flex items-start justify-between gap-3">
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Megaphone className={cn("size-3.5", a.text)} />{x.author}, {timeAgo(x.createdAt)}{x.editedAt && ", edited"}
-                  {x.pinned && <span className="flex items-center gap-1 font-medium text-primary"><Pin className="size-3" />Pinned</span>}
+                  <Megaphone className={cn("size-3.5", a.text)} />
+                  {x.author}, {timeAgo(x.createdAt)}
+                  {x.editedAt && ", edited"}
+                  {x.pinned && (
+                    <span className="flex items-center gap-1 font-medium text-primary">
+                      <Pin className="size-3" />
+                      Pinned
+                    </span>
+                  )}
                 </p>
                 {canManage(s.id) && (
                   <div className="-mr-2 -mt-2 flex shrink-0">
-                    <Button size="icon" variant="ghost" aria-label={`Edit ${x.title}`} onClick={() => setEditingAnn({ open: true, announcement: x })}><PencilLine /></Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Edit ${x.title}`}
+                      onClick={() => setEditingAnn({ open: true, announcement: x })}
+                    >
+                      <PencilLine />
+                    </Button>
                     <DeleteAnnouncementButton announcement={x} />
                   </div>
                 )}
@@ -157,38 +310,84 @@ function SocietyPage({ societyId }: { societyId: string }) {
               <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{x.body}</p>
             </article>
           ))}
-          <AnnouncementDialog open={editingAnn.open} onClose={() => setEditingAnn({ ...editingAnn, open: false })} societyId={s.id} announcement={editingAnn.announcement} />
+          <AnnouncementDialog
+            open={editingAnn.open}
+            onClose={() => setEditingAnn({ ...editingAnn, open: false })}
+            societyId={s.id}
+            announcement={editingAnn.announcement}
+          />
         </TabsContent>
 
         <TabsContent value="discussions" className="mt-6">
-          {!isMember ? <MembersOnly what="Discussions" /> : (
+          {!isMember ? (
+            <MembersOnly what="Discussions" />
+          ) : (
             <div className="grid overflow-hidden rounded-xl border bg-card shadow-soft md:grid-cols-[220px_1fr]">
               <div className="border-b bg-surface p-3 md:border-b-0 md:border-r">
                 <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground">Channels</p>
                 {socChannels.map((c) => (
-                  <button key={c.id} onClick={() => setChannel(c.id)} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm", channel === c.id ? "bg-card font-semibold text-primary shadow-soft" : "text-muted-foreground hover:bg-card")}>
-                    <Hash className="size-3.5" />{c.name}
+                  <button
+                    key={c.id}
+                    onClick={() => setChannel(c.id)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
+                      channel === c.id
+                        ? "bg-card font-semibold text-primary shadow-soft"
+                        : "text-muted-foreground hover:bg-card",
+                    )}
+                  >
+                    <Hash className="size-3.5" />
+                    {c.name}
                   </button>
                 ))}
               </div>
               <div className="flex h-[460px] flex-col">
                 <div className="border-b px-5 py-3">
-                  <p className="font-semibold">#{socChannels.find((c) => c.id === channel)?.name}</p>
-                  <p className="text-xs text-muted-foreground">{socChannels.find((c) => c.id === channel)?.description}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Only members of {s.shortName} can read this channel.</p>
+                  <p className="font-semibold">
+                    #{socChannels.find((c) => c.id === channel)?.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {socChannels.find((c) => c.id === channel)?.description}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Only members of {s.shortName} can read this channel.
+                  </p>
                 </div>
                 <div className="flex-1 space-y-4 overflow-y-auto p-5">
-                  {messages.filter((m) => m.channelId === channel).length === 0 && <p className="text-center text-sm text-muted-foreground">No messages yet. Say hello.</p>}
-                  {messages.filter((m) => m.channelId === channel).map((m) => (
-                    <div key={m.id} className="flex gap-3">
-                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", m.authorId === user.id ? "bg-ink text-ink-foreground" : "bg-muted")}>{m.author.split(" ").map((p) => p[0]).join("")}</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm"><span className="font-semibold">{m.author}</span> <span className="text-xs text-muted-foreground">{timeAgo(m.createdAt)}</span></p>
-                        <p className="whitespace-pre-line break-words text-sm text-foreground/90">{m.body}</p>
+                  {messages.filter((m) => m.channelId === channel).length === 0 && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      No messages yet. Say hello.
+                    </p>
+                  )}
+                  {messages
+                    .filter((m) => m.channelId === channel)
+                    .map((m) => (
+                      <div key={m.id} className="flex gap-3">
+                        <span
+                          className={cn(
+                            "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                            m.authorId === user.id ? "bg-ink text-ink-foreground" : "bg-muted",
+                          )}
+                        >
+                          {m.author
+                            .split(" ")
+                            .map((p) => p[0])
+                            .join("")}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm">
+                            <span className="font-semibold">{m.author}</span>{" "}
+                            <span className="text-xs text-muted-foreground">
+                              {timeAgo(m.createdAt)}
+                            </span>
+                          </p>
+                          <p className="whitespace-pre-line break-words text-sm text-foreground/90">
+                            {m.body}
+                          </p>
+                        </div>
+                        <MessageActions message={m} societyId={s.id} societyName={s.shortName} />
                       </div>
-                      <MessageActions message={m} societyId={s.id} societyName={s.shortName} />
-                    </div>
-                  ))}
+                    ))}
                 </div>
                 <form
                   className="flex gap-2 border-t p-3"
@@ -196,11 +395,20 @@ function SocietyPage({ societyId }: { societyId: string }) {
                     e.preventDefault();
                     if (!channel) return;
                     const o = await postMessage(channel, draft);
-                    if (o.ok) setDraft(""); else toast.error(o.error);
+                    if (o.ok) setDraft("");
+                    else toast.error(o.error);
                   }}
                 >
-                  <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message…" maxLength={1000} aria-label="Message" />
-                  <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()}><Send /></Button>
+                  <Input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="Write a message…"
+                    maxLength={1000}
+                    aria-label="Message"
+                  />
+                  <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()}>
+                    <Send />
+                  </Button>
                 </form>
               </div>
             </div>
@@ -208,49 +416,116 @@ function SocietyPage({ societyId }: { societyId: string }) {
         </TabsContent>
 
         <TabsContent value="calls" className="mt-6">
-          {!isMember ? <MembersOnly what="Calls" /> : (
+          {!isMember ? (
+            <MembersOnly what="Calls" />
+          ) : (
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">Drop into a room any time, or schedule a call. Every call ends with a written recap.</p>
+                <p className="text-sm text-muted-foreground">
+                  Drop into a room any time, or schedule a call. Every call ends with a written
+                  recap.
+                </p>
                 <ScheduleCallDialog defaultSocietyId={s.id} />
               </div>
-              <div className="grid gap-3 md:grid-cols-2">{rooms.filter((r) => r.societyId === s.id).map((r) => <RoomCard key={r.id} room={r} />)}</div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {rooms
+                  .filter((r) => r.societyId === s.id)
+                  .map((r) => (
+                    <RoomCard key={r.id} room={r} />
+                  ))}
+              </div>
               {meetings.some((m) => m.societyId === s.id && (m.date ?? "") >= today) && (
-                <div><p className="mb-3 text-sm font-semibold">Upcoming calls</p><div className="grid gap-3 md:grid-cols-2">{meetings.filter((m) => m.societyId === s.id && (m.date ?? "") >= today).map((m) => <MeetingCard key={m.id} meeting={m} />)}</div></div>
+                <div>
+                  <p className="mb-3 text-sm font-semibold">Upcoming calls</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {meetings
+                      .filter((m) => m.societyId === s.id && (m.date ?? "") >= today)
+                      .map((m) => (
+                        <MeetingCard key={m.id} meeting={m} />
+                      ))}
+                  </div>
+                </div>
               )}
               {recaps.some((r) => r.societyId === s.id) && (
-                <div><p className="mb-3 text-sm font-semibold">Recaps</p><div className="grid gap-3 md:grid-cols-2">{recaps.filter((r) => r.societyId === s.id).map((r) => <RecapCard key={r.id} recap={r} />)}</div></div>
+                <div>
+                  <p className="mb-3 text-sm font-semibold">Recaps</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {recaps
+                      .filter((r) => r.societyId === s.id)
+                      .map((r) => (
+                        <RecapCard key={r.id} recap={r} />
+                      ))}
+                  </div>
+                </div>
               )}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="events" className="mt-6">
-          {socEvents.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{socEvents.map((e) => <EventCard key={e.id} event={e} />)}</div>
-            : <EmptyState icon={CalendarClock} title="No upcoming events" body="When the committee adds an event, it'll show up here." />}
+          {socEvents.length ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {socEvents.map((e) => (
+                <EventCard key={e.id} event={e} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={CalendarClock}
+              title="No upcoming events"
+              body="When the committee adds an event, it'll show up here."
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="resources" className="mt-6">
-          {!isMember ? <MembersOnly what="Resources" /> : socRes.length === 0 ? <EmptyState icon={FileText} title="No resources yet" body="Guides and links shared by the committee will appear here." /> : (
+          {!isMember ? (
+            <MembersOnly what="Resources" />
+          ) : socRes.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No resources yet"
+              body="Guides and links shared by the committee will appear here."
+            />
+          ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {socRes.map((r) => { const I = resIcon[r.kind]; return (
-                <div key={r.id} className="flex gap-3 rounded-xl border bg-card p-4 shadow-soft">
-                  <span className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary"><I className="size-4" /></span>
-                  <div><p className="text-sm font-semibold">{r.title}</p><p className="text-xs text-muted-foreground">{r.kind}: {r.description}</p></div>
-                </div>
-              ); })}
+              {socRes.map((r) => {
+                const I = resIcon[r.kind];
+                return (
+                  <div key={r.id} className="flex gap-3 rounded-xl border bg-card p-4 shadow-soft">
+                    <span className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <I className="size-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">{r.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.kind}: {r.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="members" className="mt-6">
           <div className="rounded-xl border bg-card p-6 shadow-soft">
-            <div className="flex items-center gap-3"><Users className="size-5 text-primary" /><p className="font-semibold">{s.memberCount} members</p></div>
+            <div className="flex items-center gap-3">
+              <Users className="size-5 text-primary" />
+              <p className="font-semibold">{s.memberCount} members</p>
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {shownMembers.map((n) => (
-                <span key={n} className="rounded-full border bg-surface px-3 py-1 text-xs">{n}</span>
+                <span key={n} className="rounded-full border bg-surface px-3 py-1 text-xs">
+                  {n}
+                </span>
               ))}
-              {s.memberCount > shownMembers.length && <span className="rounded-full px-3 py-1 text-xs text-muted-foreground">+ {s.memberCount - shownMembers.length} more</span>}
+              {s.memberCount > shownMembers.length && (
+                <span className="rounded-full px-3 py-1 text-xs text-muted-foreground">
+                  + {s.memberCount - shownMembers.length} more
+                </span>
+              )}
             </div>
           </div>
         </TabsContent>
@@ -263,18 +538,31 @@ function DeleteAnnouncementButton({ announcement }: { announcement: Announcement
   const { deleteAnnouncement } = useData();
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild><Button size="icon" variant="ghost" aria-label={`Delete ${announcement.title}`}><Trash2 /></Button></AlertDialogTrigger>
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="ghost" aria-label={`Delete ${announcement.title}`}>
+          <Trash2 />
+        </Button>
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
-          <AlertDialogDescription>"{announcement.title}" disappears from the society page and members' feeds. It can't be undone.</AlertDialogDescription>
+          <AlertDialogDescription>
+            "{announcement.title}" disappears from the society page and members' feeds. It can't be
+            undone.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Keep it</AlertDialogCancel>
-          <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={async () => {
-            const o = await deleteAnnouncement(announcement.id);
-            if (o.ok) toast("Announcement deleted"); else toast.error(o.error);
-          }}>Delete</AlertDialogAction>
+          <AlertDialogAction
+            className={buttonVariants({ variant: "destructive" })}
+            onClick={async () => {
+              const o = await deleteAnnouncement(announcement.id);
+              if (o.ok) toast("Announcement deleted");
+              else toast.error(o.error);
+            }}
+          >
+            Delete
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

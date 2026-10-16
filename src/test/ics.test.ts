@@ -3,8 +3,17 @@ import { eventToIcs } from "@/lib/ics";
 import type { Event } from "@/lib/types";
 
 const event: Event = {
-  id: "9b2f4c1e-0000-4000-8000-000000000001", title: "Quiz night", description: "Teams of four, prizes", societyId: "gaming",
-  date: "2026-11-05", start: "19:30", end: "22:00", venue: "Aungier St, room 2.01", category: "Social", attendees: 0, tags: [],
+  id: "9b2f4c1e-0000-4000-8000-000000000001",
+  title: "Quiz night",
+  description: "Teams of four, prizes",
+  societyId: "gaming",
+  date: "2026-11-05",
+  start: "19:30",
+  end: "22:00",
+  venue: "Aungier St, room 2.01",
+  category: "Social",
+  attendees: 0,
+  tags: [],
 };
 
 describe("eventToIcs", () => {

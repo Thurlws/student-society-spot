@@ -12,23 +12,34 @@ type Stack = { url: string; publishableKey: string; serviceKey: string };
 export function localStack(): Stack {
   if (!process.env["E2E_STACK"]) {
     const s = JSON.parse(execSync("npm run -s supabase -- status -o json", { encoding: "utf8" }));
-    process.env["E2E_STACK"] = JSON.stringify({ url: s.API_URL, publishableKey: s.PUBLISHABLE_KEY, serviceKey: s.SERVICE_ROLE_KEY });
+    process.env["E2E_STACK"] = JSON.stringify({
+      url: s.API_URL,
+      publishableKey: s.PUBLISHABLE_KEY,
+      serviceKey: s.SERVICE_ROLE_KEY,
+    });
   }
   const stack = JSON.parse(process.env["E2E_STACK"]) as Stack;
-  if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(stack.url)) throw new Error(`Refusing to run journeys against ${stack.url}: only the local stack.`);
+  if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(stack.url))
+    throw new Error(`Refusing to run journeys against ${stack.url}: only the local stack.`);
   return stack;
 }
 
 export const adminClient = () => {
   const { url, serviceKey } = localStack();
-  return createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 };
 
 /** Test accounts. Everything starting with "e2e-" is deleted and recreated before each run. */
 export const people = {
   chair: { email: "e2e-chair@mytudublin.ie", name: "Cara Chair", state: "e2e/.auth/chair.json" },
   member: { email: "e2e-member@mytudublin.ie", name: "Mo Member", state: "e2e/.auth/member.json" },
-  student: { email: "e2e-student@mytudublin.ie", name: "Sam Student", state: "e2e/.auth/student.json" },
+  student: {
+    email: "e2e-student@mytudublin.ie",
+    name: "Sam Student",
+    state: "e2e/.auth/student.json",
+  },
   returning: { email: "e2e-returning@mytudublin.ie", name: "Rita Returning" },
   newcomer: { email: "e2e-newcomer@mytudublin.ie" },
 };
@@ -43,7 +54,9 @@ export async function latestEmail(email: string) {
     const r = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`);
     const [m] = ((await r.json()).messages ?? []) as { ID: string; Subject: string }[];
     if (m) {
-      const full = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()) as { Text: string };
+      const full = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()) as {
+        Text: string;
+      };
       return { subject: m.Subject, text: full.Text };
     }
     await new Promise((res) => setTimeout(res, 250));
@@ -59,7 +72,9 @@ export async function signIn(page: Page, email: string) {
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
   const mail = await latestEmail(email);
-  const link = mail.text.match(/https?:\/\/\S+?\/auth\/confirm\?token_hash=[^&\s]+&type=email/)?.[0];
+  const link = mail.text.match(
+    /https?:\/\/\S+?\/auth\/confirm\?token_hash=[^&\s]+&type=email/,
+  )?.[0];
   if (!link) throw new Error(`No sign-in link in "${mail.subject}"`);
   await page.goto(link, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Continue" }).click();
@@ -80,4 +95,5 @@ export async function openNotifications(page: Page) {
 }
 
 /** YYYY-MM-DD, `days` from today. */
-export const isoDate = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+export const isoDate = (days: number) =>
+  new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);

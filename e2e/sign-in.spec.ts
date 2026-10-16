@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { people, signIn } from "./support";
 
-test("a new student confirms their address, sets up a profile and lands on the home page", async ({ page }) => {
+test("a new student confirms their address, sets up a profile and lands on the home page", async ({
+  page,
+}) => {
   const mail = await signIn(page, people.newcomer.email);
   expect(mail.subject).toBe("Confirm your SocConnect account");
   await expect(page).toHaveURL(/\/onboarding$/);

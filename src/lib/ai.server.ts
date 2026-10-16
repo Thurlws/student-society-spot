@@ -6,7 +6,12 @@ const BASE = "https://ai.gateway.lovable.dev/v1";
 const MODEL = "openai/gpt-6-astra";
 
 export class AiError extends Error {
-  constructor(public status: number, message: string) { super(message); }
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
 }
 
 function provider() {
@@ -30,16 +35,25 @@ const opts = {
 };
 
 function friendly(e: unknown): AiError {
-  const status = (e as { statusCode?: number })?.statusCode ?? (e instanceof AiError ? e.status : 500);
+  const status =
+    (e as { statusCode?: number })?.statusCode ?? (e instanceof AiError ? e.status : 500);
   if (status === 429) return new AiError(429, "The AI is busy right now — try again in a moment.");
-  if (status === 402) return new AiError(402, "AI credits have run out. Add credits in Settings → Plans & credits.");
-  if (status === 403) return new AiError(403, "AI access is not available for this workspace right now.");
+  if (status === 402)
+    return new AiError(402, "AI credits have run out. Add credits in Settings → Plans & credits.");
+  if (status === 403)
+    return new AiError(403, "AI access is not available for this workspace right now.");
   return new AiError(status, e instanceof Error ? e.message : "The AI request failed.");
 }
 
 export async function aiText(instructions: string, messages: ModelMessage[]) {
   try {
-    const result = streamText({ model: provider().responses(MODEL), instructions, messages, maxRetries: 0, providerOptions: opts });
+    const result = streamText({
+      model: provider().responses(MODEL),
+      instructions,
+      messages,
+      maxRetries: 0,
+      providerOptions: opts,
+    });
     return await result.text;
   } catch (e) {
     throw friendly(e);
@@ -69,7 +83,13 @@ export async function aiTranscribe(audio: Uint8Array, mime: string): Promise<str
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new AiError(401, "AI is not configured.");
   const type = mime.startsWith("audio/") ? mime.split(";")[0]! : "audio/webm";
-  const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+  const ext = type.includes("mp4")
+    ? "mp4"
+    : type.includes("ogg")
+      ? "ogg"
+      : type.includes("wav")
+        ? "wav"
+        : "webm";
   const form = new FormData();
   form.append("model", STT_MODEL);
   form.append("file", new File([audio as Uint8Array<ArrayBuffer>], `clip.${ext}`, { type }));
@@ -80,7 +100,12 @@ export async function aiTranscribe(audio: Uint8Array, mime: string): Promise<str
     headers: { Authorization: `Bearer ${apiKey}`, "X-Lovable-AIG-SDK": "fetch" },
     body: form,
   });
-  if (!res.ok) throw friendly(Object.assign(new Error(await res.text().catch(() => "Transcription failed")), { statusCode: res.status }));
+  if (!res.ok)
+    throw friendly(
+      Object.assign(new Error(await res.text().catch(() => "Transcription failed")), {
+        statusCode: res.status,
+      }),
+    );
   const body = await res.text();
   let deltas = "";
   let done = "";
@@ -93,7 +118,9 @@ export async function aiTranscribe(audio: Uint8Array, mime: string): Promise<str
       const ev = JSON.parse(payload) as { type?: string; delta?: string; text?: string };
       if (ev.type === "transcript.text.delta" && ev.delta) deltas += ev.delta;
       else if (ev.type === "transcript.text.done" && typeof ev.text === "string") done = ev.text;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return (done || deltas).trim();
 }

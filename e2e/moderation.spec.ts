@@ -13,7 +13,9 @@ test("a member reports a message and the committee removes it", async ({ browser
   await student.goto(`/societies/${societies.open.slug}`);
   await student.getByRole("button", { name: "Join society" }).click();
   await student.getByRole("tab", { name: "discussions" }).click();
-  await student.getByRole("button", { name: `Actions for ${people.member.name}'s message` }).click();
+  await student
+    .getByRole("button", { name: `Actions for ${people.member.name}'s message` })
+    .click();
   // Students can report other people's messages but not delete them.
   await expect(student.getByRole("menuitem", { name: "Remove message" })).toHaveCount(0);
   await student.getByRole("menuitem", { name: "Report to the committee" }).click();
@@ -25,7 +27,9 @@ test("a member reports a message and the committee removes it", async ({ browser
   await chair.goto("/committee");
   await chair.getByRole("combobox").click();
   await chair.getByRole("option", { name: societies.open.shortName }).click();
-  const queue = chair.locator("section", { has: chair.getByRole("heading", { name: "Reported messages" }) });
+  const queue = chair.locator("section", {
+    has: chair.getByRole("heading", { name: "Reported messages" }),
+  });
   await expect(queue.getByText("Nobody should come to this society")).toBeVisible();
   await expect(queue.getByText("Putting people off joining")).toBeVisible();
   await queue.getByRole("button", { name: "Remove message" }).click();

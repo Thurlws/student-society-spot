@@ -134,7 +134,17 @@ export function LiveCallBridge({
 }
 
 /** Video tiles for everyone in the room, plus an invite card while you're alone. */
-export function LiveTiles({ accentSolid, roomId, roomName, societyName }: { accentSolid: string; roomId: string; roomName: string; societyName?: string | undefined }) {
+export function LiveTiles({
+  accentSolid,
+  roomId,
+  roomName,
+  societyName,
+}: {
+  accentSolid: string;
+  roomId: string;
+  roomName: string;
+  societyName?: string | undefined;
+}) {
   const tracks = useTracks(CAMERA_TRACKS, ALL_TRACKS);
   const participants = useParticipants();
   // Tiles follow the people in the room, not the video tracks: someone whose
@@ -155,7 +165,9 @@ export function LiveTiles({ accentSolid, roomId, roomName, societyName }: { acce
       {cameraless.map((p) => (
         <LiveTile key={p.identity} participant={p} accentSolid={accentSolid} />
       ))}
-      {participants.length <= 1 && <InviteTile roomId={roomId} roomName={roomName} societyName={societyName} />}
+      {participants.length <= 1 && (
+        <InviteTile roomId={roomId} roomName={roomName} societyName={societyName} />
+      )}
     </>
   );
 }
@@ -216,16 +228,28 @@ function LiveTile({
   );
 }
 
-function InviteTile({ roomId, roomName, societyName }: { roomId: string; roomName: string; societyName?: string | undefined }) {
+function InviteTile({
+  roomId,
+  roomName,
+  societyName,
+}: {
+  roomId: string;
+  roomName: string;
+  societyName?: string | undefined;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-ink-foreground/20 p-6 text-center">
       <Users className="size-6 opacity-60" />
       <p className="text-sm font-semibold">Waiting for others to join</p>
       <p className="max-w-xs text-xs opacity-70">
-        Members can open this room from SocConnect. Committee members can also share a guest link or QR code.
+        Members can open this room from SocConnect. Committee members can also share a guest link or
+        QR code.
       </p>
       <InviteDialog roomId={roomId} roomName={roomName} societyName={societyName}>
-        <Button size="sm" variant="secondary"><QrCode />Show QR & link</Button>
+        <Button size="sm" variant="secondary">
+          <QrCode />
+          Show QR & link
+        </Button>
       </InviteDialog>
     </div>
   );

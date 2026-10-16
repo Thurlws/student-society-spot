@@ -4,7 +4,15 @@ import { useData } from "@/lib/api/store";
 import type { Outcome } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Society } from "@/lib/types";
 
@@ -15,7 +23,15 @@ const report = async (p: Promise<Outcome>, message: string, success = false) => 
   else toast(message);
 };
 
-export function JoinButton({ society, size = "sm", full }: { society: Society; size?: "sm" | "default"; full?: boolean }) {
+export function JoinButton({
+  society,
+  size = "sm",
+  full,
+}: {
+  society: Society;
+  size?: "sm" | "default";
+  full?: boolean;
+}) {
   const { membership, joinSociety, leaveSociety, cancelRequest } = useData();
   const status = membership(society.id);
   const cls = full ? "w-full" : undefined;
@@ -23,8 +39,14 @@ export function JoinButton({ society, size = "sm", full }: { society: Society; s
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button size={size} variant="outline" className={cls} aria-label={`Joined ${society.shortName}. Leave society`}>
-            <Check />Joined
+          <Button
+            size={size}
+            variant="outline"
+            className={cls}
+            aria-label={`Joined ${society.shortName}. Leave society`}
+          >
+            <Check />
+            Joined
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -37,15 +59,26 @@ export function JoinButton({ society, size = "sm", full }: { society: Society; s
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={() => report(leaveSociety(society.id), `You left ${society.shortName}`)}>Leave</AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => report(leaveSociety(society.id), `You left ${society.shortName}`)}
+            >
+              Leave
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     );
   if (status === "pending")
     return (
-      <Button size={size} variant="outline" className={cls} title="Cancel your request" onClick={() => report(cancelRequest(society.id), "Request withdrawn")}>
-        <Clock />Pending, cancel request
+      <Button
+        size={size}
+        variant="outline"
+        className={cls}
+        title="Cancel your request"
+        onClick={() => report(cancelRequest(society.id), "Request withdrawn")}
+      >
+        <Clock />
+        Pending, cancel request
       </Button>
     );
   return (
@@ -53,10 +86,17 @@ export function JoinButton({ society, size = "sm", full }: { society: Society; s
       size={size}
       className={cls}
       onClick={() =>
-        report(joinSociety(society.id), society.requiresApproval ? `Request sent to ${society.shortName}` : `Welcome to ${society.shortName}!`, true)
+        report(
+          joinSociety(society.id),
+          society.requiresApproval
+            ? `Request sent to ${society.shortName}`
+            : `Welcome to ${society.shortName}!`,
+          true,
+        )
       }
     >
-      <Plus />{society.requiresApproval ? "Request to join" : "Join society"}
+      <Plus />
+      {society.requiresApproval ? "Request to join" : "Join society"}
     </Button>
   );
 }

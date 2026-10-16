@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { pageAs, people, societies } from "./support";
 
-test("the committee posts, edits and deletes an announcement that members see", async ({ browser }) => {
+test("the committee posts, edits and deletes an announcement that members see", async ({
+  browser,
+}) => {
   const chair = await pageAs(browser, people.chair);
   await chair.goto("/committee");
   await chair.getByRole("combobox").click();
