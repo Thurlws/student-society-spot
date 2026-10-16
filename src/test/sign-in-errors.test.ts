@@ -18,9 +18,12 @@ describe("signInError", () => {
     ).toMatch(/last hour/);
   });
 
-  it("keeps the domain rule's own message", () => {
-    expect(signInError({ message: "Please use your TU Dublin email (@mytudublin.ie)" })).toBe(
-      "Please use your TU Dublin email (@mytudublin.ie)",
+  it("keeps the domain rules' own messages", () => {
+    expect(signInError({ message: "Please use your university email address." })).toBe(
+      "Please use your university email address.",
+    );
+    expect(signInError({ message: "Your new address has to be at the same university." })).toBe(
+      "Your new address has to be at the same university.",
     );
   });
 

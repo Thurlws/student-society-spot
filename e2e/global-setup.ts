@@ -14,9 +14,14 @@ export default async function globalSetup() {
   check(await admin.from("societies").delete().like("slug", "e2e-%"), "delete old societies");
   await fetch(`${MAILPIT}/api/v1/messages`, { method: "DELETE" });
 
+  const tud = await admin.from("universities").select("id").eq("slug", "tudublin").single();
+  check(tud, "find TU Dublin");
+  const university = tud.data!.id;
+
   check(
     await admin.from("societies").insert([
       {
+        university_id: university,
         slug: societies.open.slug,
         name: societies.open.name,
         short_name: societies.open.shortName,
@@ -26,6 +31,7 @@ export default async function globalSetup() {
         requires_approval: false,
       },
       {
+        university_id: university,
         slug: societies.approval.slug,
         name: societies.approval.name,
         short_name: societies.approval.shortName,
@@ -51,7 +57,13 @@ export default async function globalSetup() {
     "invite the chair",
   );
 
-  for (const p of [people.chair, people.member, people.student, people.returning]) {
+  for (const p of [
+    people.chair,
+    people.member,
+    people.student,
+    people.returning,
+    people.uniadmin,
+  ]) {
     const created = await admin.auth.admin.createUser({ email: p.email, email_confirm: true });
     check(created, `create ${p.email}`);
     const uid = created.data.user!.id;
@@ -73,6 +85,11 @@ export default async function globalSetup() {
           .from("society_memberships")
           .insert({ society_id: open, user_id: uid, status: "member" }),
         "add member",
+      );
+    if (p === people.uniadmin)
+      check(
+        await admin.from("university_admins").insert({ university_id: university, user_id: uid }),
+        "make a university admin",
       );
   }
 

@@ -2,7 +2,7 @@
 
 A web app for university societies. Students find societies, join them, register for events and get announcements in one feed. Committees review membership requests, post updates, run events, answer member requests and hold video calls with AI recaps.
 
-It started as a hackathon project at TU Dublin and currently supports TU Dublin only. The domain rules, branding and society data are TU Dublin's.
+It started as a hackathon project at TU Dublin, which is still the only university on it. Universities are data: each has its email domains, members and admins, and people only see their own university's societies.
 
 > **Status:** prototype with a real backend, not yet piloted. Known open problems and the plan are in [`context/`](context/README.md). Start there if you're picking up the work.
 
@@ -11,7 +11,7 @@ It started as a hackathon project at TU Dublin and currently supports TU Dublin 
 - **Frontend:** React 19, TypeScript, TanStack Router and Start (server rendering), Tailwind CSS 4, shadcn/ui.
 - **Backend:** Supabase (Postgres and Auth), managed by Lovable Cloud. The browser reads and writes the database directly with the signed-in user's token. Row-level security policies and SQL functions in [`drizzle/migrations/`](drizzle/migrations) enforce every permission and business rule, so the browser is never trusted.
 - **Server functions** in `src/lib/*.functions.ts` handle the parts that need secrets: LiveKit call tokens and guest links, AI recaps, captions and society recommendations.
-- **Sign-in:** an emailed sign-in link (`supabase.auth.signInWithOtp`). Only `@mytudublin.ie` and `@tudublin.ie` addresses can sign up; a database trigger enforces this.
+- **Sign-in:** an emailed sign-in link (`supabase.auth.signInWithOtp`). Only addresses at a listed university domain can sign up (`university_domains`; for TU Dublin `@mytudublin.ie` and `@tudublin.ie`); a database trigger enforces this.
 
 [`AGENTS.md`](AGENTS.md) has the design decisions in more detail.
 
@@ -71,7 +71,7 @@ bun run e2e      # browser journeys; needs the local database too
 
 CI runs all of these on every pull request and every push to `main` (`.github/workflows/ci.yml`), in three jobs: `check`, `database` and `journeys`.
 
-`dev/supabase/tests/permission_matrix.test.sql` tries every table and every database function as a signed-out visitor, a student, an applicant, a member, the society's committee, another society's committee and a platform admin. When you add a table or a function that signed-in users can call, add rows for it there. The test fails until you do.
+`dev/supabase/tests/permission_matrix.test.sql` tries every table and every database function as a signed-out visitor, a student, an applicant, a member, the society's committee, another society's committee, a platform admin, a student at another university and a university admin. When you add a table or a function that signed-in users can call, add rows for it there. The test fails until you do.
 
 ### Browser journeys
 
@@ -132,7 +132,7 @@ Society calls are real multi-person calls when the LiveKit variables are set. Cr
 ## Known issues
 
 - Sign-in emails from Lovable's default sender land in Microsoft 365 quarantine at TU Dublin. The fix needs a custom sending domain; see [`context/sign-in-email-bug.md`](context/sign-in-email-bug.md).
-- Single university only. TU Dublin is hard-coded in the sign-up trigger and in about a dozen source files.
+- A second university needs its own society data and a decision on the sign-in email wording, which names TU Dublin. See Phase 3 in [`context/roadmap.md`](context/roadmap.md).
 - The October 2026 audit's open items, and what's planned next (multiple universities, pilot readiness), are in [`context/roadmap.md`](context/roadmap.md).
 
 ## Project layout

@@ -7,7 +7,7 @@ insert into auth.users (id, email, aud, role)
   select md5(n)::uuid, n || '.mod@mytudublin.ie', 'authenticated', 'authenticated'
   from unnest('{chair,cochair,troll,reader,outsider,admin}'::text[]) n;
 insert into public.user_roles (user_id, role) values (md5('admin')::uuid, 'platform_admin');
-insert into public.societies (id, slug, name, short_name) values (md5('soc')::uuid, 'mod-soc', 'Moderation Test Society', 'ModSoc');
+insert into public.societies (id, slug, name, short_name, university_id) values (md5('soc')::uuid, 'mod-soc', 'Moderation Test Society', 'ModSoc', md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values (md5('soc')::uuid, md5('chair')::uuid), (md5('soc')::uuid, md5('cochair')::uuid);
 insert into public.society_memberships (society_id, user_id, status) values
   (md5('soc')::uuid, md5('troll')::uuid, 'member'), (md5('soc')::uuid, md5('reader')::uuid, 'member');

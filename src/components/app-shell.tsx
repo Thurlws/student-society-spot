@@ -320,7 +320,7 @@ function UserMenu() {
         <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
           <Settings className="size-4" /> Settings
         </DropdownMenuItem>
-        {access.is_admin && (
+        {(access.is_admin || access.university_admin) && (
           <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>
             <ShieldCheck className="size-4" /> Admin
           </DropdownMenuItem>

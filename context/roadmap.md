@@ -127,9 +127,24 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 | T2.5 Browser journeys | Done: Playwright in `e2e/` against the local stack, with sign-in through Mailpit: new and returning sign-in, join and approve, events, announcements, moderation, the committee's society picker. CI job `journeys` |
 | T2.6 Lean cleanup | Done: 28 unused UI components and 23 packages removed; Prettier run once; lint in CI |
 
-### Phase 3: multi-university
+### Phase 3: multi-university (code done 2026-10-16, branch `phase-3`)
 
-T3.1 tables `universities`, `university_domains`, `university_members`, `university_roles`, plus `societies.university_id` with a TU Dublin backfill (P0, M, needs T2.1). T3.2 tenant-aware `private.society_visible`, society policies, `private.can_see_profile`, invites, `my_access`, sign-up trigger (P0, M, needs T3.1). T3.3 cross-university isolation tests (P0, M). T3.4 university admin console (P1, M). T3.5 remove TU Dublin hard-coding (P1, M). T3.6 yearly re-verification (P2, S).
+| Task | Status |
+|---|---|
+| T3.1 Universities | Done (0021): `universities`, `university_domains`, `university_members` (one university per account, from its email domain), `university_admins` (named for what it holds, instead of the planned `university_roles`), `societies.university_id`. Existing societies and accounts moved to TU Dublin (id `md5('tudublin')`). Society addresses are unique per university |
+| T3.2 Tenant-aware rules | Done (0022): `society_visible`, `can_see_profile`, society, tag, committee, resource, proposal and report policies, invites, `join_society`, the count functions, `my_access`, sign-up and email-change triggers. New helpers `private.can_manage_university` / `can_manage_society` replace platform-admin checks on society-scoped rules. Invites grant what their role says (before, any invite without a society made a platform admin) |
+| T3.3 Isolation tests | Done: `university_isolation.test.sql`; the permission matrix now has nine kinds of user (added a student at another university and a university admin). They caught one gap before release: editing a collaboration proposal could point it at another university's society, which creating one can't |
+| T3.4 University admin console | Done: `/admin` for platform and university admins; platform admins pick the university, add universities and domains, and appoint university admins |
+| T3.5 TU Dublin hard-coding | Done in code. Left on purpose: the society data imported from societies.tudublin.ie, the TU Dublin course list (offered to TU Dublin members only), the brand colour, the welcome page's example societies, and the sign-in email templates (see below) |
+| T3.6 Yearly re-verification | Done (0023): every sign-in counts as verification; a nightly job ends the sessions of accounts that haven't signed in for a year, so the next sign-in needs the university mailbox again |
+
+**Rollout (with or after Phase 2):**
+
+1. Apply migrations 0021 to 0023 at the same time as the Phase 3 code. The app reads `my_access().university` and creates societies with a `university_id`.
+2. In Lovable Cloud's SQL editor, check every account got a university: `select count(*) from public.profiles p where not exists (select 1 from public.university_members m where m.user_id = p.id);` should be 0. Anyone counted can still sign in but sees no societies; ask before fixing them by hand.
+3. Check the nightly job exists: `select jobname, schedule from cron.job;` should list `end-lapsed-sessions`.
+4. Optional: appoint TU Dublin university admins (for example Students' Union staff) from `/admin` → Universities.
+5. Before a second university goes live: decide the sign-in email wording. `dev/supabase/templates/` says "the app for TU Dublin societies", which helps TU Dublin students trust the email but is wrong for anyone else. The templates can't know the recipient's university unless Lovable's template data includes it.
 
 ### Phase 4: pilot readiness
 
@@ -142,5 +157,5 @@ Realtime notifications, per-page loading and pagination, SSO per university, ema
 ## Milestones
 
 - **TU Dublin demo:** finish T1.1 (domain and templates), then roll out Phases 1 and 2 (T2.4 is done).
-- **Trinity or UCD demo:** add T2.1, T3.1-T3.3, T3.5. About 3 to 5 more developer-weeks.
+- **Trinity or UCD demo:** T2.1 and Phase 3 are done in code (2026-10-16). Still needed: that university's society data, its domains and an admin set up in `/admin`, and the sign-in email wording (Phase 3 rollout, step 5).
 - **Limited pilot:** all of Phases 0 to 4. About 7 to 12 more developer-weeks plus time with the university's DPO and IT team.

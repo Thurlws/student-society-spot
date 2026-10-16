@@ -37,7 +37,7 @@ These keep the eventual move cheap.
 | Build config | `vite.config.ts` (`@lovable.dev/vite-tanstack-config`) | Works as it is (see Verified). Replacing it with a plain Vite config is optional. |
 | Lovable-only helpers | `src/integrations/supabase/previewAuthStorage.ts` (only acts on Lovable preview hosts), `src/lib/lovable-error-reporting.ts` (no-op outside the editor), `src/integrations/supabase/cron-auth.ts` (unused) | Harmless elsewhere. Delete during the move. |
 | GitHub sync | `.lovable/`, Lovable blocks in `README.md` and `AGENTS.md` | Disconnect the sync in Lovable, then remove them. |
-| Transcript purge job | pg_cron in migration 0003 | Comes along with the migrations. Check it exists after a restore. |
+| Nightly jobs | pg_cron: transcript purge (0003), ending sessions of accounts not verified for a year (0023, deletes from Supabase's `auth.sessions`) | Come along with the migrations. Check both exist after a restore (`select jobname from cron.job;`). The second assumes Supabase Auth. |
 
 Server variables the host must set: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, plus the AI provider key. `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are baked in at build time.
 
