@@ -63,14 +63,14 @@ set local role authenticated;
 select pg_temp.act_as('tudadmin');
 update public.societies set status = 'archived' where id = md5('soc')::uuid;
 update public.societies set status = 'active' where id = md5('soc')::uuid;
+update public.societies set name = 'Totally Official Society' where id = md5('soc')::uuid;
 select pg_temp.act_as('chair');
 update public.societies set tagline = 'New tagline' where id = md5('soc')::uuid;
-update public.societies set name = 'Totally Official Society' where id = md5('soc')::uuid;
 reset role;
 select results_eq($$select action from public.audit_log where society_id = md5('soc')::uuid and action like 'society.%' order by id$$,
   array['society.created', 'society.archived', 'society.restored', 'society.renamed'], 'archiving, restoring and renaming are logged; a new tagline isn''t');
-select ok((select actor_role = 'committee' and details->'from'->>'name' = 'Audit Test Society' and details->'to'->>'name' = 'Totally Official Society'
-  from pg_temp.last('society.renamed')), 'a committee rename keeps the old and new names');
+select ok((select actor_role = 'university_admin' and details->'from'->>'name' = 'Audit Test Society' and details->'to'->>'name' = 'Totally Official Society'
+  from pg_temp.last('society.renamed')), 'a rename keeps the old and new names');
 
 -- Moderation
 set local role authenticated;

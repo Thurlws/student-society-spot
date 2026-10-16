@@ -204,6 +204,13 @@
       "when": 1792120191276,
       "tag": "0028_society_import",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792120251276,
+      "tag": "0029_society_identity",
+      "breakpoints": true
     }
   ]
 }
