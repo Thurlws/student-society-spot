@@ -251,11 +251,16 @@ function CalendarView({ ids }: { ids: Set<string> }) {
                     params={{ eventId: e.id }}
                     className={cn(
                       "mb-1 block truncate rounded px-1.5 py-0.5 text-[11px] font-medium",
-                      accentClasses[s.accent].soft,
-                      accentClasses[s.accent].text,
-                      isRegistered(e.id) && "ring-1 ring-current",
+                      e.cancelled
+                        ? "border border-destructive/40 text-destructive"
+                        : [
+                            accentClasses[s.accent].soft,
+                            accentClasses[s.accent].text,
+                            isRegistered(e.id) && "ring-1 ring-current",
+                          ],
                     )}
                   >
+                    {e.cancelled && "Cancelled, "}
                     {e.start} {e.title}
                   </Link>
                 );

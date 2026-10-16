@@ -47,7 +47,7 @@ function Home() {
   const fits = useSocietyFits();
   const upcoming = events.filter((e) => e.date >= todayIso());
   const next = upcoming
-    .filter((e) => isRegistered(e.id))
+    .filter((e) => isRegistered(e.id) && !e.cancelled)
     .sort((a, b) => `${a.date} ${a.start}`.localeCompare(`${b.date} ${b.start}`))[0];
   const nextSociety = next ? getSociety(next.societyId) : undefined;
   const mine = upcoming

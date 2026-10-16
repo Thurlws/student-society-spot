@@ -132,6 +132,7 @@ export const askSocConnect = createServerFn({ method: "POST" })
         .from("events")
         .select("id,title,description,starts_at,venue,societies(slug,name)")
         .in("society_id", ids)
+        .is("cancelled_at", null)
         .gte("starts_at", new Date().toISOString())
         .order("starts_at")
         .limit(50),
@@ -234,6 +235,7 @@ export const generateSocietyProposal = createServerFn({ method: "POST" })
           .from("events")
           .select("society_id,title,description,starts_at,venue")
           .in("society_id", [data.a, data.b])
+          .is("cancelled_at", null)
           .gte("starts_at", new Date().toISOString())
           .limit(20),
       ]);
