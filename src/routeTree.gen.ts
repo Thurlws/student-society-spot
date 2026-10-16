@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -43,6 +44,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -179,6 +185,7 @@ const ApiHealthTestAlertRoute = ApiHealthTestAlertRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/committee': typeof AuthenticatedCommitteeRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/privacy'
+    | '/terms'
     | '/welcome'
     | '/admin'
     | '/committee'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/privacy'
+    | '/terms'
     | '/welcome'
     | '/admin'
     | '/committee'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/privacy'
+    | '/terms'
     | '/welcome'
     | '/_authenticated/admin'
     | '/_authenticated/committee'
@@ -347,6 +359,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   WelcomeRoute: typeof WelcomeRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/welcome': {
@@ -590,6 +610,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   WelcomeRoute: WelcomeRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthConfirmRoute: AuthConfirmRoute,

@@ -74,6 +74,19 @@ export function timeAgo(iso: string) {
   return days === 1 ? "yesterday" : `${days}d ago`;
 }
 
+/** "Today", "Yesterday" or the date, for a YYYY-MM-DD Dublin date (date lines in discussions). */
+export function dayLabel(iso: string) {
+  const d = daysUntil(iso);
+  if (d === 0) return "Today";
+  if (d === -1) return "Yesterday";
+  const sameYear = iso.slice(0, 4) === todayIso().slice(0, 4);
+  return formatDate(iso, {
+    weekday: "long",
+    month: "long",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
 /** Whole days from Dublin "today" to a YYYY-MM-DD date. */
 export function daysUntil(iso: string) {
   return Math.round(

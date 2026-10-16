@@ -3,21 +3,22 @@ import {
   Bell,
   CalendarDays,
   ChevronsLeft,
-  FileLock2,
   Compass,
+  FileLock2,
   Home,
   Inbox,
   LayoutDashboard,
+  LogOut,
   Menu,
   MessageSquareText,
   MessagesSquare,
+  ScrollText,
   Search,
   Settings,
-  Users,
-  Waypoints,
-  Video,
-  LogOut,
   ShieldCheck,
+  Users,
+  Video,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -327,7 +328,10 @@ function UserMenu() {
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => navigate({ to: "/privacy" })}>
-          <FileLock2 className="size-4" /> Privacy
+          <FileLock2 className="size-4" /> Privacy and cookies
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/terms" })}>
+          <ScrollText className="size-4" /> Terms of use
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {

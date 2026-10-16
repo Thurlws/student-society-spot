@@ -139,6 +139,15 @@ export function useAuth() {
   return useContext(Ctx) ?? SIGNED_OUT;
 }
 
+/**
+ * Whether someone still has to say what people should call them: no name yet, or only the
+ * start of their email address (usually a student number), which sign-up used to fill in.
+ */
+export const needsName = (name: string | null | undefined, email: string) => {
+  const n = (name ?? "").trim().toLowerCase();
+  return n.length < 2 || n === email.split("@")[0]!.toLowerCase();
+};
+
 export const initialsOf = (name: string) =>
   name
     .split(/\s+/)

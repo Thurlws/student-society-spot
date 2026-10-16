@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SocietyAvatar, SocietyBanner } from "@/components/society-avatar";
+import { LegalFooter } from "@/components/legal-page";
 import { cn } from "@/lib/utils";
 import type { Society } from "@/lib/types";
 
@@ -276,7 +277,17 @@ function SignInCard() {
         </svg>
         Sign in with Microsoft
       </Button>
-      <p className="text-xs text-muted-foreground">Use the address your university gave you.</p>
+      <p className="text-xs text-muted-foreground">
+        Use the address your university gave you. By signing in, you agree to the{" "}
+        <Link to="/terms" className="underline hover:text-foreground">
+          terms of use
+        </Link>{" "}
+        and confirm you've read the{" "}
+        <Link to="/privacy" className="underline hover:text-foreground">
+          privacy notice
+        </Link>
+        .
+      </p>
     </form>
   );
 }
@@ -326,12 +337,7 @@ function Welcome() {
           ))}
         </ul>
       </section>
-      <footer className="mx-auto flex max-w-7xl flex-wrap gap-x-4 px-6 py-8 text-xs text-muted-foreground">
-        <span>SocConnect, for university societies.</span>
-        <Link to="/privacy" className="underline hover:text-foreground">
-          Privacy
-        </Link>
-      </footer>
+      <LegalFooter className="mx-auto flex max-w-7xl flex-wrap gap-x-4 gap-y-1 px-6 py-8 text-xs text-muted-foreground" />
     </div>
   );
 }

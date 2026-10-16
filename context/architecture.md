@@ -58,10 +58,12 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 | 0028 | `import_societies` for the CSV import on `/admin` |
 | 0029 | A society's name, short name, category, logo and banner change only through admins or an import (audit finding 17) |
 | 0030 | Only proposals the person can read can be saved (finding 27) |
+| 0031 | Display names: sign-up leaves the name empty (or takes the Microsoft account's), names that were only the start of the email address are cleared, and `private.check_display_name` refuses to finish onboarding without a real name |
+| 0032 | `delete_message(_message_id, _reason)` tells the author when someone else removes their message, and why (Digital Services Act, article 17) |
 
 ## Environments
 
-- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. `dev/supabase/check-migrations.sql` says which migrations it has. Lovable doesn't apply migration files that arrive from GitHub: each one is pasted into Lovable's SQL editor (More → Cloud → SQL editor). On 2026-10-16 production had none of 0007 to 0030; `dev/supabase/apply-0007-0030.sql` applies them in one transaction.
+- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. `dev/supabase/check-migrations.sql` says which migrations it has. Lovable doesn't apply migration files that arrive from GitHub: each one is pasted into Lovable's SQL editor (More → Cloud → SQL editor). On 2026-10-16 production had none of 0007 to 0030; `dev/supabase/apply-0007-0030.sql` applied them in one transaction, and `apply-0031-0032.sql` does the same for the next two.
 - **Staging:** not set up yet; the plan is in [staging.md](staging.md).
 - **Local:** `dev/supabase/config.toml`, run with `bun run db:start`. It replays all migrations in filename order, and Mailpit at http://127.0.0.1:54324 catches emails. `bun run db:check-sign-in` checks the sign-in email paths.
 - **CI:** `.github/workflows/ci.yml` on pull requests and pushes to `main`: `check` (typecheck, unit tests, build, lint) with Bun 1.4.2 and Node 24; `database` (Postgres only, then `db:test`); `journeys` (Supabase without storage, realtime and studio, then Playwright in Chromium).

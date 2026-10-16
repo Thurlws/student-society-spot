@@ -4,6 +4,7 @@ import { pageAs, people, societies } from "./support";
 test("a university admin suspends a student, who sees why, then lifts it", async ({ browser }) => {
   const admin = await pageAs(browser, people.uniadmin);
   await admin.goto("/admin", { waitUntil: "networkidle" });
+  await admin.getByRole("tab", { name: "People" }).click();
   const section = admin.locator("section", {
     has: admin.getByRole("heading", { name: "People", exact: true }),
   });
@@ -33,6 +34,7 @@ test("a university admin suspends a student, who sees why, then lifts it", async
   await student.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
   await expect(student.getByRole("heading", { name: societies.open.name })).toBeVisible();
 
+  await admin.getByRole("tab", { name: "Activity" }).click();
   const activity = admin.locator("section", {
     has: admin.getByRole("heading", { name: "Activity" }),
   });
