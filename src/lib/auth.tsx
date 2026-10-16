@@ -2,11 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-/** Domains allowed to sign in. The database enforces the same rule on sign-up. */
-export const ALLOWED_DOMAINS = ["mytudublin.ie", "tudublin.ie"];
-export const emailAllowed = (email: string) =>
-  ALLOWED_DOMAINS.includes(email.trim().toLowerCase().split("@")[1] ?? "");
-
 /** What to tell someone whose sign-in email request failed, from Supabase's error code. */
 export function signInError(e: { code?: string | undefined; message: string }) {
   if (e.code === "over_email_send_rate_limit") {
@@ -17,7 +12,7 @@ export function signInError(e: { code?: string | undefined; message: string }) {
   }
   if (e.code === "over_request_rate_limit")
     return "Too many attempts from this network. Try again in a few minutes.";
-  if (/TU Dublin email/.test(e.message)) return e.message;
+  if (/university email|same university/.test(e.message)) return e.message;
   return "We couldn't send the sign-in link. Try again in a minute.";
 }
 
