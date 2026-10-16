@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -154,7 +154,7 @@ function YourData() {
   };
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Button variant="outline" onClick={download}>
         Download my data
       </Button>
@@ -184,6 +184,9 @@ function YourData() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Link to="/privacy" className="text-sm text-muted-foreground underline hover:text-foreground">
+        What we keep and for how long
+      </Link>
     </div>
   );
 }

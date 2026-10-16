@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -34,6 +35,11 @@ import { Route as AuthenticatedSocietiesSocietyIdRouteImport } from './routes/_a
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -154,6 +160,7 @@ const AuthenticatedSocietiesSocietyIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/privacy': typeof PrivacyRoute
   '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/societies/': typeof AuthenticatedSocietiesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/privacy': typeof PrivacyRoute
   '/welcome': typeof WelcomeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/committee': typeof AuthenticatedCommitteeRoute
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/welcome': typeof WelcomeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/committee': typeof AuthenticatedCommitteeRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/privacy'
     | '/welcome'
     | '/admin'
     | '/committee'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/societies/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/privacy'
     | '/welcome'
     | '/admin'
     | '/committee'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/privacy'
     | '/welcome'
     | '/_authenticated/admin'
     | '/_authenticated/committee'
@@ -298,6 +310,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   WelcomeRoute: typeof WelcomeRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   JoinCodeRoute: typeof JoinCodeRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/welcome': {
@@ -509,6 +529,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   WelcomeRoute: WelcomeRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   JoinCodeRoute: JoinCodeRoute,

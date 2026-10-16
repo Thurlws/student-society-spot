@@ -3,6 +3,7 @@ import {
   Bell,
   CalendarDays,
   ChevronsLeft,
+  FileLock2,
   Compass,
   Home,
   Inbox,
@@ -325,6 +326,9 @@ function UserMenu() {
             <ShieldCheck className="size-4" /> Admin
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => navigate({ to: "/privacy" })}>
+          <FileLock2 className="size-4" /> Privacy
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
             await signOut();
