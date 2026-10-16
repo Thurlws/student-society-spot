@@ -284,7 +284,15 @@ function useDataValue() {
       );
     },
     /** Authors delete their own; the committee and admins can remove any message in their channels. */
-    deleteMessage: (id: string) => act(() => supabase.rpc("delete_message", { _message_id: id })),
+    // The reason goes to the author when someone else removes their message (migration 0032).
+    deleteMessage: (id: string, reason = "") =>
+      act(async () => {
+        const r = await supabase.rpc("delete_message", { _message_id: id, _reason: reason });
+        // Until 0032 is in production the function takes no reason.
+        return r.error?.code === "PGRST202"
+          ? supabase.rpc("delete_message", { _message_id: id })
+          : r;
+      }),
     reportMessage: async (id: string, reason: string) => {
       const p = reportReasonInput.safeParse(reason);
       if (!p.success) return fail(firstIssue(p.error));
