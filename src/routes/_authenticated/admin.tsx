@@ -16,6 +16,7 @@ import { useAuth, type University } from "@/lib/auth";
 import { pageHead } from "@/lib/seo";
 import { PageHeader, EmptyState } from "@/components/cards";
 import { ReportedMessages } from "@/components/moderation";
+import { ActivityLog } from "@/components/activity-log";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -248,6 +249,7 @@ function AdminPage() {
           />
         </section>
       ))}
+      {universityId && <ActivityLog universityId={universityId} />}
       {editing && (
         <SocietyDialog
           society={editing === "new" ? null : editing}

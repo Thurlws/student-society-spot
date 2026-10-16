@@ -28,4 +28,16 @@ test("a university admin creates a society and invites its committee", async ({ 
   await society.getByLabel("Committee member email").fill("someone@gmail.com");
   await society.getByRole("button", { name: "Add", exact: true }).click();
   await expect(admin.getByText("Invite an address at TU Dublin.")).toBeVisible();
+
+  // Both changes are in the activity log, under the admin's name.
+  const activity = admin.locator("section", {
+    has: admin.getByRole("heading", { name: "Activity" }),
+  });
+  await expect(activity.getByText("E2E Admin Made Society was created")).toBeVisible();
+  await expect(
+    activity.getByText(
+      "e2e-newchair@mytudublin.ie was invited to E2E Admin Made's committee as President",
+    ),
+  ).toBeVisible();
+  await expect(activity.getByText(`${people.uniadmin.name}, `).first()).toBeVisible();
 });
