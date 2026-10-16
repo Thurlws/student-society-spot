@@ -17,13 +17,17 @@ export function ProfileForm({ submitLabel = "Save profile", onSaved, finishOnboa
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [busy, setBusy] = useState(false);
+  const [filled, setFilled] = useState(false);
 
+  // Fill in the saved details once. The profile refreshes when interests change on the same
+  // page, and refilling then would wipe whatever the person had typed meanwhile.
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || filled) return;
     setName(profile.display_name);
     setCourse(profile.course);
     setYear(profile.year);
-  }, [profile]);
+    setFilled(true);
+  }, [profile, filled]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
