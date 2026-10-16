@@ -5,6 +5,7 @@ import {
   CalendarPlus,
   Check,
   Clock,
+  Loader2,
   MapPin,
   PencilLine,
   Tag,
@@ -19,13 +20,12 @@ import { pageHead } from "@/lib/seo";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { EventCard } from "@/components/cards";
 import { EventDialog } from "@/components/event-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -284,8 +284,16 @@ function CancelEventButton({
 }) {
   const { cancelEvent } = useData();
   const [reason, setReason] = useState("");
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   return (
-    <AlertDialog onOpenChange={(o) => o && setReason("")}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) setReason("");
+      }}
+    >
       <AlertDialogTrigger asChild>
         <Button variant="outline" className="text-destructive hover:text-destructive">
           <Ban />
@@ -315,16 +323,25 @@ function CancelEventButton({
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Keep event</AlertDialogCancel>
-          <AlertDialogAction
-            className={buttonVariants({ variant: "destructive" })}
+          {/* A plain button, so a failure keeps the dialog and the typed reason. */}
+          <Button
+            variant="destructive"
+            disabled={busy}
             onClick={async () => {
+              setBusy(true);
               const o = await cancelEvent(eventId, reason);
-              if (o.ok) toast("Event cancelled");
-              else toast.error(o.error);
+              setBusy(false);
+              if (!o.ok) {
+                toast.error(o.error);
+                return;
+              }
+              toast("Event cancelled");
+              setOpen(false);
             }}
           >
+            {busy && <Loader2 className="animate-spin" />}
             Cancel event
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
