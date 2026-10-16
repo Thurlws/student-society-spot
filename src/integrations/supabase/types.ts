@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          at: string
+          details: Json
+          id: number
+          society_id: string | null
+          subject_id: string | null
+          university_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role: string
+          at?: string
+          details?: Json
+          id?: never
+          society_id?: string | null
+          subject_id?: string | null
+          university_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          at?: string
+          details?: Json
+          id?: never
+          society_id?: string | null
+          subject_id?: string | null
+          university_id?: string | null
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           created_at: string
@@ -1483,18 +1519,24 @@ export type Database = {
       university_members: {
         Row: {
           joined_at: string
+          suspended_at: string | null
+          suspension_reason: string
           university_id: string
           user_id: string
           verified_at: string
         }
         Insert: {
           joined_at?: string
+          suspended_at?: string | null
+          suspension_reason?: string
           university_id: string
           user_id: string
           verified_at?: string
         }
         Update: {
           joined_at?: string
+          suspended_at?: string | null
+          suspension_reason?: string
           university_id?: string
           user_id?: string
           verified_at?: string
@@ -1599,6 +1641,18 @@ export type Database = {
         Returns: undefined
       }
       email_domain_allowed: { Args: { _email: string }; Returns: boolean }
+      find_people: {
+        Args: { _query: string; _university_id: string }
+        Returns: {
+          course: string
+          display_name: string
+          joined_at: string
+          suspended_at: string | null
+          suspension_reason: string
+          user_id: string
+          year: string
+        }[]
+      }
       event_attendee_counts: {
         Args: never
         Returns: {
@@ -1612,6 +1666,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      import_societies: {
+        Args: { _rows: Json; _university_id: string }
+        Returns: Json
       }
       is_society_committee: {
         Args: { _society_id: string; _uid: string }
@@ -1658,6 +1716,7 @@ export type Database = {
         }[]
       }
       register_for_event: { Args: { _event_id: string }; Returns: undefined }
+      reinstate_user: { Args: { _user_id: string }; Returns: undefined }
       report_message: {
         Args: { _message_id: string; _reason: string }
         Returns: undefined
@@ -1681,6 +1740,7 @@ export type Database = {
         Returns: undefined
       }
       share_recap: { Args: { _recap_id: string }; Returns: undefined }
+      sign_in_health: { Args: never; Returns: Json }
       society_member_count: { Args: { _society_id: string }; Returns: number }
       society_member_counts: {
         Args: never
@@ -1716,6 +1776,7 @@ export type Database = {
         }
         Returns: string
       }
+      suspend_user: { Args: { _reason: string; _user_id: string }; Returns: undefined }
       update_event: {
         Args: {
           _capacity: number

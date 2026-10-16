@@ -1,9 +1,10 @@
-import { Flag, Loader2, MoreHorizontal, ShieldAlert, Trash2 } from "lucide-react";
+import { Flag, Loader2, MoreHorizontal, ShieldAlert, Trash2, UserX } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
 import { timeAgo } from "@/lib/format";
 import type { DiscussionMessage, MessageReport } from "@/lib/types";
+import { SuspendDialog } from "@/components/people-admin";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -173,6 +174,7 @@ export function ReportedMessages({ societyId }: { societyId?: string }) {
   const { messageReports, getSociety, deleteMessage, dismissMessageReports, canManage, isAdmin } =
     useData();
   const [busy, setBusy] = useState<string | null>(null);
+  const [suspending, setSuspending] = useState<{ userId: string; name: string } | null>(null);
   const open = messageReports.filter(
     (r) =>
       !r.dismissed &&
@@ -271,11 +273,24 @@ export function ReportedMessages({ societyId }: { societyId?: string }) {
                 >
                   Keep message
                 </Button>
+                {/* Admins on /admin; committees can't suspend anyone. */}
+                {!societyId && isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={`Suspend ${first.author}`}
+                    onClick={() => setSuspending({ userId: first.authorId, name: first.author })}
+                  >
+                    <UserX />
+                    Suspend author
+                  </Button>
+                )}
               </div>
             </li>
           );
         })}
       </ul>
+      {suspending && <SuspendDialog person={suspending} onClose={() => setSuspending(null)} />}
     </section>
   );
 }

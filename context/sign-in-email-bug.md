@@ -1,6 +1,6 @@
 # Returning users don't get the sign-in email
 
-**Status (2026-10-16):** cause found (Microsoft 365 quarantines the emails as spam). App side fixed and merged (Phase 1), and production links now last 10 minutes. The rest needs the custom sending domain and templates in Lovable Cloud (checklist below).
+**Status (2026-10-16):** cause found (Microsoft 365 quarantines the emails as spam). App side fixed and merged (Phase 1), and production links now last 10 minutes. The rest needs the custom sending domain and templates in Lovable Cloud (checklist below). Since Phase 4, `/api/health/sign-in` notices when sign-in links go out but aren't used, which is what this bug looked like ([monitoring.md](monitoring.md)), and failed sends from `/welcome` reach the error tracker once it's set up.
 
 ## Symptom
 

@@ -122,6 +122,7 @@ export interface MessageReport {
   messageId: string;
   societyId: string;
   author: string;
+  authorId: string;
   reason: string;
   excerpt: string;
   createdAt: string;

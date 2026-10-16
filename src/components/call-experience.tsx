@@ -104,8 +104,9 @@ export function CallExperience({
   const [srSupported, setSrSupported] = useState(true);
   // "live" = real call via LiveKit; "unavailable" = calls aren't configured yet.
   const [mode, setMode] = useState<"checking" | "live" | "unavailable">("checking");
-  // Consent: captions (and so the recap) can be switched off by anyone at any time.
-  const [captionsOn, setCaptionsOn] = useState(true);
+  // Consent: captions send your speech to an AI service, so each person turns their own on, and
+  // can turn them off again at any time. The recap only uses what was captioned or typed.
+  const [captionsOn, setCaptionsOn] = useState(false);
   const [remoteCaptions, setRemoteCaptions] = useState(false);
   const [lk, setLk] = useState<{ url: string; token: string } | null>(null);
   const [joining, setJoining] = useState(false);
@@ -409,10 +410,11 @@ export function CallExperience({
               Captions and an AI recap
             </p>
             <p className="mt-1">
-              By joining you agree that what you say is captioned, shared with everyone in the call,
-              and used for an AI recap that participants and the committee can read. Transcripts are
-              deleted after 7 days; summaries are kept. You can turn your captions off at any time
-              with the captions button.
+              Your captions start off. If you turn them on with the captions button, what you say is
+              sent to an AI service to be written down, shared with everyone in the call, and used
+              for an AI recap that participants and the committee can read. Transcripts are deleted
+              after 7 days; summaries are kept for a year. You can turn your captions off again at
+              any time.
             </p>
           </div>
           <Button
@@ -510,7 +512,11 @@ export function CallExperience({
             )}
             <div className="flex-1 space-y-3 overflow-y-auto p-4 text-sm">
               {transcript.length === 0 && !interim && (
-                <p className="opacity-60">Start talking — captions will show up here.</p>
+                <p className="opacity-60">
+                  {captionsOn
+                    ? "Start talking — captions will show up here."
+                    : "Turn your captions on to add what you say, or type below."}
+                </p>
               )}
               {transcript.map((l, i) => (
                 <p key={i}>

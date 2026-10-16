@@ -16,6 +16,13 @@ export function signInError(e: { code?: string | undefined; message: string }) {
   return "We couldn't send the sign-in link. Try again in a minute.";
 }
 
+/** Whether a failed sign-in email is SocConnect's problem, worth an alert, rather than the person's. */
+export function signInFailureIsOurs(e: { code?: string | undefined; message: string }) {
+  if (e.code === "over_email_send_rate_limit") return !/\d+ seconds/.test(e.message);
+  if (e.code === "over_request_rate_limit") return false;
+  return !/university email|same university/.test(e.message);
+}
+
 export type Profile = {
   id: string;
   display_name: string;
@@ -35,6 +42,8 @@ export type Access = {
   university: University | null;
   university_admin: boolean;
   committee: CommitteeSeat[];
+  /** Set while an admin has suspended the account (migration 0025). */
+  suspended?: { at: string; reason: string } | null;
 };
 
 type AuthValue = {

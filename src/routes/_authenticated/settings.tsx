@@ -1,10 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { downloadMyData } from "@/lib/api/my-data";
 import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
@@ -137,67 +137,7 @@ function YourData() {
   const remove = useServerFn(deleteMyAccount);
   const [busy, setBusy] = useState(false);
 
-  const download = async () => {
-    const uid = session?.user.id;
-    if (!uid) return;
-    // Row-level security only returns this person's own rows.
-    const parts = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("display_name, course, year, onboarded_at, created_at")
-        .eq("id", uid),
-      supabase.from("profile_interests").select("interests(name)").eq("profile_id", uid),
-      supabase
-        .from("notification_prefs")
-        .select("announcements, events, discussions, email")
-        .eq("user_id", uid),
-      supabase
-        .from("society_memberships")
-        .select("status, message, requested_at, decided_at, societies(name)")
-        .eq("user_id", uid),
-      supabase.from("society_roles").select("position, societies(name)").eq("user_id", uid),
-      supabase
-        .from("event_registrations")
-        .select("created_at, events(title, starts_at)")
-        .eq("user_id", uid),
-      supabase.from("messages").select("body, created_at").eq("author_id", uid),
-      supabase
-        .from("support_requests")
-        .select("title, description, category, status, resolution, created_at")
-        .eq("submitted_by", uid),
-      supabase.from("notifications").select("title, body, created_at, read_at").eq("user_id", uid),
-      supabase.from("ai_usage").select("feature, created_at").eq("user_id", uid),
-    ]);
-    const keys = [
-      "profile",
-      "interests",
-      "notificationSettings",
-      "memberships",
-      "committeeRoles",
-      "eventRegistrations",
-      "messages",
-      "memberRequests",
-      "notifications",
-      "aiUsage",
-    ];
-    const data = Object.fromEntries(keys.map((k, i) => [k, parts[i]!.data ?? []]));
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          { exportedAt: new Date().toISOString(), email: session?.user.email, ...data },
-          null,
-          2,
-        ),
-      ],
-      { type: "application/json" },
-    );
-    const a = Object.assign(document.createElement("a"), {
-      href: URL.createObjectURL(blob),
-      download: "socconnect-my-data.json",
-    });
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  };
+  const download = () => session && downloadMyData(session.user.id, session.user.email);
 
   const del = async () => {
     setBusy(true);
@@ -214,7 +154,7 @@ function YourData() {
   };
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Button variant="outline" onClick={download}>
         Download my data
       </Button>
@@ -244,6 +184,9 @@ function YourData() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Link to="/privacy" className="text-sm text-muted-foreground underline hover:text-foreground">
+        What we keep and for how long
+      </Link>
     </div>
   );
 }
