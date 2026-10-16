@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Waypoints } from "lucide-react";
 import { pageHead } from "@/lib/seo";
 import { useData } from "@/lib/api/store";
+import { useAuth } from "@/lib/auth";
 import { ProfileForm } from "@/components/profile-form";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 function Onboarding() {
   const { interests, toggleInterest, allInterests } = useData();
+  const { profile } = useAuth();
   const navigate = useNavigate();
+  // Someone who finished onboarding before names were required only needs to give one.
+  const returning = !!profile?.onboarded_at;
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-6 py-12">
       <div className="flex items-center gap-2.5">
@@ -22,12 +26,16 @@ function Onboarding() {
         <span className="font-display text-lg font-semibold">SocConnect</span>
       </div>
       <div>
-        <h1 className="text-3xl font-semibold">Welcome! Let's set you up.</h1>
+        <h1 className="text-3xl font-semibold">
+          {returning ? "What should people call you?" : "Welcome! Let's set you up."}
+        </h1>
         <p className="mt-2 text-muted-foreground">
-          Pick a few interests so we can suggest societies, then tell us who you are.
+          {returning
+            ? "Your societies used to see the start of your email address. Give the name people know you by instead."
+            : "Pick a few interests so we can suggest societies, then tell us who you are."}
         </p>
       </div>
-      <section className="rounded-xl border bg-card p-6 shadow-soft">
+      <section className={cn("rounded-xl border bg-card p-6 shadow-soft", returning && "hidden")}>
         <h2 className="font-semibold">Your interests</h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {allInterests.map((i) => {
@@ -53,7 +61,7 @@ function Onboarding() {
       <section className="rounded-xl border bg-card p-6 shadow-soft">
         <h2 className="mb-4 font-semibold">About you</h2>
         <ProfileForm
-          submitLabel="Finish and continue"
+          submitLabel={returning ? "Save and continue" : "Finish and continue"}
           finishOnboarding
           onSaved={() => navigate({ to: "/" })}
         />

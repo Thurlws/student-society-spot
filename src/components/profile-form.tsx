@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { needsName, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ export function ProfileForm({
   onSaved?: () => void;
   finishOnboarding?: boolean;
 }) {
-  const { profile, session, refresh, access } = useAuth();
+  const { profile, session, refresh, access, email } = useAuth();
   const courses = catalogues[access.university?.slug ?? ""];
   const [name, setName] = useState("");
   const [course, setCourse] = useState("");
@@ -34,16 +34,20 @@ export function ProfileForm({
   // page, and refilling then would wipe whatever the person had typed meanwhile.
   useEffect(() => {
     if (!profile || filled) return;
-    setName(profile.display_name);
+    // A name that is only the start of the email address isn't one; ask for a real one.
+    setName(needsName(profile.display_name, email) ? "" : profile.display_name);
     setCourse(profile.course);
     setYear(profile.year);
     setFilled(true);
-  }, [profile, filled]);
+  }, [profile, filled, email]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session) return;
-    if (name.trim().length < 2) return void toast.error("Please enter your name.");
+    if (needsName(name, email))
+      return void toast.error(
+        "Tell us what people should call you: your name, not your student number or email.",
+      );
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
@@ -55,7 +59,11 @@ export function ProfileForm({
       })
       .eq("id", session.user.id);
     setBusy(false);
-    if (error) return void toast.error("Couldn't save your profile. Try again.");
+    // The database's own refusals (P0001) say what to change; anything else is ours.
+    if (error)
+      return void toast.error(
+        error.code === "P0001" ? error.message : "Couldn't save your profile. Try again.",
+      );
     await refresh();
     toast.success("Profile saved");
     onSaved?.();
@@ -64,14 +72,21 @@ export function ProfileForm({
   return (
     <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
       <div className="space-y-1.5 sm:col-span-3">
-        <Label htmlFor="pf-name">Display name</Label>
+        <Label htmlFor="pf-name">What should people call you?</Label>
         <Input
           id="pf-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Aoife Byrne"
+          aria-describedby="pf-name-hint"
+          autoComplete="name"
           maxLength={80}
           required
         />
+        <p id="pf-name-hint" className="text-xs text-muted-foreground">
+          Your name, or the name people know you by. Members of your societies see it next to your
+          messages.
+        </p>
       </div>
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="pf-course">Course</Label>
