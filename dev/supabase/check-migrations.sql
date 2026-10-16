@@ -25,6 +25,8 @@ from (values
   ('0025 suspension', exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'university_members' and column_name = 'suspended_at')),
   ('0026 retention', to_regprocedure('public.purge_expired_data()') is not null),
   ('0027 sign-in health', to_regprocedure('public.sign_in_health()') is not null),
-  ('0028 society import', to_regprocedure('public.import_societies(uuid, jsonb)') is not null)
+  ('0028 society import', to_regprocedure('public.import_societies(uuid, jsonb)') is not null),
+  ('0029 society identity', coalesce(pg_get_functiondef(to_regprocedure('public.guard_society_update()')) like '%name, category, logo or banner%', false)),
+  ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%'))
 ) as m(migration, applied)
 order by m.migration;
