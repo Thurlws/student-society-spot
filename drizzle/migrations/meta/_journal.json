@@ -127,6 +127,13 @@
       "when": 1792113315828,
       "tag": "0017_reports_about_committee_members",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792113369856,
+      "tag": "0018_events_only_through_functions",
+      "breakpoints": true
     }
   ]
 }
