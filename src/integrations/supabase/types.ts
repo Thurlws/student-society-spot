@@ -1736,6 +1736,7 @@ export type Database = {
         Returns: undefined
       }
       share_recap: { Args: { _recap_id: string }; Returns: undefined }
+      sign_in_health: { Args: never; Returns: Json }
       society_member_count: { Args: { _society_id: string }; Returns: number }
       society_member_counts: {
         Args: never
