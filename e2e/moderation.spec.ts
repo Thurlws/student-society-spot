@@ -32,7 +32,8 @@ test("a member reports a message and the committee removes it", async ({ browser
   });
   await expect(queue.getByText("Nobody should come to this society")).toBeVisible();
   await expect(queue.getByText("Putting people off joining")).toBeVisible();
-  await queue.getByRole("button", { name: "Remove message" }).click();
+  await queue.getByRole("button", { name: `Remove message from ${people.member.name}` }).click();
+  await chair.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
   await expect(chair.getByText("Message removed")).toBeVisible();
 
   await member.reload({ waitUntil: "networkidle" });

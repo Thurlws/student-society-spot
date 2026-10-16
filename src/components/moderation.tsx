@@ -30,6 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 /** Delete (own), remove (committee or admin) or report a discussion message. The database decides who may do which. */
@@ -165,14 +166,21 @@ export function MessageActions({
 export function ReportedMessages({ societyId }: { societyId?: string }) {
   const { messageReports, getSociety, deleteMessage, dismissMessageReports, canManage, isAdmin } =
     useData();
+  const [busy, setBusy] = useState<string | null>(null);
   const open = messageReports.filter(
     (r) => (societyId ? r.societyId === societyId : true) && (isAdmin || canManage(r.societyId)),
   );
   const byMessage = new Map<string, MessageReport[]>();
   for (const r of open) byMessage.set(r.messageId, [...(byMessage.get(r.messageId) ?? []), r]);
   if (!byMessage.size) return null;
-  const run = async (p: Promise<{ ok: boolean; error?: string }>, done: string) => {
+  const run = async (
+    messageId: string,
+    p: Promise<{ ok: boolean; error?: string }>,
+    done: string,
+  ) => {
+    setBusy(messageId);
     const o = await p;
+    setBusy(null);
     if (o.ok) toast(done);
     else toast.error(o.error ?? "Something went wrong. Try again.");
   };
@@ -209,19 +217,47 @@ export function ReportedMessages({ societyId }: { societyId?: string }) {
                 </ul>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => run(deleteMessage(messageId), "Message removed")}
-                >
-                  <Trash2 />
-                  Remove message
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={busy === messageId}
+                      aria-label={`Remove message from ${first.author}`}
+                    >
+                      <Trash2 />
+                      Remove message
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove {first.author}'s message?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        It disappears for everyone in the channel. This can't be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className={buttonVariants({ variant: "destructive" })}
+                        onClick={() => run(messageId, deleteMessage(messageId), "Message removed")}
+                      >
+                        Remove
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Button
                   size="sm"
                   variant="outline"
+                  disabled={busy === messageId}
+                  aria-label={`Keep message from ${first.author}`}
                   onClick={() =>
-                    run(dismissMessageReports(messageId), "Report closed. The message stays.")
+                    run(
+                      messageId,
+                      dismissMessageReports(messageId),
+                      "Report closed. The message stays.",
+                    )
                   }
                 >
                   Keep message
