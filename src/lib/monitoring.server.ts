@@ -121,3 +121,25 @@ export async function reportError(error: unknown, context: ErrorContext) {
     // The tracker being down is not worth a second error.
   }
 }
+
+/** Compares two strings without leaking how much of them matched through timing. */
+async function sameSecret(a: string, b: string) {
+  const digest = async (s: string) =>
+    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
+  const [x, y] = await Promise.all([digest(a), digest(b)]);
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i]! ^ y[i]!;
+  return diff === 0;
+}
+
+/**
+ * For the monitoring endpoints: null when the request carries `Authorization: Bearer
+ * <MONITORING_TOKEN>`, otherwise the response to send. Without a token set, they don't exist.
+ */
+export async function refuseWithoutMonitoringToken(request: Request) {
+  const token = process.env["MONITORING_TOKEN"];
+  if (!token) return new Response("Not found", { status: 404 });
+  if (!(await sameSecret(request.headers.get("authorization") ?? "", `Bearer ${token}`)))
+    return new Response("Unauthorized", { status: 401 });
+  return null;
+}
