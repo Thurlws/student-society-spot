@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import courses from "@/data/tud-courses.json";
+import tudCourses from "@/data/tud-courses.json";
 
+// Course lists by university slug; students elsewhere type their course.
+const catalogues: Record<string, typeof tudCourses> = { tudublin: tudCourses };
 const years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Postgraduate", "Staff"];
 
 /** Display name, course and year — saved to the signed-in person's own profile. */
@@ -20,7 +22,8 @@ export function ProfileForm({
   onSaved?: () => void;
   finishOnboarding?: boolean;
 }) {
-  const { profile, session, refresh } = useAuth();
+  const { profile, session, refresh, access } = useAuth();
+  const courses = catalogues[access.university?.slug ?? ""];
   const [name, setName] = useState("");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
@@ -74,18 +77,20 @@ export function ProfileForm({
         <Label htmlFor="pf-course">Course</Label>
         <Input
           id="pf-course"
-          list="tud-courses"
-          placeholder="Search course code or name"
+          list={courses ? "courses" : undefined}
+          placeholder={courses ? "Search course code or name" : undefined}
           value={course}
           onChange={(e) => setCourse(e.target.value)}
           maxLength={120}
           autoComplete="off"
         />
-        <datalist id="tud-courses">
-          {courses.map((c) => (
-            <option key={c.code} value={`${c.code} — ${c.name}`} />
-          ))}
-        </datalist>
+        {courses && (
+          <datalist id="courses">
+            {courses.map((c) => (
+              <option key={c.code} value={`${c.code} — ${c.name}`} />
+            ))}
+          </datalist>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="pf-year">Year</Label>
