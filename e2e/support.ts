@@ -40,6 +40,11 @@ export const people = {
     name: "Sam Student",
     state: "e2e/.auth/student.json",
   },
+  uniadmin: {
+    email: "e2e-uniadmin@mytudublin.ie",
+    name: "Una Admin",
+    state: "e2e/.auth/uniadmin.json",
+  },
   returning: { email: "e2e-returning@mytudublin.ie", name: "Rita Returning" },
   newcomer: { email: "e2e-newcomer@mytudublin.ie" },
 };
