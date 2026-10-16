@@ -199,7 +199,7 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 | Digital Services Act | Done (0032): removing someone else's message tells the author what, by whom and why; the terms cover rules, reporting illegal content and moderation |
 | AI Act labelling | Done: AI-written society suggestions now say "Written by AI" (recaps, answers and proposals already did) |
 
-Apply 0031 and 0032 with `dev/supabase/apply-0031-0032.sql` (go-live step 2b).
+Applied to production with `dev/supabase/apply-0031-0032.sql` on 2026-10-16 (go-live step 2b): 4 people had a student-number name and are asked for a name at their next visit.
 
 ### Phase 5: when demand justifies it
 
