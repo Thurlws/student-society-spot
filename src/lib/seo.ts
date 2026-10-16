@@ -1,3 +1,9 @@
+/**
+ * The published address, for link previews (og:image needs a full URL). Change it with the
+ * custom domain.
+ */
+export const SITE_URL = "https://student-society-spot.lovable.app";
+
 export function pageHead(title: string, description: string) {
   const full = `${title} · SocConnect`;
   return {
