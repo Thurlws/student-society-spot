@@ -120,6 +120,13 @@
       "when": 1792108934701,
       "tag": "0016_message_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792113315828,
+      "tag": "0017_reports_about_committee_members",
+      "breakpoints": true
     }
   ]
 }
