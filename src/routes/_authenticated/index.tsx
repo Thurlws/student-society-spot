@@ -61,6 +61,7 @@ function Home() {
       ? [
           {
             s,
+            byAi: !!fits.data?.reasons[r.slug],
             reason:
               fits.data?.reasons[r.slug] ??
               (r.score
@@ -260,8 +261,8 @@ function Home() {
         <SectionHeader title="You might enjoy" subtitle="Based on your interests" />
         {fits.data?.notice && <p className="mb-3 text-sm text-warning">{fits.data.notice}</p>}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {recs.map(({ s, reason }) => (
-            <SocietyCard key={s.id} society={s} reason={reason} />
+          {recs.map(({ s, reason, byAi }) => (
+            <SocietyCard key={s.id} society={s} reason={reason} reasonByAi={byAi} />
           ))}
         </div>
       </section>

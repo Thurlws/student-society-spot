@@ -28,7 +28,7 @@ Expected scale for one pilot: 500 to 3,000 active students, 70 to 200 societies.
 
 | Category | Items | Source |
 |---|---|---|
-| Identity | University email address, display name | The person, or their university's Microsoft account |
+| Identity | University email address, display name (required; never the start of the email address, which is often a student number: until 2026-10-16 sign-up used it as the name, and migration 0031 cleared those) | The person, or their university's Microsoft account |
 | Study | Course and year (free text, or the university's course list) | The person |
 | Preferences | Interests, notification settings | The person |
 | University | Which university the account belongs to (from the email domain), when they last signed in, suspension and reason | Automatic, admins |
@@ -37,7 +37,7 @@ Expected scale for one pilot: 500 to 3,000 active students, 70 to 200 societies.
 | Calls | Who joined, display name in the call; only for people who turn captions on: 7-second audio clips, the transcript, an AI summary and answers | The person |
 | AI use | Questions asked, when AI features are used | The person |
 | Admin records | The activity log of privileged actions (section 6) | Automatic |
-| Technical | Sign-in session in the browser's local storage; request logs at the hosting provider | Automatic |
+| Technical | Sign-in session in the browser's local storage; a guest's name for a call in session storage; request logs at the hosting provider | Automatic |
 
 Not collected: student numbers, phone numbers, dates of birth, addresses, photos (avatars aren't uploaded), location, advertising identifiers. Society data imported from the university's public societies site leaves out student-number email addresses, phone numbers and committee names.
 
