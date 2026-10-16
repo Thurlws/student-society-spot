@@ -1,14 +1,7 @@
 export type Role = "student" | "committee";
 
 export type SocietyAccent =
-  | "indigo"
-  | "teal"
-  | "coral"
-  | "amber"
-  | "rose"
-  | "sky"
-  | "emerald"
-  | "plum";
+  "indigo" | "teal" | "coral" | "amber" | "rose" | "sky" | "emerald" | "plum";
 
 export interface User {
   id: string;
@@ -29,7 +22,17 @@ export interface CommitteeMember {
 }
 
 export type SocietyLinkKind =
-  | "website" | "instagram" | "tiktok" | "facebook" | "linkedin" | "x" | "youtube" | "discord" | "linktree" | "whatsapp" | "other";
+  | "website"
+  | "instagram"
+  | "tiktok"
+  | "facebook"
+  | "linkedin"
+  | "x"
+  | "youtube"
+  | "discord"
+  | "linktree"
+  | "whatsapp"
+  | "other";
 
 export interface SocietyLink {
   kind: SocietyLinkKind;
@@ -173,7 +176,8 @@ export interface ResolvedRequest extends MembershipRequest {
 
 /** Lifecycle: open → in_progress → resolved (see src/lib/support-requests.ts for allowed moves). */
 export type SupportRequestStatus = "open" | "in_progress" | "resolved";
-export type SupportRequestCategory = "question" | "membership" | "event" | "equipment" | "finance" | "other";
+export type SupportRequestCategory =
+  "question" | "membership" | "event" | "equipment" | "finance" | "other";
 export type SupportRequestPriority = "low" | "normal" | "high";
 
 export interface SupportRequestActivity {

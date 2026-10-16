@@ -31,7 +31,11 @@ function InboxPage() {
       <EmptyState
         icon={ShieldCheck}
         title="Committee access only"
-        body={seat ? "Your society's request inbox switches to live data in the next update." : "The request inbox is for society committee members."}
+        body={
+          seat
+            ? "Your society's request inbox switches to live data in the next update."
+            : "The request inbox is for society committee members."
+        }
       />
     );
   }

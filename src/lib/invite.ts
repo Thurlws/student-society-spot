@@ -23,6 +23,10 @@ export const GUEST_NAME_KEY = "socconnect-guest-name";
 
 /** Guest display names are short and must not contain control characters. */
 export function cleanGuestName(raw: string): string {
-  const name = raw.replace(/\s+/g, " ").replace(/\p{Cc}/gu, "").trim().slice(0, 60);
+  const name = raw
+    .replace(/\s+/g, " ")
+    .replace(/\p{Cc}/gu, "")
+    .trim()
+    .slice(0, 60);
   return name.length > 0 ? name : "Guest";
 }

@@ -11,6 +11,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(context.userId);
-    if (error) throw new Error("Couldn't delete your account. Try again, or contact the SocConnect team.");
+    if (error)
+      throw new Error("Couldn't delete your account. Try again, or contact the SocConnect team.");
     return { ok: true };
   });

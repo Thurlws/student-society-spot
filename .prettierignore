@@ -10,3 +10,7 @@ routeTree.gen.ts
 src/integrations
 playwright-report
 test-results
+# Hand-written notes and email templates keep their own layout
+*.md
+.lovable
+dev/supabase/templates

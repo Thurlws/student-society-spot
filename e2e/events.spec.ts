@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { isoDate, openNotifications, pageAs, people, societies } from "./support";
 
-test("the committee creates an event, a student registers, then the committee moves and cancels it", async ({ browser }) => {
+test("the committee creates an event, a student registers, then the committee moves and cancels it", async ({
+  browser,
+}) => {
   const chair = await pageAs(browser, people.chair);
   await chair.goto("/committee");
   await chair.getByRole("combobox").click();

@@ -22,11 +22,18 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     // Set to use an already installed Chromium instead of `npx playwright install chromium`.
-    launchOptions: process.env["PLAYWRIGHT_CHROMIUM_PATH"] ? { executablePath: process.env["PLAYWRIGHT_CHROMIUM_PATH"] } : {},
+    launchOptions: process.env["PLAYWRIGHT_CHROMIUM_PATH"]
+      ? { executablePath: process.env["PLAYWRIGHT_CHROMIUM_PATH"] }
+      : {},
   },
   projects: [
     { name: "sign-in", testMatch: /auth\.setup\.ts/ },
-    { name: "journeys", testMatch: /\.spec\.ts/, dependencies: ["sign-in"], use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "journeys",
+      testMatch: /\.spec\.ts/,
+      dependencies: ["sign-in"],
+      use: { ...devices["Desktop Chrome"] },
+    },
   ],
   webServer: {
     command: "npx vite dev --host 127.0.0.1 --port 8080 --strictPort",
