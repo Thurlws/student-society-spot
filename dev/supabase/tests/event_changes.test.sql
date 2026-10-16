@@ -7,7 +7,7 @@ select plan(16);
 insert into auth.users (id, email, aud, role)
   select md5(n)::uuid, n || '.events@mytudublin.ie', 'authenticated', 'authenticated'
   from unnest('{chair,goer,fan,latecomer}'::text[]) n;
-insert into public.societies (id, slug, name, short_name) values (md5('soc')::uuid, 'events-soc', 'Events Test Society', 'EvSoc');
+insert into public.societies (id, slug, name, short_name, university_id) values (md5('soc')::uuid, 'events-soc', 'Events Test Society', 'EvSoc', md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values (md5('soc')::uuid, md5('chair')::uuid);
 -- goer is registered and a member, fan is only a member.
 insert into public.society_memberships (society_id, user_id, status) values

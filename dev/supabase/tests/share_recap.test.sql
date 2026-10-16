@@ -8,7 +8,7 @@ insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-00000000f002', 'recap.host@mytudublin.ie', 'authenticated', 'authenticated'),
   ('00000000-0000-0000-0000-00000000f003', 'recap.stranger@mytudublin.ie', 'authenticated', 'authenticated'),
   ('00000000-0000-0000-0000-00000000f004', 'recap.former@mytudublin.ie', 'authenticated', 'authenticated');
-insert into public.societies (id, slug, name, short_name) values ('00000000-0000-0000-0000-00000000f100', 'test-recap-soc', 'Test Recap Society', 'RecapSoc');
+insert into public.societies (id, slug, name, short_name, university_id) values ('00000000-0000-0000-0000-00000000f100', 'test-recap-soc', 'Test Recap Society', 'RecapSoc', md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values ('00000000-0000-0000-0000-00000000f100', '00000000-0000-0000-0000-00000000f001');
 insert into public.society_memberships (society_id, user_id, status) values ('00000000-0000-0000-0000-00000000f100', '00000000-0000-0000-0000-00000000f002', 'member');
 -- f004 hosted a call, then left the society.
