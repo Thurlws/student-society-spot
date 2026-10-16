@@ -17,6 +17,7 @@ import { pageHead } from "@/lib/seo";
 import { PageHeader, EmptyState } from "@/components/cards";
 import { ReportedMessages } from "@/components/moderation";
 import { ActivityLog } from "@/components/activity-log";
+import { PeopleAdmin } from "@/components/people-admin";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -205,6 +206,7 @@ function AdminPage() {
         />
       )}
       <ReportedMessages />
+      {universityId && <PeopleAdmin universityId={universityId} />}
       {isLoading && <div className="h-32 animate-pulse rounded-xl bg-muted" />}
       {data && data.societies.length === 0 && (
         <EmptyState title="No societies yet" body="Create the first society to get started." />

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AuditEntry, AuditNames } from "@/lib/audit";
+import type { Outcome } from "@/lib/validation";
 
 /** A table or function that isn't in production yet: the code can be published before its migration. */
 export const missingInDatabase = (e: { code?: string } | null) =>
@@ -56,4 +57,70 @@ export async function loadActivity(
       societies: Object.fromEntries((s.data ?? []).map((x) => [x.id, x.short_name])),
     },
   };
+}
+
+export type Person = {
+  userId: string;
+  name: string;
+  course: string;
+  year: string;
+  joinedAt: string;
+  suspendedAt: string | null;
+  suspensionReason: string;
+};
+
+const errorText = (e: { message: string }) => e.message.replace(/^.*?ERROR:\s*/, "");
+
+/** People at a university the caller manages, by part of their name or their exact email address. */
+export async function findPeople(universityId: string, query: string): Promise<Person[]> {
+  const { data, error } = await supabase.rpc("find_people", {
+    _university_id: universityId,
+    _query: query,
+  });
+  if (error) throw new Error(errorText(error));
+  return (data ?? []).map((p) => ({
+    userId: p.user_id,
+    name: p.display_name || "Unnamed",
+    course: p.course,
+    year: p.year,
+    joinedAt: p.joined_at,
+    suspendedAt: p.suspended_at,
+    suspensionReason: p.suspension_reason,
+  }));
+}
+
+/** Everyone currently suspended at a university. Null before migration 0025. */
+export async function loadSuspended(universityId: string): Promise<Person[] | null> {
+  const { data, error } = await supabase
+    .from("university_members")
+    .select(
+      "user_id, joined_at, suspended_at, suspension_reason, profiles(display_name, course, year)",
+    )
+    .eq("university_id", universityId)
+    .not("suspended_at", "is", null)
+    .order("suspended_at", { ascending: false });
+  if (error?.code === "42703" || missingInDatabase(error)) return null;
+  if (error) throw new Error(errorText(error));
+  return (data ?? []).map((m) => {
+    const p = m.profiles as { display_name: string; course: string; year: string } | null;
+    return {
+      userId: m.user_id,
+      name: p?.display_name || "Unnamed",
+      course: p?.course ?? "",
+      year: p?.year ?? "",
+      joinedAt: m.joined_at,
+      suspendedAt: m.suspended_at,
+      suspensionReason: m.suspension_reason,
+    };
+  });
+}
+
+export async function suspendUser(userId: string, reason: string): Promise<Outcome> {
+  const { error } = await supabase.rpc("suspend_user", { _user_id: userId, _reason: reason });
+  return error ? { ok: false, error: errorText(error) } : { ok: true };
+}
+
+export async function reinstateUser(userId: string): Promise<Outcome> {
+  const { error } = await supabase.rpc("reinstate_user", { _user_id: userId });
+  return error ? { ok: false, error: errorText(error) } : { ok: true };
 }

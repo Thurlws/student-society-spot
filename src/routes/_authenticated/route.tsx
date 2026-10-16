@@ -8,6 +8,7 @@ import {
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { SuspendedNotice } from "@/components/suspended-notice";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -19,10 +20,11 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function Gate() {
-  const { ready, session, profile } = useAuth();
+  const { ready, session, profile, access } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const needsOnboarding = ready && !!profile && !profile.onboarded_at && pathname !== "/onboarding";
+  const needsOnboarding =
+    ready && !!profile && !profile.onboarded_at && !access.suspended && pathname !== "/onboarding";
 
   useEffect(() => {
     if (ready && !session) navigate({ to: "/welcome" });
@@ -37,5 +39,7 @@ function Gate() {
       </div>
     );
   }
+  // The database already shows a suspended account nothing; this says why.
+  if (access.suspended) return <SuspendedNotice />;
   return <Outlet />;
 }

@@ -35,6 +35,8 @@ export type Access = {
   university: University | null;
   university_admin: boolean;
   committee: CommitteeSeat[];
+  /** Set while an admin has suspended the account (migration 0025). */
+  suspended?: { at: string; reason: string } | null;
 };
 
 type AuthValue = {
