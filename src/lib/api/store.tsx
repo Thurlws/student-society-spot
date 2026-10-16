@@ -86,10 +86,11 @@ function useDataValue() {
   const qc = useQueryClient();
   const uidAuth = auth.session?.user.id;
   const committeeUuids = auth.access.committee.map((c) => c.society_id);
-  const key = ["app-data", uidAuth, committeeUuids.join(",")];
+  const universityId = auth.access.university?.id;
+  const key = ["app-data", uidAuth, universityId, committeeUuids.join(",")];
   const q = useQuery({
     queryKey: key,
-    queryFn: () => loadAppData(uidAuth!, committeeUuids),
+    queryFn: () => loadAppData(uidAuth!, committeeUuids, universityId),
     enabled: !!uidAuth,
     // shortcut: polling reloads everything for each visible tab; move messages and notifications to realtime before a large pilot.
     refetchInterval: 60_000,

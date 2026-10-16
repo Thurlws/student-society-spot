@@ -65,7 +65,14 @@ const mustOrMissing = <T>(r: {
 }): T =>
   r.error && (r.error.code === "PGRST205" || r.error.code === "42P01") ? ([] as T) : must(r);
 
-export async function loadAppData(uid: string, committeeSocietyIds: string[]): Promise<AppData> {
+export async function loadAppData(
+  uid: string,
+  committeeSocietyIds: string[],
+  universityId: string | undefined,
+): Promise<AppData> {
+  // Platform admins can read every university's societies; the app shows only their own.
+  let societyQuery = supabase.from("societies").select("*").eq("status", "active");
+  if (universityId) societyQuery = societyQuery.eq("university_id", universityId);
   const [
     soc,
     tags,
@@ -87,7 +94,7 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     props,
     saved,
   ] = await Promise.all([
-    supabase.from("societies").select("*").eq("status", "active").order("name"),
+    societyQuery.order("name"),
     supabase.from("society_tags").select("society_id, interests(name)"),
     supabase.from("society_roles").select("society_id, user_id, position, profiles(display_name)"),
     supabase.from("society_memberships").select("society_id, status").eq("user_id", uid),
@@ -332,7 +339,7 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     resolvedRequests,
     supportRequests,
     channels,
-    recommendations: must(recommendationRes),
+    recommendations: must(recommendationRes).filter((r) => slugOf[r.society_id]),
     registrations: must(regs).map((r) => r.event_id),
     announcements: (
       must(ann) as {
