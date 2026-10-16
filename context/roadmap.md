@@ -33,13 +33,13 @@ Line numbers are from commit `e83c5c6`. "Fixed in code" means merged code and mi
 | 14 | No message moderation; no edit or cancel for events and announcements | 0001:88-94, `src/lib/api/store.tsx` | T2.2, T2.3 | Fixed in code 2026-10-16 (migrations 0014-0016) |
 | 15 | Missing indexes on `user_id` lookups and announcements by society and date | 0000, 0001 | T1.5 | Fixed in code (migration 0010) |
 | 16 | README described the old browser-only demo | `README.md` | T0.3 | Fixed 2026-10-15 |
-| 17 | Committees can rename their society or change its logo | 0006:19-33 | Later | Mitigated 2026-10-16: every rename is in the audit log (0024). Still open as a rule |
+| 17 | Committees can rename their society or change its logo | 0006:19-33 | Later | Fixed in code 2026-10-16 (0029): name, short name, category, logo and banner are admin and import only |
 
 ### Nice to have
 
 | # | Finding | Where | Status |
 |---|---|---|---|
-| 18 | `getUser()` network call on every navigation | `src/routes/_authenticated/route.tsx:8-11` | Open |
+| 18 | `getUser()` network call on every navigation | `src/routes/_authenticated/route.tsx:8-11` | Fixed 2026-10-16: the stored session decides, and a network blip no longer sends people to `/welcome` |
 | 19 | "(demo figure)" and demo calendar ids on real data | `societies.$societyId.tsx:228`, `src/lib/ics.ts:21-23` | Fixed 2026-10-16 (T2.4) |
 | 20 | 25 unused shadcn components (3,118 lines) and about 20 packages only they use. Keep `input-otp` | `src/components/ui/` | Fixed 2026-10-16 (T2.6): 28 components and 23 packages removed |
 
@@ -56,8 +56,8 @@ Line numbers are from commit `566c72c`.
 | 23 | `register_for_event` took registrations for events the caller can't see, such as an archived society's | 0001 `register_for_event` | Fixed in code (0014) |
 | 24 | A committee member on two societies could save one society's profile text over the other: the edit form kept the first society's text after switching | `committee.tsx` `EditDialog` | Fixed 2026-10-16 |
 | 25 | Picking interests during onboarding could replace the name being typed with the start of the email address | `src/components/profile-form.tsx` | Fixed 2026-10-16. Found by the sign-up journey |
-| 26 | Text typed into the sign-in form before the page finishes loading is lost, and pressing Continue on `/auth/confirm` that early does nothing. Only noticeable on slow connections | `welcome.tsx`, `auth.confirm.tsx` | Open (nice to have) |
-| 27 | Any signed-in user can save any proposal id, and the error for an unknown id tells them whether it exists | 0001 `saved_proposals` | Open (minor) |
+| 26 | Text typed into the sign-in form before the page finishes loading is lost, and pressing Continue on `/auth/confirm` that early does nothing. Only noticeable on slow connections | `welcome.tsx`, `auth.confirm.tsx` | Fixed 2026-10-16: the buttons wait for the page to load and keep what was typed (journey in `sign-in.spec.ts`) |
+| 27 | Any signed-in user can save any proposal id, and the error for an unknown id tells them whether it exists | 0001 `saved_proposals` | Fixed in code 2026-10-16 (0030) |
 
 ### Found reviewing Phase 2 (2026-10-16)
 
@@ -169,17 +169,31 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 **Rollout (with or after Phase 3):**
 
 1. Read this first: the first night after 0026 is applied, `purge_expired_data` deletes everything already past its period (read notifications older than 90 days, AI usage older than 30 days, call recaps older than a year, and so on; see `docs/privacy/retention.md`). If anything should be kept, change the periods before applying it.
-2. Apply migrations 0024 to 0028 together with the Phase 4 code. The code works without them (the new admin sections stay hidden and the import says it needs the update), but suspension, the audit log and retention only exist once they're in.
-3. Run `dev/supabase/check-migrations.sql` in Lovable Cloud's SQL editor: every row from 0007 to 0028 should say `yes`. This also answers whether 0007 onwards reached production.
+2. Apply migrations 0024 to 0030 together with the Phase 4 code (0029 and 0030 came after Phase 4; see below). The code works without them (the new admin sections stay hidden and the import says it needs the update), but suspension, the audit log and retention only exist once they're in.
+3. Run `dev/supabase/check-migrations.sql` in Lovable Cloud's SQL editor: every row from 0007 to 0030 should say `yes`. This also answers whether 0007 onwards reached production.
 4. Check the nightly jobs: `select jobname, schedule from cron.job;` lists `purge-call-transcripts`, `end-lapsed-sessions` and `purge-expired-data`.
 5. Set `PRIVACY_CONTACT_EMAIL` in `src/lib/privacy.ts` when there is an address.
 6. Monitoring: follow [monitoring.md](monitoring.md) (tracker, secrets, test alert, uptime checks).
+
+### After Phase 4: demo and pilot readiness (2026-10-16, branch `claude/festive-curie-inphrm`)
+
+| Task | Status |
+|---|---|
+| Re-score readiness | Done: the audit page's scorecard is updated (link at the top of this file) |
+| Close the small findings left | Done: 17 (0029), 18, 26, 27 (0030) |
+| One go-live checklist | Done: [go-live.md](go-live.md) |
+| Demo runbook | Done: [demo.md](demo.md) |
+
+Checked on 2026-10-16 with a public request, as the welcome page makes: production has `email_domain_allowed`, so migrations up to at least 0022 reached Lovable Cloud. The full answer still needs `check-migrations.sql` in the SQL editor.
 
 ### Phase 5: when demand justifies it
 
 Realtime notifications, per-page loading and pagination, SSO per university, email digests, analytics for societies officers, links into official membership systems.
 
 ## Milestones
+
+What's left for each, in order, is in [go-live.md](go-live.md) (2026-10-16).
+
 
 - **TU Dublin demo:** finish T1.1 (domain and templates), then roll out Phases 1 and 2 (T2.4 is done).
 - **Trinity or UCD demo:** T2.1 and Phase 3 are done in code (2026-10-16). Still needed: that university's society data, its domains and an admin set up in `/admin`, and the sign-in email wording (Phase 3 rollout, step 5).

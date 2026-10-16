@@ -11,6 +11,8 @@ Working notes that carry state between sessions, for people and coding agents. T
 | [monitoring.md](monitoring.md) | Health checks, error alerts, how to set them up and what to do when one fires |
 | [staging.md](staging.md) | The staging project: why, how to set it up in Lovable, and how a migration goes through it |
 | [onboarding.md](onboarding.md) | Adding a university and its societies from `/admin`, the yearly routine, and ending a pilot |
+| [go-live.md](go-live.md) | Everything left before a demo and a pilot, in order: settings, accounts and agreements only the owner can do |
+| [demo.md](demo.md) | Preparing and giving a demo: accounts, content, the script, and what to do when something fails |
 
 Design decisions that are already settled live in [`../AGENTS.md`](../AGENTS.md). Setup and commands are in [`../README.md`](../README.md).
 
