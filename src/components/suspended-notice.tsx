@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ShieldOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { downloadMyData } from "@/lib/api/my-data";
@@ -39,6 +39,9 @@ export function SuspendedNotice() {
           onClick={() => session && downloadMyData(session.user.id, session.user.email)}
         >
           Download my data
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/privacy">Privacy notice</Link>
         </Button>
         <Button
           variant="ghost"

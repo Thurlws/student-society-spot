@@ -305,8 +305,11 @@ function Welcome() {
           ))}
         </ul>
       </section>
-      <footer className="mx-auto max-w-7xl px-6 py-8 text-xs text-muted-foreground">
-        SocConnect, for university societies.
+      <footer className="mx-auto flex max-w-7xl flex-wrap gap-x-4 px-6 py-8 text-xs text-muted-foreground">
+        <span>SocConnect, for university societies.</span>
+        <Link to="/privacy" className="underline hover:text-foreground">
+          Privacy
+        </Link>
       </footer>
     </div>
   );

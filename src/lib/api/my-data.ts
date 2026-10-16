@@ -31,6 +31,17 @@ export async function downloadMyData(uid: string, email: string | undefined) {
       .eq("submitted_by", uid),
     supabase.from("notifications").select("title, body, created_at, read_at").eq("user_id", uid),
     supabase.from("ai_usage").select("feature, created_at").eq("user_id", uid),
+    supabase
+      .from("university_members")
+      .select("joined_at, verified_at, suspended_at, suspension_reason, universities(name)")
+      .eq("user_id", uid),
+    supabase
+      .from("message_reports")
+      .select("reason, excerpt, created_at, dismissed_at")
+      .eq("reported_by", uid),
+    supabase.from("support_request_activity").select("kind, text, created_at").eq("actor_id", uid),
+    supabase.from("call_participants").select("joined_at, call_rooms(name)").eq("user_id", uid),
+    supabase.from("saved_proposals").select("collaboration_proposals(title)").eq("user_id", uid),
   ]);
   const keys = [
     "profile",
@@ -43,6 +54,11 @@ export async function downloadMyData(uid: string, email: string | undefined) {
     "memberRequests",
     "notifications",
     "aiUsage",
+    "university",
+    "reportsYouMade",
+    "requestActivity",
+    "callsJoined",
+    "savedProposals",
   ];
   const data = Object.fromEntries(keys.map((k, i) => [k, parts[i]!.data ?? []]));
   const blob = new Blob(
