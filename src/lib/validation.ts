@@ -16,7 +16,7 @@ export interface NotificationPrefs {
   email: boolean;
 }
 
-export type EventAvailability = "open" | "registered" | "full" | "past";
+export type EventAvailability = "open" | "registered" | "full" | "past" | "cancelled";
 
 export const eventCategories = [
   "Workshop",
@@ -86,7 +86,18 @@ export const eventInput = (today: string) =>
     });
 export type EventInput = z.infer<ReturnType<typeof eventInput>>;
 
-export const firstIssue = (e: z.ZodError) => e.issues[0]?.message ?? "Check the form and try again.";
+export const reportReasonInput = z
+  .string()
+  .trim()
+  .max(300, "Keep the reason under 300 characters.");
+
+export const cancelReasonInput = z
+  .string()
+  .trim()
+  .max(300, "Keep the reason under 300 characters.");
+
+export const firstIssue = (e: z.ZodError) =>
+  e.issues[0]?.message ?? "Check the form and try again.";
 
 export const supportRequestInput = z.object({
   societyId: z.string(),

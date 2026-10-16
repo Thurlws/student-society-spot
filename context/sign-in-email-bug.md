@@ -1,6 +1,6 @@
 # Returning users don't get the sign-in email
 
-**Status (2026-10-16):** cause found (Microsoft 365 quarantines the emails as spam). App side fixed on branch `phase-1`; the rest needs the custom sending domain and settings in Lovable Cloud (checklist below).
+**Status (2026-10-16):** cause found (Microsoft 365 quarantines the emails as spam). App side fixed and merged (Phase 1), and production links now last 10 minutes. The rest needs the custom sending domain and templates in Lovable Cloud (checklist below).
 
 ## Symptom
 
@@ -60,7 +60,7 @@ So our code and migrations send the email. In production the card showed "Check 
 
 **To do in Lovable Cloud:**
 
-1. **Now, no domain needed:** Auth settings → Email OTP expiration = **600** seconds. Until this is set, production links last Supabase's default of 1 hour, while the app already says 10 minutes.
+1. **Done 2026-10-16 (by the owner):** Auth settings → Email OTP expiration = **600** seconds, so production links last 10 minutes, as the app says.
 2. **Custom domain** (Cloud → Emails): enter the domain. Lovable creates a sender subdomain (default `notify`, so for example `noreply@notify.<domain>`) and shows the DNS records to add: a TXT record for verification and NS records that delegate the subdomain to Lovable (add them inside the domain's DNS zone; don't change the domain's nameservers at the registrar), plus `_dmarc` if you turn on "Show as sent from @<domain>". Lovable handles SPF and DKIM. Verification takes a few hours, up to 72.
 3. **Templates** (Cloud → Emails → Auth emails → Customize auth emails): this generates the six templates as React Email files in the repo; ask Lovable "Show me my email template files" for the path. Change Magic link and Confirm signup to the wording and subjects in `dev/supabase/templates/`. If the template data includes the token hash, point the button at `<site URL>/auth/confirm?token_hash=<hash>&type=email`; otherwise keep Lovable's link (the page is ready either way). Publish the app so the templates go live.
 4. **Auth settings → Site URL and Redirect URLs:** the Site URL must be the published app address, because `/auth/confirm` links are built from it. List the published domain in Redirect URLs.

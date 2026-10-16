@@ -20,4 +20,40 @@ jobs:
       - run: bun run typecheck
       - run: bun run test
       - run: bun run build
-      # Lint joins once the existing Prettier errors are fixed with `bun run format`.
+      # Formatting is part of lint; `bun run format` fixes it.
+      - run: bun run lint
+
+  database:
+    # Replays every migration into a local Supabase database and runs the pgTAP tests in
+    # dev/supabase/tests, including the permission matrix. Only Postgres is started.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run db:start -- -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - run: npm run db:test
+
+  journeys:
+    # Playwright in Chromium against a local Supabase stack: sign-in through the real email
+    # flow (read from Mailpit), joining and approval, events, announcements and moderation.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:start -- -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - run: bun run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

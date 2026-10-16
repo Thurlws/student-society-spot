@@ -1,12 +1,12 @@
 # Architecture
 
-Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
+Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 (branch `claude/zen-fermi-bzwqu9`), 2026-10-16.
 
 ## Shape
 
 - **Browser to database, directly.** React 19 with TanStack Router talks to Supabase (REST and RPC) using the signed-in user's token. Row-level security (RLS) decides what each user can read or write.
 - **Reads:** one loader, `loadAppData` in `src/lib/api/fetch.ts` (22 queries), exposed through `useData()` in `src/lib/api/store.tsx`. It refetches every 60 s in visible tabs and on window focus (audit finding 5 eased it from 15 s).
-- **Writes:** SQL functions (`join_society`, `decide_membership`, `register_for_event`, `create_event`, `submit_support_request`, `schedule_meeting`, `share_recap`, …) or plain inserts checked by RLS. Errors become `{ ok, error }` via `act()` in `store.tsx`.
+- **Writes:** SQL functions (`join_society`, `decide_membership`, `register_for_event`, `create_event`, `update_event`, `cancel_event`, `submit_support_request`, `schedule_meeting`, `share_recap`, `report_message`, `delete_message`, …) or plain writes checked by RLS (announcements, resources, notifications). Errors become `{ ok, error }` via `act()` in `store.tsx`.
 - **Server functions** (TanStack Start `createServerFn`), only where secrets are needed:
   - `src/lib/livekit.functions.ts`: call tokens, guest links (codes stored hashed)
   - `src/lib/calls.functions.ts`: AI recaps, Q&A, caption transcription
@@ -16,7 +16,7 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
 
 ## Database (`drizzle/migrations/`)
 
-28 tables, about 38 SQL functions, RLS on every table. Permission helpers live in the `private` schema (0008).
+29 tables, about 44 SQL functions, RLS on every table. Permission helpers live in the `private` schema (0008).
 
 | Migration | Adds |
 |---|---|
@@ -33,12 +33,16 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
 | 0010 | Indexes for per-user lookups and announcements by society |
 | 0011 | Domain check also on email changes |
 | 0012 | Foreign keys to `profiles` cascade or set null, so accounts can be deleted |
+| 0013 | `share_recap` refuses everyone but the committee and the call's host (drop-in rooms have no host, and the old check let anyone through) |
+| 0014 | `update_event` and `cancel_event` (notify registered people; cancelled events refuse registrations); no direct updates on `events`; `register_for_event` refuses events the caller can't see |
+| 0015 | Announcement edits limited to title, body and pin (column grants); `edited_at` set by a trigger |
+| 0016 | Message moderation: `message_reports`, `report_message`, `delete_message`, `dismiss_message_reports` |
 
 ## Environments
 
 - **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. There is no staging environment.
 - **Local:** `dev/supabase/config.toml`, run with `bun run db:start`. It replays all migrations in filename order, and Mailpit at http://127.0.0.1:54324 catches emails. `bun run db:check-sign-in` checks the sign-in email paths.
-- **CI:** `.github/workflows/ci.yml` runs typecheck, tests and build with Bun 1.4.2 and Node 24 on pull requests and pushes to `main`.
+- **CI:** `.github/workflows/ci.yml` on pull requests and pushes to `main`: `check` (typecheck, unit tests, build, lint) with Bun 1.4.2 and Node 24; `database` (Postgres only, then `db:test`); `journeys` (Supabase without storage, realtime and studio, then Playwright in Chromium).
 - **Other hosts:** not used yet. What changes when we leave Lovable is in [hosting.md](hosting.md).
 
 ## Gotchas
@@ -48,6 +52,10 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15.
 - `.env` is committed and must only hold public values. Locally, secrets go in `.env.local`, which TanStack Start loads into `process.env` for server code too. Production secrets live in Lovable Cloud.
 - The Supabase CLI reads `SUPABASE_PROJECT_ID` from `.env`, so local Docker containers carry the production project id in their names. They are still local.
 - Commits pushed to `main` sync into the Lovable editor. Never force-push or rewrite pushed history.
-- `bun run lint` fails on about 2,497 pre-existing Prettier errors, so it's not in CI yet.
+- Lint (with Prettier) passes since 2026-10-16 and runs in CI. Edits made without Prettier, including Lovable's, turn CI red until `bun run format` is run. Markdown and the email templates are left out of formatting (`.prettierignore`).
+- Supabase grants every new table and function to `anon` and `authenticated` (default privileges). RLS is the only barrier for tables, and every new `security definer` function needs `revoke execute ... from public, anon` (plus `authenticated` for internal ones). The permission matrix fails when an owner-rights function is callable but not listed.
+- `src/integrations/supabase/types.ts` is generated by Lovable from the production schema. New columns and functions from our migrations are added to it by hand until Lovable regenerates it.
+- Radix dialogs don't call `onOpenChange` when the page opens them, so forms that refill "on open" there never refill. The edit dialogs reset their fields during render when `open` turns true instead.
+- In containers without IPv6, `vite dev` fails to bind `::`; use `npx vite dev --host 127.0.0.1 --port 8080` (the Playwright config does).
 - TU Dublin is hard-coded in `src/lib/auth.tsx:6`, the 0000 domain trigger and staff-admin grant, `src/routes/welcome.tsx`, `src/routes/_authenticated/admin.tsx:103`, `src/lib/society-ai.functions.ts:6`, `src/components/profile-form.tsx` (`src/data/tud-courses.json`), `src/styles.css` and the `__root.tsx` meta tags. Phase 3 of the roadmap replaces this with a `universities` table.
-- Unit tests (`src/test/`, 29) cover helpers, sign-in error messages and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test` against the local stack); they cover the Phase 1 changes, not yet every rule, and CI doesn't run them yet.
+- Unit tests (`src/test/`, 31) cover helpers, calendar files, sign-in error messages and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test`, about 970 checks): the role-by-table permission matrix (`permission_matrix.test.sql`), the rules inside the write functions, and one file per feature. Browser journeys are Playwright tests in `e2e/` (`bun run e2e`, 10 tests). All three run in CI.

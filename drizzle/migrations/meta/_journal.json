@@ -92,6 +92,34 @@
       "when": 1792105720174,
       "tag": "0012_deletable_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792108173880,
+      "tag": "0013_share_recap_host_check",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792108496112,
+      "tag": "0014_edit_and_cancel_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792108754778,
+      "tag": "0015_announcement_edits",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792108934701,
+      "tag": "0016_message_moderation",
+      "breakpoints": true
     }
   ]
 }

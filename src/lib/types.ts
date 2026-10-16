@@ -1,14 +1,7 @@
 export type Role = "student" | "committee";
 
 export type SocietyAccent =
-  | "indigo"
-  | "teal"
-  | "coral"
-  | "amber"
-  | "rose"
-  | "sky"
-  | "emerald"
-  | "plum";
+  "indigo" | "teal" | "coral" | "amber" | "rose" | "sky" | "emerald" | "plum";
 
 export interface User {
   id: string;
@@ -29,7 +22,17 @@ export interface CommitteeMember {
 }
 
 export type SocietyLinkKind =
-  | "website" | "instagram" | "tiktok" | "facebook" | "linkedin" | "x" | "youtube" | "discord" | "linktree" | "whatsapp" | "other";
+  | "website"
+  | "instagram"
+  | "tiktok"
+  | "facebook"
+  | "linkedin"
+  | "x"
+  | "youtube"
+  | "discord"
+  | "linktree"
+  | "whatsapp"
+  | "other";
 
 export interface SocietyLink {
   kind: SocietyLinkKind;
@@ -80,6 +83,9 @@ export interface Event {
   attendees: number;
   tags: string[];
   featured?: boolean;
+  /** Cancelled by the committee; kept so registered people can see why. */
+  cancelled?: boolean;
+  cancelReason?: string | undefined;
 }
 
 export interface Announcement {
@@ -90,6 +96,8 @@ export interface Announcement {
   body: string;
   createdAt: string; // ISO datetime
   pinned?: boolean;
+  /** Set when the committee changed the wording after posting. */
+  editedAt?: string | undefined;
 }
 
 export interface DiscussionChannel {
@@ -103,8 +111,21 @@ export interface DiscussionMessage {
   id: string;
   channelId: string;
   author: string;
+  authorId: string;
   body: string;
   createdAt: string;
+}
+
+/** An open report about a discussion message. Committees see their society's, admins see all, members see their own. */
+export interface MessageReport {
+  id: string;
+  messageId: string;
+  societyId: string;
+  author: string;
+  reason: string;
+  excerpt: string;
+  createdAt: string;
+  reportedByMe: boolean;
 }
 
 export interface Resource {
@@ -139,7 +160,7 @@ export interface CollaborationProposal {
 export interface MembershipRequest {
   id: string;
   societyId: string;
-  /** Set when the requester is a demo account, so approval can update their membership. */
+  /** The requester's account. */
   userId?: string | undefined;
   name: string;
   course: string;
@@ -155,7 +176,8 @@ export interface ResolvedRequest extends MembershipRequest {
 
 /** Lifecycle: open → in_progress → resolved (see src/lib/support-requests.ts for allowed moves). */
 export type SupportRequestStatus = "open" | "in_progress" | "resolved";
-export type SupportRequestCategory = "question" | "membership" | "event" | "equipment" | "finance" | "other";
+export type SupportRequestCategory =
+  "question" | "membership" | "event" | "equipment" | "finance" | "other";
 export type SupportRequestPriority = "low" | "normal" | "high";
 
 export interface SupportRequestActivity {

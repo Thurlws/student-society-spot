@@ -6,7 +6,18 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // src/integrations and the route tree are generated (by Lovable and TanStack Router).
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "src/integrations",
+      "src/routeTree.gen.ts",
+      "playwright-report",
+      "test-results",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

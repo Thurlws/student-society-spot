@@ -41,51 +41,90 @@ export interface PulseMap {
   nodes: Record<string, PulseNode>;
 }
 
-const hubSize = (label: string, count: number) => ({ w: Math.round(30 + 8.6 * label.length + 8.5 * String(count).length), h: 30 });
+const hubSize = (label: string, count: number) => ({
+  w: Math.round(30 + 8.6 * label.length + 8.5 * String(count).length),
+  h: 30,
+});
 
 export function layoutPulseMap(societies: Pick<Society, "id" | "tags">[]): PulseMap {
   const counts = new Map<string, number>();
-  for (const s of societies) for (const t of new Set(s.tags)) counts.set(t, (counts.get(t) ?? 0) + 1);
-  const ranked = [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)! || a.localeCompare(b));
+  for (const s of societies)
+    for (const t of new Set(s.tags)) counts.set(t, (counts.get(t) ?? 0) + 1);
+  const ranked = [...counts.keys()].sort(
+    (a, b) => counts.get(b)! - counts.get(a)! || a.localeCompare(b),
+  );
   const kept = new Set(ranked.length > MAX_HUBS ? ranked.slice(0, MAX_HUBS - 1) : ranked);
-  const hubsOf = (s: Pick<Society, "tags">) => [...new Set(s.tags.map((t) => (kept.has(t) ? t : OTHER)))].sort();
+  const hubsOf = (s: Pick<Society, "tags">) =>
+    [...new Set(s.tags.map((t) => (kept.has(t) ? t : OTHER)))].sort();
 
   // Order the hubs around the ring so interests that share societies sit next to each
   // other (cheapest insertion, biggest interests first).
   const memberships = societies.map(hubsOf);
   const count = (k: string) => memberships.filter((m) => m.includes(k)).length;
-  const keys = [...new Set(memberships.flat())].sort((a, b) => count(b) - count(a) || a.localeCompare(b));
-  const together = (a: string, b: string) => memberships.filter((m) => m.includes(a) && m.includes(b)).length;
+  const keys = [...new Set(memberships.flat())].sort(
+    (a, b) => count(b) - count(a) || a.localeCompare(b),
+  );
+  const together = (a: string, b: string) =>
+    memberships.filter((m) => m.includes(a) && m.includes(b)).length;
   const order: string[] = [];
   for (const k of keys) {
-    let at = order.length, best = -Infinity;
+    let at = order.length,
+      best = -Infinity;
     for (let i = 0; i < order.length && order.length > 1; i++) {
-      const prev = order[i]!, next = order[(i + 1) % order.length]!;
+      const prev = order[i]!,
+        next = order[(i + 1) % order.length]!;
       const gain = together(prev, k) + together(k, next) - together(prev, next);
-      if (gain > best) { best = gain; at = i + 1; }
+      if (gain > best) {
+        best = gain;
+        at = i + 1;
+      }
     }
     order.splice(at, 0, k);
   }
 
   // Bigger interests get a wider slice of the ring, and the ring is turned so the biggest
   // ones sit at the left and right, where there's the most room around them.
-  const cx = MAP_W / 2, cy = MAP_H / 2, rx = 290, ry = 182;
+  const cx = MAP_W / 2,
+    cy = MAP_H / 2,
+    rx = 290,
+    ry = 182;
   const weight = order.map((k) => 1 + Math.sqrt(count(k)));
   const total = weight.reduce((n, w) => n + w, 0);
-  const mids = weight.map((w, i) => (weight.slice(0, i).reduce((n, x) => n + x, 0) + w / 2) / total * Math.PI * 2);
-  let turn = 0, crowd = Infinity;
+  const mids = weight.map(
+    (w, i) => ((weight.slice(0, i).reduce((n, x) => n + x, 0) + w / 2) / total) * Math.PI * 2,
+  );
+  let turn = 0,
+    crowd = Infinity;
   for (let step = 0; step < 72; step++) {
     const t = (step / 72) * Math.PI * 2;
     const c = mids.reduce((n, m, i) => n + count(order[i]!) * Math.abs(Math.sin(m + t)), 0);
-    if (c < crowd - 1e-9) { crowd = c; turn = t; }
+    if (c < crowd - 1e-9) {
+      crowd = c;
+      turn = t;
+    }
   }
   const hubs: PulseHub[] = order.map((key, i) => {
     const a = mids[i]! + turn;
     const c = count(key);
-    return { key, label: key, count: c, x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry, ...hubSize(key, c) };
+    return {
+      key,
+      label: key,
+      count: c,
+      x: cx + Math.cos(a) * rx,
+      y: cy + Math.sin(a) * ry,
+      ...hubSize(key, c),
+    };
   });
   const untagged = memberships.filter((m) => m.length === 0).length;
-  if (untagged) hubs.push({ key: UNTAGGED, label: "No interests listed", count: untagged, x: cx, y: cy, ...hubSize("No interests listed", untagged) });
+  if (untagged)
+    hubs.push({
+      key: UNTAGGED,
+      label: "No interests listed",
+      count: untagged,
+      x: cx,
+      y: cy,
+      ...hubSize("No interests listed", untagged),
+    });
   const hubAt = new Map(hubs.map((h) => [h.key, h]));
 
   // Start each society on a small sunflower spiral around its anchor: just outside its hub,
@@ -102,12 +141,15 @@ export function layoutPulseMap(societies: Pick<Society, "id" | "tags">[]): Pulse
     let ax = hs.reduce((n, h) => n + h.x, 0) / hs.length;
     let ay = hs.reduce((n, h) => n + h.y, 0) / hs.length;
     if (hs.length === 1 && k !== "") {
-      const dx = ax - cx, dy = ay - cy, d = Math.hypot(dx, dy) || 1;
+      const dx = ax - cx,
+        dy = ay - cy,
+        d = Math.hypot(dx, dy) || 1;
       ax += (dx / d) * 56;
       ay += (dy / d) * 56;
     }
     members.forEach((idx, j) => {
-      const r = 17 * Math.sqrt(j + 0.5), t = j * 2.39996;
+      const r = 17 * Math.sqrt(j + 0.5),
+        t = j * 2.39996;
       pos[idx] = { x: ax + Math.cos(t) * r, y: ay + Math.sin(t) * r };
       home[idx] = { ...pos[idx]! };
     });
@@ -121,13 +163,20 @@ export function layoutPulseMap(societies: Pick<Society, "id" | "tags">[]): Pulse
       const p = pos[i]!;
       for (let j = i + 1; j < pos.length; j++) {
         const q = pos[j]!;
-        let dx = q.x - p.x, dy = q.y - p.y;
+        let dx = q.x - p.x,
+          dy = q.y - p.y;
         let d = Math.hypot(dx, dy);
         if (d >= min) continue;
-        if (d < 0.01) { dx = Math.cos(j * 2.39996); dy = Math.sin(j * 2.39996); d = 1; }
+        if (d < 0.01) {
+          dx = Math.cos(j * 2.39996);
+          dy = Math.sin(j * 2.39996);
+          d = 1;
+        }
         const push = (min - d) / 2;
-        p.x -= (dx / d) * push; p.y -= (dy / d) * push;
-        q.x += (dx / d) * push; q.y += (dy / d) * push;
+        p.x -= (dx / d) * push;
+        p.y -= (dy / d) * push;
+        q.x += (dx / d) * push;
+        q.y += (dy / d) * push;
       }
       for (const h of hubs) {
         const ox = h.w / 2 + NODE_R + 4 - Math.abs(p.x - h.x);
@@ -145,7 +194,12 @@ export function layoutPulseMap(societies: Pick<Society, "id" | "tags">[]): Pulse
 
   const nodes: Record<string, PulseNode> = {};
   societies.forEach((s, i) => {
-    nodes[s.id] = { id: s.id, x: Math.round(pos[i]!.x * 10) / 10, y: Math.round(pos[i]!.y * 10) / 10, hubs: memberships[i]!.length ? memberships[i]! : [UNTAGGED] };
+    nodes[s.id] = {
+      id: s.id,
+      x: Math.round(pos[i]!.x * 10) / 10,
+      y: Math.round(pos[i]!.y * 10) / 10,
+      hubs: memberships[i]!.length ? memberships[i]! : [UNTAGGED],
+    };
   });
   return { hubs, nodes };
 }
