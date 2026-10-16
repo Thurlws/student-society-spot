@@ -1635,7 +1635,7 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
-      delete_message: { Args: { _message_id: string }; Returns: undefined }
+      delete_message: { Args: { _message_id: string; _reason?: string }; Returns: undefined }
       dismiss_message_reports: {
         Args: { _message_id: string }
         Returns: undefined

@@ -67,7 +67,12 @@ export function MessageActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {(own || moderator) && (
-            <DropdownMenuItem onSelect={() => setDialog("delete")}>
+            <DropdownMenuItem
+              onSelect={() => {
+                setReason("");
+                setDialog("delete");
+              }}
+            >
               <Trash2 />
               {own ? "Delete" : "Remove message"}
             </DropdownMenuItem>
@@ -95,14 +100,28 @@ export function MessageActions({
             </AlertDialogTitle>
             <AlertDialogDescription>
               It disappears for everyone in the channel. This can't be undone.
+              {!own && ` ${message.author} is told it was removed, and why if you say.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {!own && (
+            <div className="space-y-1.5">
+              <Label htmlFor="remove-reason">Why? (optional, {message.author} sees this)</Label>
+              <Textarea
+                id="remove-reason"
+                rows={2}
+                maxLength={300}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. Insulting other members"
+              />
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
               className={buttonVariants({ variant: "destructive" })}
               onClick={async () => {
-                const o = await deleteMessage(message.id);
+                const o = await deleteMessage(message.id, own ? "" : reason);
                 if (o.ok) toast(own ? "Message deleted" : "Message removed");
                 else toast.error(o.error);
               }}
@@ -251,7 +270,16 @@ export function ReportedMessages({ societyId }: { societyId?: string }) {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         className={buttonVariants({ variant: "destructive" })}
-                        onClick={() => run(messageId, deleteMessage(messageId), "Message removed")}
+                        onClick={() =>
+                          run(
+                            messageId,
+                            deleteMessage(
+                              messageId,
+                              "It was reported, and found to break SocConnect's terms of use.",
+                            ),
+                            "Message removed",
+                          )
+                        }
                       >
                         Remove
                       </AlertDialogAction>

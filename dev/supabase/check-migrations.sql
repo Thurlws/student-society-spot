@@ -28,6 +28,7 @@ from (values
   ('0028 society import', to_regprocedure('public.import_societies(uuid, jsonb)') is not null),
   ('0029 society identity', coalesce(pg_get_functiondef(to_regprocedure('public.guard_society_update()')) like '%name, category, logo or banner%', false)),
   ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%')),
-  ('0031 display names', to_regprocedure('private.check_display_name()') is not null)
+  ('0031 display names', to_regprocedure('private.check_display_name()') is not null),
+  ('0032 removal notices', to_regprocedure('public.delete_message(uuid, text)') is not null)
 ) as m(migration, applied)
 order by m.migration;
