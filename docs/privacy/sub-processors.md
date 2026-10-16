@@ -13,6 +13,8 @@ When a university pilots SocConnect, the university is the controller, the SocCo
 | **OpenAI**, through the Lovable AI gateway (`src/lib/ai.server.ts`) | Transcribes caption clips (`openai/gpt-transcribe`), writes call recaps and answers questions about them, explains society suggestions, drafts collaboration proposals and answers "Ask SocConnect" (`openai/gpt-6-astra`) | Seven-second audio clips of speech from people who turned captions on, call transcripts, questions people ask, and society, event and announcement text the person can already see | United States | To confirm: the transfer mechanism (EU-US Data Privacy Framework or standard contractual clauses), and how long Lovable's gateway and OpenAI keep requests. The app asks for responses not to be stored (`store: false`) |
 | **LiveKit** (LiveKit Cloud) | Carries video calls between browsers | Display name, an internal identity, camera, microphone and the captions people send in a call. Not recorded by SocConnect | To confirm: the project's region | To confirm: LiveKit's data processing agreement. Only used when `LIVEKIT_*` variables are set |
 
+| **Sentry** (Functional Software, Inc.), EU region | Error alerts (roadmap T4.4): server errors, warnings (a failing feature, AI out of credits, a slow or failing server function), browser crashes | Error reports: the error and its stack, the page's path, the server function's name. Scrubbed of email addresses, tokens and keys; never names, message text, request bodies or ids of people | EU (Frankfurt), chosen when the account is created | Added 2026-10-16 as the owner sets it up. To confirm: Sentry's data processing agreement and its transfer terms for support access from the US. Nothing is sent until `SENTRY_DSN` is set |
+
 ## Not sub-processors, but worth knowing
 
 | Who | What happens | Notes |
@@ -25,6 +27,5 @@ When a university pilots SocConnect, the university is the controller, the SocCo
 
 | Provider | For | Status |
 |---|---|---|
-| An error-tracking service hosted in the EU (for example Sentry's EU region) | Server errors and alerts (roadmap T4.4) | The code sends nothing until `SENTRY_DSN` is set. Error reports are scrubbed of email addresses and tokens before they leave |
 | An uptime checker | Polls the public `/api/health` endpoint | Sees no personal data |
-| A CAPTCHA service (Cloudflare Turnstile or hCaptcha) | Stops scripted sign-in requests (audit finding 7) | Waiting for an account. Sees the visitor's IP address and browser |
+| **Cloudflare** (Turnstile) | Checks the sign-in form is used by a person (audit finding 7). Code done 2026-10-16; on once `VITE_TURNSTILE_SITE_KEY` is set, and the notice then lists it | The visitor's IP address and browser characteristics, on the sign-in page only. Cloudflare says Turnstile sets no cookies and keeps IP addresses for a few weeks at most | To confirm: Cloudflare's data processing agreement and the transfer mechanism (it's certified under the EU-US Data Privacy Framework) |

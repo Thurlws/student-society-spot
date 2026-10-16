@@ -27,6 +27,12 @@ describe("signInError", () => {
     );
   });
 
+  it("explains a failed bot check", () => {
+    expect(
+      signInError({ code: "captcha_failed", message: "captcha protection: request disallowed" }),
+    ).toMatch(/not a bot/);
+  });
+
   it("never blames the email address for a server error", () => {
     expect(
       signInError({ code: "unexpected_failure", message: "Database error saving new user" }),

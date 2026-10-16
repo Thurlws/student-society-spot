@@ -28,6 +28,8 @@ Things only the owner or the university can do. The code is ready for them.
 
 SocConnect sets no cookies and has no analytics, advertising or tracking. It keeps two things on the device, both strictly necessary for what the person asked for, so the ePrivacy rules need no consent banner: the sign-in session (local storage) and the name a guest typed to join a call (session storage, gone when the tab closes). The list is `DEVICE_STORAGE` in `src/lib/privacy.ts`, shown at `/privacy#cookies`. Adding anything that isn't strictly necessary (analytics, a third-party script, a chat widget) needs a consent step first, and an update here.
 
+Cloudflare Turnstile, the bot check on the sign-in form, loads a script from Cloudflare on the sign-in page once `VITE_TURNSTILE_SITE_KEY` is set. It's a security measure for the service the person asked for, and Cloudflare says it sets no cookies, so it needs no consent either; the notice and [sub-processors.md](sub-processors.md) name it automatically while it's on.
+
 ## Keeping it current
 
 - A change that collects new personal data, sends it somewhere new or keeps it longer updates the notice, these files and the DPIA risk table in the same pull request.
