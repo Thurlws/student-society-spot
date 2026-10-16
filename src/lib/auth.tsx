@@ -12,6 +12,8 @@ export function signInError(e: { code?: string | undefined; message: string }) {
   }
   if (e.code === "over_request_rate_limit")
     return "Too many attempts from this network. Try again in a few minutes.";
+  if (e.code === "captcha_failed")
+    return "The check that you're not a bot didn't pass. Reload the page and try again.";
   if (/university email|same university/.test(e.message)) return e.message;
   return "We couldn't send the sign-in link. Try again in a minute.";
 }

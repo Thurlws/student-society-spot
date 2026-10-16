@@ -46,6 +46,8 @@ export default defineConfig({
       SUPABASE_URL: stack.url,
       SUPABASE_PUBLISHABLE_KEY: stack.publishableKey,
       SUPABASE_SERVICE_ROLE_KEY: stack.serviceKey,
+      // The local stack doesn't check bot tokens, and Cloudflare would refuse localhost.
+      VITE_TURNSTILE_SITE_KEY: process.env["E2E_TURNSTILE_SITE_KEY"] ?? "",
     },
   },
 });
