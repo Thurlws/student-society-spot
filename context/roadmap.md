@@ -2,7 +2,7 @@
 
 From the full audit of 2026-10-15. The audit report is a private page (https://claude.ai/artifact/Lfyqs1j3j9QeWVaiY8DLKs) that only its owner can open unless shared. This file is the working copy: update statuses here.
 
-The root `roadmap.md` is Lovable's earlier phase list and is out of date.
+The root `roadmap.md` only points here now (2026-10-16); it used to hold Lovable's earlier phase list.
 
 ## Findings
 
