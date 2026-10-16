@@ -3,6 +3,7 @@ import { Loader2, Waypoints } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { pageHead } from "@/lib/seo";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Button } from "@/components/ui/button";
 
 type LinkType = "email" | "magiclink" | "signup";
@@ -26,6 +27,8 @@ function Confirm() {
   const { token_hash, type } = Route.useSearch();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  // Before the page has loaded, Continue would do nothing.
+  const hydrated = useHydrated();
   const [error, setError] = useState(
     token_hash ? "" : "This sign-in link is incomplete. Ask for a new one.",
   );
@@ -57,7 +60,7 @@ function Confirm() {
             </Button>
           </>
         ) : (
-          <Button className="w-full" onClick={confirm} disabled={busy}>
+          <Button className="w-full" onClick={confirm} disabled={busy || !hydrated}>
             {busy && <Loader2 className="animate-spin" />}Continue
           </Button>
         )}
