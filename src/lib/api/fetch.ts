@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type {
   CallRecap, CallRoom, CallSummary, TranscriptLine,
   Announcement, CollaborationProposal, DiscussionChannel, DiscussionMessage, Event, MembershipRequest,
-  Notification, ResolvedRequest, Resource, Society, SocietyAccent, SocietyLink, SupportRequest,
+  MessageReport, Notification, ResolvedRequest, Resource, Society, SocietyAccent, SocietyLink, SupportRequest,
 } from "@/lib/types";
 import type { NotificationPrefs } from "@/lib/validation";
 import { toDublin } from "@/lib/format";
@@ -20,6 +20,7 @@ export type AppData = {
   announcements: Announcement[];
   channels: DiscussionChannel[];
   messages: DiscussionMessage[];
+  messageReports: MessageReport[];
   resources: (Resource & { url: string })[];
   notifications: Notification[];
   prefs: NotificationPrefs;
@@ -61,10 +62,12 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     supabase.from("collaboration_proposals").select("*").order("created_at", { ascending: false }),
     supabase.from("saved_proposals").select("proposal_id").eq("user_id", uid),
   ]);
-  const [roomRes, recapRes, recommendationRes] = await Promise.all([
+  const [roomRes, recapRes, recommendationRes, reportRes] = await Promise.all([
     supabase.from("call_rooms").select("*, profiles!call_rooms_host_id_fkey(display_name)").order("starts_at", { nullsFirst: true }),
     supabase.from("call_recaps").select("*").order("created_at", { ascending: false }).limit(100),
     supabase.rpc("recommend_societies"),
+    supabase.from("message_reports").select("id, message_id, society_id, reason, excerpt, created_at, reported_by, author:profiles!message_reports_author_id_fkey(display_name)")
+      .is("dismissed_at", null).order("created_at", { ascending: false }),
   ]);
 
   const socRows = must(soc);
@@ -148,8 +151,11 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     announcements: (must(ann) as { id: string; society_id: string; title: string; body: string; pinned: boolean; created_at: string; edited_at: string | null; profiles: { display_name: string } | null }[])
       .filter((a) => slugOf[a.society_id])
       .map((a) => ({ id: a.id, societyId: slugOf[a.society_id]!, author: name(a.profiles), title: a.title, body: a.body, createdAt: a.created_at, pinned: a.pinned, editedAt: a.edited_at ?? undefined })),
-    messages: (must(msg) as { id: string; channel_id: string; body: string; created_at: string; profiles: { display_name: string } | null }[])
-      .map((m) => ({ id: m.id, channelId: m.channel_id, author: name(m.profiles), body: m.body, createdAt: m.created_at })).reverse(),
+    messages: (must(msg) as { id: string; channel_id: string; author_id: string; body: string; created_at: string; profiles: { display_name: string } | null }[])
+      .map((m) => ({ id: m.id, channelId: m.channel_id, author: name(m.profiles), authorId: m.author_id, body: m.body, createdAt: m.created_at })).reverse(),
+    messageReports: (must(reportRes) as unknown as { id: string; message_id: string; society_id: string; reason: string; excerpt: string; created_at: string; reported_by: string; author: { display_name: string } | null }[])
+      .filter((r) => slugOf[r.society_id])
+      .map((r) => ({ id: r.id, messageId: r.message_id, societyId: slugOf[r.society_id]!, author: name(r.author), reason: r.reason, excerpt: r.excerpt, createdAt: r.created_at, reportedByMe: r.reported_by === uid })),
     resources: must(res).filter((r) => slugOf[r.society_id]).map((r) => ({ id: r.id, societyId: slugOf[r.society_id]!, title: r.title, kind: r.kind as Resource["kind"], description: r.description, url: r.url })),
     notifications: must(notes).map((n) => ({ id: n.id, title: n.title, body: n.body, createdAt: n.created_at, read: !!n.read_at, link: (n.link as Notification["link"]) ?? undefined })),
     prefs: p ? { announcements: p.announcements, events: p.events, discussions: p.discussions, email: p.email } : { announcements: true, events: true, discussions: false, email: false },

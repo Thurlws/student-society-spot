@@ -108,8 +108,21 @@ export interface DiscussionMessage {
   id: string;
   channelId: string;
   author: string;
+  authorId: string;
   body: string;
   createdAt: string;
+}
+
+/** An open report about a discussion message. Committees see their society's, admins see all, members see their own. */
+export interface MessageReport {
+  id: string;
+  messageId: string;
+  societyId: string;
+  author: string;
+  reason: string;
+  excerpt: string;
+  createdAt: string;
+  reportedByMe: boolean;
 }
 
 export interface Resource {

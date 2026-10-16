@@ -17,6 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OfficialInfo } from "@/components/official-info";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
+import { MessageActions } from "@/components/moderation";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -180,11 +181,12 @@ function SocietyPage({ societyId }: { societyId: string }) {
                   {messages.filter((m) => m.channelId === channel).length === 0 && <p className="text-center text-sm text-muted-foreground">No messages yet. Say hello.</p>}
                   {messages.filter((m) => m.channelId === channel).map((m) => (
                     <div key={m.id} className="flex gap-3">
-                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", m.author === user.name ? "bg-ink text-ink-foreground" : "bg-muted")}>{m.author.split(" ").map((p) => p[0]).join("")}</span>
-                      <div>
+                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", m.authorId === user.id ? "bg-ink text-ink-foreground" : "bg-muted")}>{m.author.split(" ").map((p) => p[0]).join("")}</span>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm"><span className="font-semibold">{m.author}</span> <span className="text-xs text-muted-foreground">{timeAgo(m.createdAt)}</span></p>
-                        <p className="whitespace-pre-line text-sm text-foreground/90">{m.body}</p>
+                        <p className="whitespace-pre-line break-words text-sm text-foreground/90">{m.body}</p>
                       </div>
+                      <MessageActions message={m} societyId={s.id} societyName={s.shortName} />
                     </div>
                   ))}
                 </div>

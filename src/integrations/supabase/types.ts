@@ -593,6 +593,81 @@ export type Database = {
         }
         Relationships: []
       }
+      message_reports: {
+        Row: {
+          author_id: string
+          created_at: string
+          dismissed_at: string | null
+          dismissed_by: string | null
+          excerpt: string
+          id: string
+          message_id: string
+          reason: string
+          reported_by: string
+          society_id: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          excerpt: string
+          id?: string
+          message_id: string
+          reason?: string
+          reported_by: string
+          society_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          excerpt?: string
+          id?: string
+          message_id?: string
+          reason?: string
+          reported_by?: string
+          society_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_dismissed_by_fkey"
+            columns: ["dismissed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_society_id_fkey"
+            columns: ["society_id"]
+            isOneToOne: false
+            referencedRelation: "societies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           author_id: string
@@ -1384,6 +1459,11 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
+      delete_message: { Args: { _message_id: string }; Returns: undefined }
+      dismiss_message_reports: {
+        Args: { _message_id: string }
+        Returns: undefined
+      }
       email_domain_allowed: { Args: { _email: string }; Returns: boolean }
       event_attendee_counts: {
         Args: never
@@ -1444,6 +1524,10 @@ export type Database = {
         }[]
       }
       register_for_event: { Args: { _event_id: string }; Returns: undefined }
+      report_message: {
+        Args: { _message_id: string; _reason: string }
+        Returns: undefined
+      }
       reserve_society_ai: {
         Args: { _feature: string; _uid: string }
         Returns: boolean
