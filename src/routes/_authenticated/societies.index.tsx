@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Search, SearchX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useData } from "@/lib/api/store";
+import { useAuth } from "@/lib/auth";
 import { pageHead } from "@/lib/seo";
 import { PageHeader, SocietyCard, EmptyState } from "@/components/cards";
 import { JoinButton } from "@/components/join-button";
@@ -21,13 +22,14 @@ export const Route = createFileRoute("/_authenticated/societies/")({
   head: () =>
     pageHead(
       "Discover societies",
-      "Browse every TU Dublin society by campus, category and interest.",
+      "Browse your university's societies by campus, category and interest.",
     ),
   component: Discover,
 });
 
 function Discover() {
   const { societies, membership, allInterests, recommendations } = useData();
+  const { university } = useAuth().access;
   const fits = useSocietyFits();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
@@ -84,7 +86,7 @@ function Discover() {
     <div>
       <PageHeader
         title="Discover societies"
-        subtitle={`All ${societies.length} TU Dublin societies. Filter by campus or what they're about, then open one to join.`}
+        subtitle={`All ${societies.length} ${university?.short_name ?? "university"} societies. Filter by campus or what they're about, then open one to join.`}
       />
       <div className="mb-6 space-y-4 rounded-xl border bg-card p-4 shadow-soft">
         <div className="flex flex-col gap-3 md:flex-row">
