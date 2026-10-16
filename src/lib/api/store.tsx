@@ -61,6 +61,16 @@ const EMPTY: AppData = {
 };
 
 const fail = (error: string): Outcome => ({ ok: false, error });
+/** RLS hides announcements you can't change, so a write that matched none comes back without an error. */
+const announcementWrite = async (
+  q: PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>,
+) => {
+  const r = await q;
+  if (r.error || r.data?.length) return r;
+  return {
+    error: { message: "This announcement was already deleted, or you can't change it any more." },
+  };
+};
 const errText = (e: unknown) => {
   const m =
     e instanceof Error
@@ -204,10 +214,14 @@ function useDataValue() {
     editAnnouncement: async (id: string, input: AnnouncementInput) => {
       const p = announcementInput.safeParse(input);
       if (!p.success) return fail(firstIssue(p.error));
-      return act(() => supabase.from("announcements").update(p.data).eq("id", id));
+      return act(() =>
+        announcementWrite(supabase.from("announcements").update(p.data).eq("id", id).select("id")),
+      );
     },
     deleteAnnouncement: (id: string) =>
-      act(() => supabase.from("announcements").delete().eq("id", id)),
+      act(() =>
+        announcementWrite(supabase.from("announcements").delete().eq("id", id).select("id")),
+      ),
     createEvent: async (slug: string, input: EventInput) => {
       const p = eventInput(todayIso()).safeParse(input);
       if (!p.success) return fail(firstIssue(p.error));

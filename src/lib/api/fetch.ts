@@ -138,9 +138,10 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
     supabase
       .from("message_reports")
       .select(
-        "id, message_id, society_id, reason, excerpt, created_at, reported_by, author:profiles!message_reports_author_id_fkey(display_name)",
+        "id, message_id, society_id, reason, excerpt, created_at, reported_by, dismissed_at, author:profiles!message_reports_author_id_fkey(display_name)",
       )
-      .is("dismissed_at", null)
+      // Your own closed reports too, so the message stays marked as reported.
+      .or(`dismissed_at.is.null,reported_by.eq.${uid}`)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -385,6 +386,7 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
         excerpt: string;
         created_at: string;
         reported_by: string;
+        dismissed_at: string | null;
         author: { display_name: string } | null;
       }[]
     )
@@ -398,6 +400,7 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
         excerpt: r.excerpt,
         createdAt: r.created_at,
         reportedByMe: r.reported_by === uid,
+        dismissed: !!r.dismissed_at,
       })),
     resources: must(res)
       .filter((r) => slugOf[r.society_id])

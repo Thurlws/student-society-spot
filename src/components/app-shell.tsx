@@ -264,7 +264,12 @@ function Notifications() {
               key={n.id}
               onClick={() => {
                 markRead(n.id);
-                if (n.link) navigate({ to: n.link.to, params: n.link.params } as never);
+                if (n.link)
+                  navigate({
+                    to: n.link.to,
+                    params: n.link.params,
+                    search: n.link.search,
+                  } as never);
               }}
               className={cn(
                 "flex w-full gap-3 border-b px-4 py-3 text-left last:border-0 hover:bg-muted",

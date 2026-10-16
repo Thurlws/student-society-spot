@@ -1,6 +1,6 @@
 # Architecture
 
-Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 (branch `claude/zen-fermi-bzwqu9`), 2026-10-16.
+Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 and its review fixes (branch `phase-2-followups`), 2026-10-16.
 
 ## Shape
 
@@ -37,6 +37,10 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 | 0014 | `update_event` and `cancel_event` (notify registered people; cancelled events refuse registrations); no direct updates on `events`; `register_for_event` refuses events the caller can't see |
 | 0015 | Announcement edits limited to title, body and pin (column grants); `edited_at` set by a trigger |
 | 0016 | Message moderation: `message_reports`, `report_message`, `delete_message`, `dismiss_message_reports` |
+| 0017 | Reports about a committee member's own message go to the rest of the committee; reporters aren't notified of their own report; the notification names the society |
+| 0018 | Events can't be deleted through the API (cancel them) |
+| 0019 | New announcements can't set their own dates |
+| 0020 | A call's host has to still be a member to share its recap |
 
 ## Environments
 
@@ -58,4 +62,4 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 - Radix dialogs don't call `onOpenChange` when the page opens them, so forms that refill "on open" there never refill. The edit dialogs reset their fields during render when `open` turns true instead.
 - In containers without IPv6, `vite dev` fails to bind `::`; use `npx vite dev --host 127.0.0.1 --port 8080` (the Playwright config does).
 - TU Dublin is hard-coded in `src/lib/auth.tsx:6`, the 0000 domain trigger and staff-admin grant, `src/routes/welcome.tsx`, `src/routes/_authenticated/admin.tsx:103`, `src/lib/society-ai.functions.ts:6`, `src/components/profile-form.tsx` (`src/data/tud-courses.json`), `src/styles.css` and the `__root.tsx` meta tags. Phase 3 of the roadmap replaces this with a `universities` table.
-- Unit tests (`src/test/`, 31) cover helpers, calendar files, sign-in error messages and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test`, about 970 checks): the role-by-table permission matrix (`permission_matrix.test.sql`), the rules inside the write functions, and one file per feature. Browser journeys are Playwright tests in `e2e/` (`bun run e2e`, 10 tests). All three run in CI.
+- Unit tests (`src/test/`, 31) cover helpers, calendar files, sign-in error messages and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test`, about 980 checks): the role-by-table permission matrix (`permission_matrix.test.sql`), the rules inside the write functions, and one file per feature. Browser journeys are Playwright tests in `e2e/` (`bun run e2e`, 10 tests). All three run in CI.
