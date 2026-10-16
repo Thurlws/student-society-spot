@@ -59,6 +59,28 @@ Line numbers are from commit `566c72c`.
 | 26 | Text typed into the sign-in form before the page finishes loading is lost, and pressing Continue on `/auth/confirm` that early does nothing. Only noticeable on slow connections | `welcome.tsx`, `auth.confirm.tsx` | Open (nice to have) |
 | 27 | Any signed-in user can save any proposal id, and the error for an unknown id tells them whether it exists | 0001 `saved_proposals` | Open (minor) |
 
+### Found reviewing Phase 2 (2026-10-16)
+
+Two reviews of the merged Phase 2 code (database and app), branch `phase-2-followups`. Line numbers are from commit `7666950`.
+
+| # | Finding | Where | Status |
+|---|---|---|---|
+| 28 | A committee member whose own message was reported could see who reported it and dismiss the report, which also took it off `/admin`. A committee member who reported a message was notified about their own report | 0016 `message_reports` policy, `dismiss_message_reports`, `report_message` | Fixed in code (0017) |
+| 29 | Committees could still delete events through the API (the 0001 delete policy), taking registrations with them and telling nobody | 0001 "Committee delete events" | Fixed in code (0018) |
+| 30 | A new announcement could set its own `created_at` and stay above every other post | 0015 left inserts open | Fixed in code (0019) |
+| 31 | A call's host could share its recap into #general after leaving the society | 0013 `share_recap` | Fixed in code (0020) |
+| 32 | "Remove message" in the reports queue deleted at once, with no confirm step | `src/components/moderation.tsx:212` | Fixed 2026-10-16 |
+| 33 | Save buttons in the event, announcement and report dialogs stayed enabled while saving: a double click made two events or posts and notified everyone twice | `event-dialog.tsx`, `announcement-dialog.tsx`, `moderation.tsx` | Fixed 2026-10-16 |
+| 34 | Cancelled events still showed as "your next event", in the calendar view, and in the AI's context | `_authenticated/index.tsx:49`, `events.index.tsx`, `society-ai.functions.ts` | Fixed 2026-10-16 |
+| 35 | Editing or deleting an announcement someone else had already removed said it worked | `store.tsx` | Fixed 2026-10-16 |
+| 36 | After a report was dismissed, "Report" came back for the reporter and then failed | `fetch.ts` | Fixed 2026-10-16 |
+| 37 | A report notification opened the first committee seat, not the society it was about | `committee.tsx:68` | Fixed 2026-10-16 (with 0017) |
+| 38 | A failed event cancellation closed the dialog and lost the typed reason | `events.$eventId.tsx:318` | Fixed 2026-10-16 |
+| 39 | The events journey failed on `main` after the merge: it clicked before the page hydrated | `e2e/*.spec.ts` | Fixed 2026-10-16: every navigation waits for the network to go quiet |
+| 40 | `bun run db:*` failed (`Invalid Argument '-s'`) | `package.json` | Fixed 2026-10-16: the scripts call the Supabase CLI directly |
+
+Left as they are: cancellation and change notices follow the "Event updates" setting, which says it covers them; `update_event` sets the tags to the category, as `create_event` does; `src/test/livekit-token.test.ts` imports `jose`, which only resolves through LiveKit's dependencies.
+
 ## Phases
 
 Effort in working days for one developer who knows the code: XS up to half a day, S 1-2, M 3-5, L 1-2 weeks, XL more.
@@ -88,13 +110,13 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 **Rollout checklist (production):**
 
-1. Merge `phase-1` (done 2026-10-16), then the Phase 2 branch.
-2. Make sure migrations 0007 to 0016 are applied to Lovable Cloud **at the same time as the code is published**. Phase 2's code reads columns and calls functions from 0014 to 0016 (`cancelled_at`, `edited_at`, `message_reports`), so the data load fails without them. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. We still haven't seen how Lovable treats migrations that arrive from GitHub; if they aren't applied, ask Lovable to apply the pending migrations in `drizzle/migrations`.
+1. Merge `phase-1` and Phase 2 (both done 2026-10-16), then `phase-2-followups`.
+2. Make sure migrations 0007 to 0020 are applied to Lovable Cloud **at the same time as the code is published**. Phase 2's code reads columns and calls functions from 0014 to 0016 (`cancelled_at`, `edited_at`, `message_reports`), so the data load fails without them. The recap, question and caption code needs 0009: without it, `reserve_society_ai` refuses those features. We still haven't seen how Lovable treats migrations that arrive from GitHub; if they aren't applied, ask Lovable to apply the pending migrations in `drizzle/migrations`.
 3. Check in Lovable Cloud's SQL editor: `select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private';` should list the 5 helpers.
 4. Review platform admins: `select u.email from public.user_roles r join auth.users u on u.id = r.user_id;` and delete rows for anyone who shouldn't be one.
 5. Sign-in setup (needs the domain): see the checklist in [sign-in-email-bug.md](sign-in-email-bug.md).
 
-### Phase 2: core and tests (code done 2026-10-16, branch `claude/zen-fermi-bzwqu9`)
+### Phase 2: core and tests (merged 2026-10-16, `Thurlws/student-society-spot#3`; review fixes on `phase-2-followups`)
 
 | Task | Status |
 |---|---|
