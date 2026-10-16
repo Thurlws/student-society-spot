@@ -85,6 +85,7 @@ function Logo({ collapsed }: { collapsed?: boolean }) {
 
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { joinedSocieties, user, role, committeeSeats } = useData();
+  const { access } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
   return (
@@ -154,7 +155,11 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
             <p className="truncate text-xs text-muted-foreground">
               {committeeSeats[0]
                 ? `${committeeSeats[0].position}, ${committeeSeats[0].short_name}`
-                : "Student"}
+                : access.is_admin
+                  ? "Platform admin"
+                  : access.university_admin
+                    ? "University admin"
+                    : "Student"}
             </p>
           </div>
         )}
