@@ -183,7 +183,7 @@ insert into matrix (label, kind, sql, expected) values
 ('role_invites: delete', 'rows', $$delete from public.role_invites where id = md5('invite')::uuid$$, '{0,0,0,0,0,0,1}'),
 ('events: insert directly', 'rows', $$insert into public.events (society_id, title, starts_at, venue, category) values (md5('A')::uuid, 'Direct', now() + interval '1 day', 'Room', 'Social')$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('events: edit A''s directly', 'rows', $$update public.events set title = 'Renamed' where id = md5('event A')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied}'),
-('events: delete A''s', 'rows', $$delete from public.events where id = md5('event A')::uuid$$, '{0,0,0,0,1,0,0}'),
+('events: delete A''s', 'rows', $$delete from public.events where id = md5('event A')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('event_registrations: insert directly', 'rows', $$insert into public.event_registrations values (md5('event B')::uuid, auth.uid())$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('event_registrations: delete directly', 'rows', $$delete from public.event_registrations where event_id in @events$$, '{0,0,0,0,0,0,0}'),
 ('announcements: post to A', 'rows', $$insert into public.announcements (society_id, author_id, title, body) values (md5('A')::uuid, auth.uid(), 'Hello', 'Hello from the matrix test.')$$, '{denied,denied,denied,denied,1,denied,denied}'),
