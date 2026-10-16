@@ -39,7 +39,7 @@ These keep the eventual move cheap.
 | GitHub sync | `.lovable/`, Lovable blocks in `README.md` and `AGENTS.md` | Disconnect the sync in Lovable, then remove them. |
 | Nightly jobs | pg_cron: transcript purge (0003), ending sessions of accounts not verified for a year (0023, deletes from Supabase's `auth.sessions`) | Come along with the migrations. Check both exist after a restore (`select jobname from cron.job;`). The second assumes Supabase Auth. |
 
-Server variables the host must set: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, plus the AI provider key. `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are baked in at build time.
+Server variables the host must set: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, plus the AI provider key, and for monitoring `SENTRY_DSN`, `SENTRY_ENVIRONMENT` and `MONITORING_TOKEN` ([monitoring.md](monitoring.md)). `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are baked in at build time.
 
 ## Exit checklist
 

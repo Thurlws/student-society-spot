@@ -3,6 +3,7 @@ import {
   Bell,
   CalendarDays,
   ChevronsLeft,
+  FileLock2,
   Compass,
   Home,
   Inbox,
@@ -325,6 +326,9 @@ function UserMenu() {
             <ShieldCheck className="size-4" /> Admin
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => navigate({ to: "/privacy" })}>
+          <FileLock2 className="size-4" /> Privacy
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
             await signOut();
@@ -352,6 +356,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           ? "Request"
           : "SocConnect");
   const { role } = useData();
+  const { access } = useAuth();
+
+  // A suspended account gets the notice on its own, without menus into pages it can't use.
+  if (access.suspended) return <main className="min-h-screen px-4 py-10">{children}</main>;
 
   return (
     <div className="flex min-h-screen">

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { pageHead } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { signInError, useAuth } from "@/lib/auth";
+import { signInError, signInFailureIsOurs, useAuth } from "@/lib/auth";
+import { reportFromBrowser } from "@/lib/report-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -168,7 +169,11 @@ function SignInCard() {
       options: { emailRedirectTo: window.location.origin },
     });
     setBusy(false);
-    if (error) return setError(signInError(error));
+    if (error) {
+      // The hourly email cap or a sending failure stops everyone signing in: tell the team.
+      if (signInFailureIsOurs(error)) reportFromBrowser(error, "sign-in");
+      return setError(signInError(error));
+    }
     setSent(true);
     setCooldown(60);
   };
@@ -305,8 +310,11 @@ function Welcome() {
           ))}
         </ul>
       </section>
-      <footer className="mx-auto max-w-7xl px-6 py-8 text-xs text-muted-foreground">
-        SocConnect, for university societies.
+      <footer className="mx-auto flex max-w-7xl flex-wrap gap-x-4 px-6 py-8 text-xs text-muted-foreground">
+        <span>SocConnect, for university societies.</span>
+        <Link to="/privacy" className="underline hover:text-foreground">
+          Privacy
+        </Link>
       </footer>
     </div>
   );

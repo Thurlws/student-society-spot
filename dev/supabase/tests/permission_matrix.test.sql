@@ -17,8 +17,8 @@ create extension if not exists pgtap with schema extensions;
 --   admin      platform admin
 --   outsider   student at Matrix University (MatrixU), a second university
 --   uniadmin   TU Dublin university admin, no committee seat
--- plus "bystander" and "ochair" (committee of O, and MatrixU's university admin), who are
--- never the ones acting. Everyone but outsider and ochair is at TU Dublin. Societies (TU
+-- plus "bystander" (suspended) and "ochair" (committee of O, and MatrixU's university admin),
+-- who are never the ones acting. Everyone but outsider and ochair is at TU Dublin. Societies (TU
 -- Dublin): A is open, B needs approval, Z is archived; O is MatrixU's, open. Every id is
 -- md5('<name>')::uuid so cases can name rows.
 --
@@ -103,6 +103,8 @@ insert into public.ai_usage (id, user_id, feature) values (md5('usage')::uuid, m
 insert into public.society_fit_cache (user_id, society_id, reason, context_hash) values
   (md5('student')::uuid, md5('A')::uuid, 'Likes technology', 'h');
 insert into public.society_ai_state (feature, status, message) values ('matrix-test', 503, 'Down for the test');
+-- bystander is suspended, so reinstate_user has someone to act on.
+update public.university_members set suspended_at = now(), suspension_reason = 'Spamming' where user_id = md5('bystander')::uuid;
 
 create temp table matrix_users (ord int, name text, uid uuid);
 insert into matrix_users values
@@ -172,6 +174,9 @@ insert into matrix (label, kind, sql, expected) values
 ('university_domains: read', 'count', $$select 1 from public.university_domains where domain in ('mytudublin.ie', 'tudublin.ie', 'matrixu.test')$$, '{denied,0,0,0,0,0,3,0,2}'),
 ('university_members: read', 'count', $$select 1 from public.university_members where user_id in @people$$, '{denied,1,1,1,1,1,10,1,8}'),
 ('university_admins: read', 'count', $$select 1 from public.university_admins where user_id in @people$$, '{denied,0,0,0,0,0,2,0,1}'),
+('audit_log: read', 'count', $$select 1 from public.audit_log where society_id in @societies$$, '{denied,0,0,0,0,0,6,0,6}'),
+('audit_log: read O''s', 'count', $$select 1 from public.audit_log where society_id = md5('O')::uuid$$, '{denied,0,0,0,0,0,2,0,0}'),
+('audit_log: read platform admin grants', 'count', $$select 1 from public.audit_log where action = 'platform_admin.added'$$, '{denied,0,0,0,0,0,1,0,0}'),
 ('role_invites: read a university admin invite', 'count', $$select 1 from public.role_invites where id = md5('uni invite')::uuid$$, '{0,0,0,0,0,0,1,0,1}'),
 -- MatrixU's society O from both universities.
 ('societies: read O', 'count', $$select 1 from public.societies where id = md5('O')::uuid$$, '{0,0,0,0,0,0,1,1,0}'),
@@ -262,7 +267,12 @@ insert into matrix (label, kind, sql, expected) values
 ('university_members: leave', 'rows', $$delete from public.university_members where user_id = auth.uid()$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_admins: make self TU Dublin admin', 'rows', $$insert into public.university_admins values (md5('tudublin')::uuid, auth.uid())$$, '{denied,denied,denied,denied,denied,denied,1,denied,denied}'),
 ('university_admins: appoint outsider at TU Dublin', 'rows', $$insert into public.university_admins values (md5('tudublin')::uuid, md5('outsider')::uuid)$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('university_members: lift a suspension directly', 'rows', $$update public.university_members set suspended_at = null where user_id = md5('bystander')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_admins: remove', 'rows', $$delete from public.university_admins where user_id = md5('uniadmin')::uuid$$, '{denied,0,0,0,0,0,1,0,0}'),
+
+('audit_log: add', 'rows', $$insert into public.audit_log (actor_role, action) values ('member', 'fake')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('audit_log: edit', 'rows', $$update public.audit_log set action = 'fake'$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('audit_log: delete', 'rows', $$delete from public.audit_log$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 
 -- Database functions. Signed-out visitors can call only email_domain_allowed.
 ('join_society(A)', 'call', $$select public.join_society(md5('A')::uuid)$$, '{denied,ok,ok,refused,refused,ok,ok,refused,ok}'),
@@ -289,6 +299,15 @@ insert into matrix (label, kind, sql, expected) values
 ('report_message(B''s message)', 'call', $$select public.report_message(md5('message B')::uuid, 'Spam')$$, '{denied,refused,refused,ok,refused,refused,refused,refused,refused}'),
 ('delete_message(A''s message)', 'call', $$select public.delete_message(md5('message A')::uuid)$$, '{denied,refused,refused,ok,ok,refused,ok,refused,ok}'),
 ('dismiss_message_reports(A''s message)', 'call', $$select public.dismiss_message_reports(md5('message A')::uuid)$$, '{denied,refused,refused,refused,ok,refused,ok,refused,ok}'),
+('suspend_user(member)', 'call', $$select public.suspend_user(md5('member')::uuid, 'Harassing people')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,ok}'),
+('suspend_user(uniadmin)', 'call', $$select public.suspend_user(md5('uniadmin')::uuid, 'Misusing admin rights')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,refused}'),
+('suspend_user(outsider, another university)', 'call', $$select public.suspend_user(md5('outsider')::uuid, 'Harassing people')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,refused}'),
+('reinstate_user(bystander)', 'call', $$select public.reinstate_user(md5('bystander')::uuid)$$, '{denied,refused,refused,refused,refused,refused,ok,refused,ok}'),
+('find_people(TU Dublin, by name)', 'count', $$select 1 from public.find_people(md5('tudublin')::uuid, 'matrix')$$, '{denied,0,0,0,0,0,8,0,8}'),
+('find_people(TU Dublin, by email)', 'count', $$select 1 from public.find_people(md5('tudublin')::uuid, 'Member.Matrix@mytudublin.ie')$$, '{denied,0,0,0,0,0,1,0,1}'),
+('find_people(MatrixU)', 'count', $$select 1 from public.find_people(md5('matrixu')::uuid, 'matrix')$$, '{denied,0,0,0,0,0,2,0,0}'),
+('import_societies(TU Dublin)', 'call', $$select public.import_societies(md5('tudublin')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,ok}'),
+('import_societies(MatrixU)', 'call', $$select public.import_societies(md5('matrixu')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,refused}'),
 ('my_access()', 'call', $$select public.my_access()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
 ('recommend_societies()', 'count', $$select 1 from public.recommend_societies() where society_id in @societies$$, '{denied,2,1,0,1,1,2,0,2}'),
 ('event_attendee_counts()', 'count', $$select 1 from public.event_attendee_counts() where event_id in @events$$, '{denied,2,2,2,2,2,2,0,2}'),
@@ -319,8 +338,8 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
         'create_event', 'decide_membership', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
-        'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'report_message', 'schedule_meeting',
-        'set_support_request_status', 'share_recap',
+        'find_people', 'import_societies', 'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
+        'schedule_meeting', 'set_support_request_status', 'share_recap', 'suspend_user',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
 select is_empty($$select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace

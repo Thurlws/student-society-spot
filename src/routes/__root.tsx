@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportFromBrowser } from "../lib/report-error";
 import { DataProvider } from "@/lib/api/store";
 import { AuthProvider } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
@@ -43,6 +44,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportFromBrowser(error, "page");
   }, [error]);
 
   return (
@@ -98,12 +100,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
-      },
     ],
   }),
   shellComponent: RootShell,
@@ -129,10 +125,11 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // /welcome is the intro; /join is a call opened from a shared link or QR code; /auth/ finishes sign-in —
-  // these show the page on its own, without the app menu.
+  // /welcome is the intro; /privacy is the privacy notice; /join is a call opened from a shared link
+  // or QR code; /auth/ finishes sign-in — these show the page on its own, without the app menu.
   const bare =
     pathname === "/welcome" ||
+    pathname === "/privacy" ||
     pathname === "/onboarding" ||
     pathname.startsWith("/join") ||
     pathname.startsWith("/auth/");

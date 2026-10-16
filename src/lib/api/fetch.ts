@@ -145,7 +145,7 @@ export async function loadAppData(
     supabase
       .from("message_reports")
       .select(
-        "id, message_id, society_id, reason, excerpt, created_at, reported_by, dismissed_at, author:profiles!message_reports_author_id_fkey(display_name)",
+        "id, message_id, society_id, author_id, reason, excerpt, created_at, reported_by, dismissed_at, author:profiles!message_reports_author_id_fkey(display_name)",
       )
       // Your own closed reports too, so the message stays marked as reported.
       .or(`dismissed_at.is.null,reported_by.eq.${uid}`)
@@ -389,6 +389,7 @@ export async function loadAppData(
         id: string;
         message_id: string;
         society_id: string;
+        author_id: string;
         reason: string;
         excerpt: string;
         created_at: string;
@@ -403,6 +404,7 @@ export async function loadAppData(
         messageId: r.message_id,
         societyId: slugOf[r.society_id]!,
         author: name(r.author),
+        authorId: r.author_id,
         reason: r.reason,
         excerpt: r.excerpt,
         createdAt: r.created_at,

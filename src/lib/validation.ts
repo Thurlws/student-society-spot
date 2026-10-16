@@ -96,6 +96,12 @@ export const cancelReasonInput = z
   .trim()
   .max(300, "Keep the reason under 300 characters.");
 
+export const suspensionReasonInput = z
+  .string()
+  .trim()
+  .min(3, "Say why. The person sees the reason.")
+  .max(300, "Keep the reason under 300 characters.");
+
 export const firstIssue = (e: z.ZodError) =>
   e.issues[0]?.message ?? "Check the form and try again.";
 
