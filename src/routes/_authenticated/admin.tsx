@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   Archive,
   ArchiveRestore,
+  FileUp,
   Loader2,
   Plus,
   ShieldCheck,
@@ -18,6 +19,7 @@ import { PageHeader, EmptyState } from "@/components/cards";
 import { ReportedMessages } from "@/components/moderation";
 import { ActivityLog } from "@/components/activity-log";
 import { PeopleAdmin } from "@/components/people-admin";
+import { SocietyImportDialog } from "@/components/society-import-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +152,7 @@ function AdminPage() {
   const university = universities?.find((u) => u.id === universityId) ?? access.university;
   const { data, isLoading } = useAdminData(universityId);
   const [editing, setEditing] = useState<SocietyRow | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
   const qc = useQueryClient();
 
   if (!access.is_admin && !access.university_admin)
@@ -189,6 +192,10 @@ function AdminPage() {
                 </SelectContent>
               </Select>
             )}
+            <Button variant="outline" onClick={() => setImporting(true)} disabled={!universityId}>
+              <FileUp />
+              Import societies
+            </Button>
             <Button onClick={() => setEditing("new")} disabled={!universityId}>
               <Plus />
               New society
@@ -252,6 +259,13 @@ function AdminPage() {
         </section>
       ))}
       {universityId && <ActivityLog universityId={universityId} />}
+      {importing && (
+        <SocietyImportDialog
+          universityId={universityId}
+          universityName={university?.short_name ?? "the university's"}
+          onClose={() => setImporting(false)}
+        />
+      )}
       {editing && (
         <SocietyDialog
           society={editing === "new" ? null : editing}

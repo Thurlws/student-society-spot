@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AuditEntry, AuditNames } from "@/lib/audit";
+import type { Json } from "@/integrations/supabase/types";
+import type { ImportRow } from "@/lib/society-import";
 import type { Outcome } from "@/lib/validation";
 
 /** A table or function that isn't in production yet: the code can be published before its migration. */
@@ -123,4 +125,25 @@ export async function suspendUser(userId: string, reason: string): Promise<Outco
 export async function reinstateUser(userId: string): Promise<Outcome> {
   const { error } = await supabase.rpc("reinstate_user", { _user_id: userId });
   return error ? { ok: false, error: errorText(error) } : { ok: true };
+}
+
+export type ImportResult = { created: number; updated: number; tags_added: number };
+
+/** Creates or updates a university's societies from a file's rows (migration 0028). */
+export async function importSocieties(
+  universityId: string,
+  rows: ImportRow[],
+): Promise<{ ok: true; result: ImportResult } | { ok: false; error: string }> {
+  const { data, error } = await supabase.rpc("import_societies", {
+    _university_id: universityId,
+    _rows: rows as unknown as Json,
+  });
+  if (error)
+    return {
+      ok: false,
+      error: missingInDatabase(error)
+        ? "Importing needs a database update (migration 0028) first."
+        : errorText(error),
+    };
+  return { ok: true, result: data as unknown as ImportResult };
 }

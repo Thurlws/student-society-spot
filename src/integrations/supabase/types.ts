@@ -1667,6 +1667,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_societies: {
+        Args: { _rows: Json; _university_id: string }
+        Returns: Json
+      }
       is_society_committee: {
         Args: { _society_id: string; _uid: string }
         Returns: boolean
