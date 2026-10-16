@@ -12,6 +12,11 @@ test("a member reports a message and the committee removes it", async ({ browser
   const student = await pageAs(browser, people.student);
   await student.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
   await student.getByRole("button", { name: "Join society" }).click();
+  // The "joined" pop-up sits where the message menu opens (and pauses while the mouse is on it):
+  // wait for it to come and go, as a person would.
+  const toast = student.locator("[data-sonner-toast]");
+  await expect(toast).toHaveCount(1);
+  await expect(toast).toHaveCount(0, { timeout: 10_000 });
   await student.getByRole("tab", { name: "discussions" }).click();
   await student
     .getByRole("button", { name: `Actions for ${people.member.name}'s message` })
