@@ -176,6 +176,13 @@
       "when": 1792118026697,
       "tag": "0024_audit_log",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792118503742,
+      "tag": "0025_suspension",
+      "breakpoints": true
     }
   ]
 }
