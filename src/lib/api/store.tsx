@@ -132,6 +132,13 @@ function useDataValue() {
       if (!p.success) return fail(firstIssue(p.error));
       return act(() => supabase.from("announcements").insert({ society_id: sid(slug)!, author_id: user.id, ...p.data }));
     },
+    /** Only the wording and the pin can change; the database marks changed wording as edited. */
+    editAnnouncement: async (id: string, input: AnnouncementInput) => {
+      const p = announcementInput.safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() => supabase.from("announcements").update(p.data).eq("id", id));
+    },
+    deleteAnnouncement: (id: string) => act(() => supabase.from("announcements").delete().eq("id", id)),
     createEvent: async (slug: string, input: EventInput) => {
       const p = eventInput(todayIso()).safeParse(input);
       if (!p.success) return fail(firstIssue(p.error));
