@@ -7,6 +7,8 @@ import { lovable } from "@/integrations/lovable";
 import { signInError, signInFailureIsOurs, useAuth } from "@/lib/auth";
 import { reportFromBrowser } from "@/lib/report-error";
 import { useHydrated } from "@/lib/use-hydrated";
+import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
+import { Turnstile, type TurnstileHandle } from "@/components/turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,6 +153,11 @@ function SignInCard() {
   // pressing Enter would reload the page), and an address typed meanwhile is kept.
   const hydrated = useHydrated();
   const emailInput = useRef<HTMLInputElement>(null);
+  // Cloudflare Turnstile's one-time token, when a site key is set (src/lib/turnstile.ts).
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaFailed, setCaptchaFailed] = useState(false);
+  const turnstile = useRef<TurnstileHandle>(null);
+  const waitingForCheck = !!TURNSTILE_SITE_KEY && !captcha;
   useEffect(() => {
     const typed = emailInput.current?.value;
     if (typed) setEmail(typed);
@@ -176,8 +183,13 @@ function SignInCard() {
     }
     const { error } = await supabase.auth.signInWithOtp({
       email: address,
-      options: { emailRedirectTo: window.location.origin },
+      options: {
+        emailRedirectTo: window.location.origin,
+        ...(captcha ? { captchaToken: captcha } : {}),
+      },
     });
+    // Each token works once: get a fresh one for the next request.
+    turnstile.current?.reset();
     setBusy(false);
     if (error) {
       // The hourly email cap or a sending failure stops everyone signing in: tell the team.
@@ -200,6 +212,28 @@ function SignInCard() {
       );
   };
 
+  const botCheck = (
+    <>
+      <Turnstile
+        ref={turnstile}
+        onToken={(t) => {
+          setCaptcha(t);
+          if (t) setCaptchaFailed(false);
+        }}
+        onError={() => setCaptchaFailed(true)}
+      />
+      {waitingForCheck && !captchaFailed && hydrated && (
+        <p className="text-xs text-muted-foreground">Checking you're not a bot…</p>
+      )}
+      {captchaFailed && (
+        <p className="text-xs text-destructive">
+          The check that you're not a bot didn't work. Reload the page; if you use a blocker, allow
+          challenges.cloudflare.com.
+        </p>
+      )}
+    </>
+  );
+
   if (sent)
     return (
       <div className="rounded-2xl border bg-card p-6 shadow-lift">
@@ -216,7 +250,11 @@ function SignInCard() {
         </p>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button variant="outline" onClick={sendLink} disabled={busy || cooldown > 0}>
+          <Button
+            variant="outline"
+            onClick={sendLink}
+            disabled={busy || cooldown > 0 || waitingForCheck}
+          >
             {busy && <Loader2 className="animate-spin" />}Resend link
             {cooldown > 0 && ` (${cooldown}s)`}
           </Button>
@@ -230,6 +268,7 @@ function SignInCard() {
             Use a different email
           </Button>
         </div>
+        {botCheck}
       </div>
     );
 
@@ -256,7 +295,8 @@ function SignInCard() {
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={busy || !hydrated}>
+      {botCheck}
+      <Button type="submit" className="w-full" disabled={busy || !hydrated || waitingForCheck}>
         {busy ? <Loader2 className="animate-spin" /> : <Mail />}Email me a sign-in link
       </Button>
       <div className="relative py-1 text-center text-xs text-muted-foreground">

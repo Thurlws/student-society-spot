@@ -232,6 +232,13 @@
       "when": 1792120431276,
       "tag": "0032_removal_notices",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792120491276,
+      "tag": "0033_nightly_job_runs",
+      "breakpoints": true
     }
   ]
 }

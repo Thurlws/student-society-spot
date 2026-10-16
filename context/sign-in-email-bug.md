@@ -70,4 +70,16 @@ So our code and migrations send the email. In production the card showed "Check 
 
 **Until then (demos):** the student can release the message from the quarantine page. Adding `no-reply@auth.lovable.cloud` to Outlook's Safe senders may let later emails through, because Microsoft honours safe senders for ordinary spam verdicts. That's untested here, and it also lets other Lovable apps' mail through for that student.
 
+## Without a domain or a paid plan
+
+Checked 2026-10-16 in Lovable's docs: a custom email sender needs a **paid Lovable plan** as well as a domain; free plans always use Lovable's shared sender. So these are the options while there's no budget, best first:
+
+1. **For a demo: sign people in beforehand.** Sessions last until someone signs out (a year at most), so a link released from quarantine once is enough. Keep https://security.microsoft.com/quarantine open in case someone signs in live ([demo.md](demo.md)).
+2. **Safe senders, per student:** in Outlook, add `no-reply@auth.lovable.cloud` to Safe senders. Microsoft honours it for ordinary spam verdicts, not for phishing ones; untested here. Fine for a small demo group, not for a pilot.
+3. **Ask TU Dublin IT for a narrow allow rule:** an Exchange rule that lets through mail from `no-reply@auth.lovable.cloud` only when it links to the published app's address (`student-society-spot.lovable.app`). Free, and narrower than allowing the shared sender outright, which IT should refuse because every Lovable app can send from it. Worth asking as part of a pilot conversation.
+4. **"Sign in with Microsoft"** would skip email altogether for TU Dublin accounts, but nobody has checked that Lovable's broker refuses other organisations' Microsoft accounts claiming a university address ([go-live.md](go-live.md#microsoft-sign-in)). Don't lean on it until that's checked.
+5. **For a pilot: make it the university's cost.** A domain is about €10–20 a year (or free for a year through the GitHub Student Developer Pack, at name.com); the paid Lovable plan is the bigger cost. A university running a pilot can reasonably cover both, or give a subdomain of its own.
+
+Six-digit codes instead of links wouldn't help: the email carrying the code is quarantined just the same.
+
 **Regression check:** `bun run db:check-sign-in` for our code; one real `@mytudublin.ie` mailbox (new and returning account) before every demo, since quarantine can't be simulated locally.

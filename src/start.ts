@@ -1,7 +1,7 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
-import { reportError } from "./lib/monitoring.server";
+import { log, reportError } from "./lib/monitoring.server";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next, request }) => {
@@ -27,7 +27,26 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// One log line per server function call (its name and how long it took), and a warning to the
+// error tracker when one fails or takes over 5 seconds. Many failures are refusals people are
+// meant to see (a quota, a permission); the tracker groups them by function and message.
+const logServerFunctions = createMiddleware({ type: "function" }).server(
+  async ({ next, serverFnMeta }) => {
+    const started = Date.now();
+    const fn = serverFnMeta.name;
+    try {
+      const result = await next();
+      const ms = Date.now() - started;
+      log(ms > 5000 ? "warn" : "info", ms > 5000 ? "server_fn.slow" : "server_fn", { fn, ms });
+      return result;
+    } catch (error) {
+      log("warn", "server_fn.failed", { fn, ms: Date.now() - started }, error);
+      throw error;
+    }
+  },
+);
+
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
-  functionMiddleware: [attachSupabaseAuth],
+  functionMiddleware: [attachSupabaseAuth, logServerFunctions],
 }));

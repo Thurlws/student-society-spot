@@ -8,6 +8,7 @@ import {
   PROVIDERS,
   RETENTION,
 } from "@/lib/privacy";
+import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { ContactLine, LegalPage, Section, Table } from "@/components/legal-page";
 
 export const Route = createFileRoute("/privacy")({
@@ -169,9 +170,11 @@ function Privacy() {
       <Section id="cookies" title="Cookies and storage on your device">
         <p>
           SocConnect sets no cookies. It has no analytics, no advertising and no tracking, and loads
-          nothing from other companies except societies' logos and banners. It keeps only these on
-          your device, because they're strictly necessary for what you asked for, so you aren't
-          asked to accept cookies:
+          nothing from other companies except societies' logos and banners
+          {TURNSTILE_SITE_KEY &&
+            " and, on the sign-in page, Cloudflare's check that you're not a bot (which looks at your browser but sets no cookies)"}
+          . It keeps only these on your device, because they're strictly necessary for what you
+          asked for, so you aren't asked to accept cookies:
         </p>
         <Table
           head={["Name", "Where", "Why", "Kept"]}
