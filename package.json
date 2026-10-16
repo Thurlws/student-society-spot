@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "playwright test",
     "supabase": "npx -y supabase@2.119.0 --workdir dev",
     "db:start": "npm run -s supabase -- start",
     "db:stop": "npm run -s supabase -- stop",
@@ -89,6 +90,7 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.25.3",
+    "@playwright/test": "1.63.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",
