@@ -201,6 +201,17 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 Applied to production with `dev/supabase/apply-0031-0032.sql` on 2026-10-16 (go-live step 2b): 4 people had a student-number name and are asked for a name at their next visit.
 
+### Alerts, logging and bot protection (2026-10-16, branch `claude/festive-curie-inphrm`)
+
+| Change | Status |
+|---|---|
+| Structured server log | Done: `log()` in `monitoring.server.ts`, one JSON line per event; every server function call logged by middleware (name, milliseconds); failing or slow ones (over 5 s), AI fallbacks and AI pauses go to the error tracker as warnings or errors, tagged by area and function. Checked with a stand-in tracker: a test alert arrives as an error, a refused call as a warning tagged with its function |
+| `/admin` → System | Done: platform admins see whether error alerts, uptime checks, AI and calls are set up, sign-in links sent and used in the last 24 hours, and the nightly jobs' last runs (0033, `nightly_job_runs`), and can send a test alert without a terminal |
+| Bot check on sign-in (finding 7) | Code done: Cloudflare Turnstile, on once `VITE_TURNSTILE_SITE_KEY` is in `.env`. Checked with Cloudflare's test key: invisible, and the token goes with the sign-in request. Enforcement needs the secret key in Lovable Cloud's auth settings, which Lovable's docs don't mention (go-live step 19) |
+| Sentry in the privacy notice | Done, ahead of the owner setting it up (EU region) |
+| Sign-in emails without budget | Lovable's custom sender needs a paid plan as well as a domain; the options without either are in [sign-in-email-bug.md](sign-in-email-bug.md#without-a-domain-or-a-paid-plan) |
+| Video calls | Work in production (the owner, 2026-10-16) |
+
 ### Phase 5: when demand justifies it
 
 Realtime notifications, per-page loading and pagination, SSO per university, email digests, analytics for societies officers, links into official membership systems.

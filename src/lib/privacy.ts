@@ -1,4 +1,5 @@
 // What the privacy notice at /privacy says about contacts, retention and service providers.
+import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 // Keep it in step with docs/privacy/ and migration 0026 (the nightly purge).
 
 /**
@@ -86,4 +87,21 @@ export const PROVIDERS: { name: string; does: string; data: string; where: strin
     data: "Your name, camera, microphone and captions while you're in a call",
     where: "to confirm",
   },
+  {
+    name: "Sentry",
+    does: "Tells the SocConnect team when something breaks",
+    data: "Error reports: what failed, on which page, and technical details. Email addresses and sign-in tokens are removed first; no names or messages",
+    where: "EU (Frankfurt), to confirm the transfer terms for its US parent company",
+  },
+  // Only while the bot check is switched on (VITE_TURNSTILE_SITE_KEY).
+  ...(TURNSTILE_SITE_KEY
+    ? [
+        {
+          name: "Cloudflare (Turnstile)",
+          does: "Checks that the sign-in form is used by a person, not a bot",
+          data: "Your IP address and technical details of your browser, on the sign-in page only. It sets no cookies",
+          where: "Cloudflare's network, worldwide, to confirm the transfer terms",
+        },
+      ]
+    : []),
 ];

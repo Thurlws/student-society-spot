@@ -85,7 +85,8 @@ export const summarizeCall = createServerFn({ method: "POST" })
           source: "ai",
         };
       } catch (e) {
-        console.warn("AI summary unavailable, using fallback:", e instanceof Error ? e.message : e);
+        const { log } = await import("./monitoring.server");
+        log("warn", "ai.fallback", { area: "ai", feature: "summary" }, e);
         summary = fallbackSummary(data.transcript, data.durationSec);
       }
     }
@@ -165,7 +166,8 @@ export const askAboutCall = createServerFn({ method: "POST" })
           [...history, { role: "user", content: data.question }],
         );
       } catch (e) {
-        console.warn("AI Q&A unavailable, using fallback:", e instanceof Error ? e.message : e);
+        const { log } = await import("./monitoring.server");
+        log("warn", "ai.fallback", { area: "ai", feature: "question" }, e);
         answer = fallbackAnswer(transcript, data.question);
       }
     }

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { allowReport, buildEnvelope, parseDsn, scrub } from "@/lib/monitoring.server";
+import { describe, expect, it, vi } from "vitest";
+import { allowReport, buildEnvelope, log, parseDsn, scrub } from "@/lib/monitoring.server";
 
 describe("Error reporting", () => {
   it("reads a Sentry DSN, and refuses anything else", () => {
@@ -41,6 +41,26 @@ describe("Error reporting", () => {
     expect(
       event.exception.values[0].stacktrace.frames.map((f: { lineno: number }) => f.lineno),
     ).toEqual([40, 12]);
+  });
+
+  it("marks warnings and tags the server function", () => {
+    const body = buildEnvelope(
+      new Error("Out of credits"),
+      { source: "server", area: "ai", level: "warning", fn: "askSociety" },
+      "production",
+    ).split("\n")[2]!;
+    const event = JSON.parse(body);
+    expect(event.level).toBe("warning");
+    expect(event.tags).toEqual({ source: "server", area: "ai", fn: "askSociety" });
+  });
+
+  it("writes one scrubbed JSON line per log entry", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    log("info", "server_fn", { fn: "joinSociety", ms: 42 }, new Error("for jane@mytudublin.ie"));
+    const line = JSON.parse(spy.mock.calls[0]![0] as string);
+    spy.mockRestore();
+    expect(line).toMatchObject({ level: "info", event: "server_fn", fn: "joinSociety", ms: 42 });
+    expect(line.error).toBe("for [email]");
   });
 
   it("sends at most 20 reports a minute", () => {

@@ -1641,6 +1641,7 @@ export type Database = {
         Returns: undefined
       }
       email_domain_allowed: { Args: { _email: string }; Returns: boolean }
+      nightly_job_runs: { Args: never; Returns: Json }
       find_people: {
         Args: { _query: string; _university_id: string }
         Returns: {
