@@ -40,6 +40,11 @@ export const people = {
     name: "Sam Student",
     state: "e2e/.auth/student.json",
   },
+  uniadmin: {
+    email: "e2e-uniadmin@mytudublin.ie",
+    name: "Una Admin",
+    state: "e2e/.auth/uniadmin.json",
+  },
   returning: { email: "e2e-returning@mytudublin.ie", name: "Rita Returning" },
   newcomer: { email: "e2e-newcomer@mytudublin.ie" },
 };
@@ -68,7 +73,7 @@ export async function latestEmail(email: string) {
 export async function signIn(page: Page, email: string) {
   // Wait for hydration: text typed into the server-rendered form before then is lost.
   await page.goto("/welcome", { waitUntil: "networkidle" });
-  await page.getByLabel("TU Dublin email").fill(email);
+  await page.getByLabel("University email").fill(email);
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
   const mail = await latestEmail(email);

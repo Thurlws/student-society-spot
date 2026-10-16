@@ -895,6 +895,7 @@ export type Database = {
           position: string
           role: string
           society_id: string | null
+          university_id: string | null
         }
         Insert: {
           claimed_at?: string | null
@@ -905,6 +906,7 @@ export type Database = {
           position?: string
           role: string
           society_id?: string | null
+          university_id?: string | null
         }
         Update: {
           claimed_at?: string | null
@@ -915,6 +917,7 @@ export type Database = {
           position?: string
           role?: string
           society_id?: string | null
+          university_id?: string | null
         }
         Relationships: [
           {
@@ -937,6 +940,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "society_member_counts"
             referencedColumns: ["society_id"]
+          },
+          {
+            foreignKeyName: "role_invites_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -997,6 +1007,7 @@ export type Database = {
           source_synced_at: string | null
           status: string
           tagline: string
+          university_id: string
         }
         Insert: {
           accent?: string
@@ -1024,6 +1035,7 @@ export type Database = {
           source_synced_at?: string | null
           status?: string
           tagline?: string
+          university_id: string
         }
         Update: {
           accent?: string
@@ -1051,8 +1063,17 @@ export type Database = {
           source_synced_at?: string | null
           status?: string
           tagline?: string
+          university_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "societies_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       society_ai_state: {
         Row: {
@@ -1377,6 +1398,119 @@ export type Database = {
             foreignKeyName: "support_requests_submitted_by_fkey"
             columns: ["submitted_by"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      universities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          short_name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          short_name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          short_name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      university_admins: {
+        Row: {
+          university_id: string
+          user_id: string
+        }
+        Insert: {
+          university_id: string
+          user_id: string
+        }
+        Update: {
+          university_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_admins_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "university_admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      university_domains: {
+        Row: {
+          domain: string
+          university_id: string
+        }
+        Insert: {
+          domain: string
+          university_id: string
+        }
+        Update: {
+          domain?: string
+          university_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_domains_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      university_members: {
+        Row: {
+          joined_at: string
+          university_id: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          joined_at?: string
+          university_id: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          joined_at?: string
+          university_id?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "university_members_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "university_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

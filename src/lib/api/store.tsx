@@ -86,10 +86,11 @@ function useDataValue() {
   const qc = useQueryClient();
   const uidAuth = auth.session?.user.id;
   const committeeUuids = auth.access.committee.map((c) => c.society_id);
-  const key = ["app-data", uidAuth, committeeUuids.join(",")];
+  const universityId = auth.access.university?.id;
+  const key = ["app-data", uidAuth, universityId, committeeUuids.join(",")];
   const q = useQuery({
     queryKey: key,
-    queryFn: () => loadAppData(uidAuth!, committeeUuids),
+    queryFn: () => loadAppData(uidAuth!, committeeUuids, universityId),
     enabled: !!uidAuth,
     // shortcut: polling reloads everything for each visible tab; move messages and notifications to realtime before a large pilot.
     refetchInterval: 60_000,
@@ -156,7 +157,8 @@ function useDataValue() {
     error: q.error ? errText(q.error) : null,
     user,
     role: user.role,
-    isAdmin: auth.access.is_admin,
+    // Platform and university admins alike: this data only holds the user's own university.
+    isAdmin: auth.access.is_admin || auth.access.university_admin,
     committeeSeats: auth.access.committee,
     societies: data.societies,
     recommendations: data.recommendations,
@@ -281,7 +283,7 @@ function useDataValue() {
           .insert({ channel_id: channelId, author_id: user.id, body: p.data }),
       );
     },
-    /** Authors delete their own; the committee and platform admins can remove any message in their channels. */
+    /** Authors delete their own; the committee and admins can remove any message in their channels. */
     deleteMessage: (id: string) => act(() => supabase.rpc("delete_message", { _message_id: id })),
     reportMessage: async (id: string, reason: string) => {
       const p = reportReasonInput.safeParse(reason);
