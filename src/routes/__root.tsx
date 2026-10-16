@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportFromBrowser } from "../lib/report-error";
 import { DataProvider } from "@/lib/api/store";
 import { AuthProvider } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
@@ -43,6 +44,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportFromBrowser(error, "page");
   }, [error]);
 
   return (
