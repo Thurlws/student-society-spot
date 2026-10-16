@@ -41,7 +41,7 @@ function JoinPage() {
   const [left, setLeft] = useState(false);
 
   useEffect(() => {
-    const saved = cleanGuestName(localStorage.getItem(GUEST_NAME_KEY) ?? "");
+    const saved = cleanGuestName(sessionStorage.getItem(GUEST_NAME_KEY) ?? "");
     if (saved) setDefaultName(saved);
     const clean = code.trim().toLowerCase();
     if (!/^[a-z0-9]{8,32}$/.test(clean)) {
@@ -121,7 +121,7 @@ function JoinPage() {
 
   const remember = (name: string) => {
     const clean = cleanGuestName(name) || "Guest";
-    localStorage.setItem(GUEST_NAME_KEY, clean);
+    sessionStorage.setItem(GUEST_NAME_KEY, clean);
     setDefaultName(clean);
   };
 

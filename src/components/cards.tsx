@@ -81,10 +81,13 @@ export function EventCard({ event, compact = false }: { event: Event; compact?: 
 export function SocietyCard({
   society,
   reason,
+  reasonByAi,
   action,
 }: {
   society: Society;
   reason?: string;
+  /** The reason was written by AI, which the EU AI Act says people should be told. */
+  reasonByAi?: boolean;
   action?: ReactNode;
 }) {
   const { membership } = useData();
@@ -125,7 +128,12 @@ export function SocietyCard({
         </p>
         <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{society.tagline}</p>
         {reason && (
-          <p className="mt-3 border-t border-dashed pt-3 text-xs text-foreground">{reason}</p>
+          <p className="mt-3 border-t border-dashed pt-3 text-xs text-foreground">
+            {reasonByAi && (
+              <span className="mr-1 font-semibold text-muted-foreground">Written by AI:</span>
+            )}
+            {reason}
+          </p>
         )}
         {society.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1.5">

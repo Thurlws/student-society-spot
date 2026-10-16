@@ -18,7 +18,10 @@ export function inviteUrl(code: string, origin: string): string | null {
   return `${base}${joinPath(id)}`;
 }
 
-/** localStorage key holding the name a visitor used for their last guest call. */
+/**
+ * sessionStorage key holding the name a visitor used for their last guest call. Session only, so
+ * it stays strictly necessary under the ePrivacy rules (no consent needed) and leaves with the tab.
+ */
 export const GUEST_NAME_KEY = "socconnect-guest-name";
 
 /** Guest display names are short and must not contain control characters. */

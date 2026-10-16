@@ -7,7 +7,34 @@
  */
 export const PRIVACY_CONTACT_EMAIL = "";
 
+/**
+ * Who runs SocConnect, as a legal person or business with its address (the EU e-Commerce
+ * Directive and the GDPR ask for it). Empty until the team confirms it (docs/privacy/dpia.md).
+ */
+export const OPERATOR = "";
+
 export const NOTICE_UPDATED = "16 October 2026";
+export const TERMS_UPDATED = "16 October 2026";
+
+/**
+ * Everything SocConnect keeps on a visitor's device. All of it is strictly necessary for what the
+ * person asked for, so the ePrivacy rules need no consent banner; the notice lists it anyway.
+ * Adding anything that isn't (analytics, tracking, a third-party script) needs consent first.
+ */
+export const DEVICE_STORAGE: { name: string; kind: string; why: string; kept: string }[] = [
+  {
+    name: "sb-…-auth-token",
+    kind: "Local storage",
+    why: "Keeps you signed in",
+    kept: "Until you sign out, or a year after your last sign-in",
+  },
+  {
+    name: "socconnect-guest-name",
+    kind: "Session storage",
+    why: "Remembers the name you typed to join a call as a guest",
+    kept: "Until you close the tab",
+  },
+];
 
 /** How long each kind of data is kept. The purge runs every night (purge_expired_data). */
 export const RETENTION: { what: string; kept: string }[] = [

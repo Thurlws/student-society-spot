@@ -43,6 +43,9 @@ export function SuspendedNotice() {
         <Button variant="ghost" asChild>
           <Link to="/privacy">Privacy notice</Link>
         </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/terms">Terms of use</Link>
+        </Button>
         <Button
           variant="ghost"
           onClick={async () => {
