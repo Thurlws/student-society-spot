@@ -90,7 +90,7 @@ export const getGuestToken = createServerFn({ method: "POST" })
     const { data: bumped } = await supabaseAdmin
       .from("call_invites").update({ uses: (inv?.uses ?? 0) + 1 }).eq("id", r.inviteId).eq("uses", inv?.uses ?? 0).select("id");
     if (!bumped?.length) throw new Error("Lots of people are joining at once — try again.");
-    const name = `${data.name.replace(/[\u0000-\u001f\u007f]/g, "")} (guest)`;
+    const name = `${data.name.replace(/\p{Cc}/gu, "")} (guest)`;
     const identity = `g-${crypto.randomUUID().slice(0, 12)}`;
     const { mintCallToken } = await import("./livekit.server");
     const token = await mintCallToken(r.roomId, name, identity);
