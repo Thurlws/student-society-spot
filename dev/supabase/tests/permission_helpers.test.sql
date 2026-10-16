@@ -14,8 +14,8 @@ insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-00000000b001', 'committee@mytudublin.ie', 'authenticated', 'authenticated'),
   ('00000000-0000-0000-0000-00000000b002', 'member@mytudublin.ie', 'authenticated', 'authenticated'),
   ('00000000-0000-0000-0000-00000000b003', 'outsider@mytudublin.ie', 'authenticated', 'authenticated');
-insert into public.societies (id, slug, name, short_name, requires_approval)
-  values ('00000000-0000-0000-0000-00000000b100', 'test-private-soc', 'Test Private Society', 'TestSoc', true);
+insert into public.societies (id, slug, name, short_name, requires_approval, university_id)
+  values ('00000000-0000-0000-0000-00000000b100', 'test-private-soc', 'Test Private Society', 'TestSoc', true, md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values
   ('00000000-0000-0000-0000-00000000b100', '00000000-0000-0000-0000-00000000b001');
 insert into public.society_memberships (society_id, user_id, status) values

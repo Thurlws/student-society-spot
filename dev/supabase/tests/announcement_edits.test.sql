@@ -4,7 +4,7 @@ select plan(7);
 
 insert into auth.users (id, email, aud, role) values
   (md5('ann chair')::uuid, 'ann.chair@mytudublin.ie', 'authenticated', 'authenticated');
-insert into public.societies (id, slug, name, short_name) values (md5('ann soc')::uuid, 'ann-soc', 'Announcement Test Society', 'AnnSoc');
+insert into public.societies (id, slug, name, short_name, university_id) values (md5('ann soc')::uuid, 'ann-soc', 'Announcement Test Society', 'AnnSoc', md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values (md5('ann soc')::uuid, md5('ann chair')::uuid);
 insert into public.announcements (id, society_id, author_id, title, body) values
   (md5('post')::uuid, md5('ann soc')::uuid, md5('ann chair')::uuid, 'AGM', 'The AGM is on Thursday at six.');

@@ -7,9 +7,9 @@ select plan(32);
 insert into auth.users (id, email, aud, role)
   select md5(n)::uuid, n || '.rules@mytudublin.ie', 'authenticated', 'authenticated'
   from unnest('{chair,treasurer,ann,bob,cara}'::text[]) n;
-insert into public.societies (id, slug, name, short_name, requires_approval) values
-  (md5('open')::uuid, 'rules-open', 'Rules Open Society', 'OpenRules', false),
-  (md5('closed')::uuid, 'rules-closed', 'Rules Closed Society', 'ClosedRules', true);
+insert into public.societies (id, slug, name, short_name, requires_approval, university_id) values
+  (md5('open')::uuid, 'rules-open', 'Rules Open Society', 'OpenRules', false, md5('tudublin')::uuid),
+  (md5('closed')::uuid, 'rules-closed', 'Rules Closed Society', 'ClosedRules', true, md5('tudublin')::uuid);
 insert into public.society_roles (society_id, user_id) values
   (md5('open')::uuid, md5('chair')::uuid), (md5('open')::uuid, md5('treasurer')::uuid), (md5('closed')::uuid, md5('chair')::uuid);
 insert into public.events (id, society_id, title, starts_at, venue, category, capacity) values
