@@ -41,6 +41,7 @@ function EventPage() {
   const s = getSociety(e.societyId)!;
   const reg = isRegistered(e.id);
   const count = attendeeCount(e);
+  const spotsLeft = Math.max((e.capacity ?? 0) - count, 0);
   const availability = eventAvailability(e);
   const until = daysUntil(e.date);
   const related = events.filter((x) => x.id !== e.id && !x.cancelled && (x.societyId === e.societyId || x.tags.some((t) => e.tags.includes(t)))).slice(0, 3);
@@ -88,9 +89,9 @@ function EventPage() {
             <ul className="space-y-3 text-sm">
               <li className="flex gap-3"><Clock className="size-4 text-primary" /><span><span className="block font-medium">{formatDate(e.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><span className="text-muted-foreground">{e.start}{e.end ? ` – ${e.end}` : ""}</span></span></li>
               <li className="flex gap-3"><MapPin className="size-4 text-primary" /><span className="font-medium">{e.venue}</span></li>
-              <li className="flex gap-3"><Users className="size-4 text-primary" /><span className="font-medium">{count} going{e.capacity ? `, ${Math.max(e.capacity - count, 0)} spots left` : ""}</span></li>
+              <li className="flex gap-3"><Users className="size-4 text-primary" /><span className="font-medium">{count} {e.cancelled ? "were going" : "going"}{e.capacity && !e.cancelled ? `, ${spotsLeft} ${spotsLeft === 1 ? "spot" : "spots"} left` : ""}</span></li>
             </ul>
-            {e.capacity && <Progress value={Math.min((count / e.capacity) * 100, 100)} className="mt-4 h-1.5" />}
+            {e.capacity && !e.cancelled && <Progress value={Math.min((count / e.capacity) * 100, 100)} className="mt-4 h-1.5" />}
             <Button className="mt-5 w-full" size="lg" variant={reg ? "outline" : "default"} onClick={toggle} disabled={busy || availability === "past" || availability === "cancelled" || (!reg && availability === "full")}>
               {availability === "cancelled" ? "Cancelled"
                 : availability === "past" ? (reg ? "Ended. You were registered" : "This event has ended")
