@@ -306,6 +306,8 @@ insert into matrix (label, kind, sql, expected) values
 ('find_people(TU Dublin, by name)', 'count', $$select 1 from public.find_people(md5('tudublin')::uuid, 'matrix')$$, '{denied,0,0,0,0,0,8,0,8}'),
 ('find_people(TU Dublin, by email)', 'count', $$select 1 from public.find_people(md5('tudublin')::uuid, 'Member.Matrix@mytudublin.ie')$$, '{denied,0,0,0,0,0,1,0,1}'),
 ('find_people(MatrixU)', 'count', $$select 1 from public.find_people(md5('matrixu')::uuid, 'matrix')$$, '{denied,0,0,0,0,0,2,0,0}'),
+('import_societies(TU Dublin)', 'call', $$select public.import_societies(md5('tudublin')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,ok}'),
+('import_societies(MatrixU)', 'call', $$select public.import_societies(md5('matrixu')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,refused}'),
 ('my_access()', 'call', $$select public.my_access()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
 ('recommend_societies()', 'count', $$select 1 from public.recommend_societies() where society_id in @societies$$, '{denied,2,1,0,1,1,2,0,2}'),
 ('event_attendee_counts()', 'count', $$select 1 from public.event_attendee_counts() where event_id in @events$$, '{denied,2,2,2,2,2,2,0,2}'),
@@ -336,7 +338,7 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
         'create_event', 'decide_membership', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
-        'find_people', 'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
+        'find_people', 'import_societies', 'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
         'schedule_meeting', 'set_support_request_status', 'share_recap', 'suspend_user',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
