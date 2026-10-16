@@ -57,7 +57,13 @@ export default async function globalSetup() {
     "invite the chair",
   );
 
-  for (const p of [people.chair, people.member, people.student, people.returning]) {
+  for (const p of [
+    people.chair,
+    people.member,
+    people.student,
+    people.returning,
+    people.uniadmin,
+  ]) {
     const created = await admin.auth.admin.createUser({ email: p.email, email_confirm: true });
     check(created, `create ${p.email}`);
     const uid = created.data.user!.id;
@@ -79,6 +85,11 @@ export default async function globalSetup() {
           .from("society_memberships")
           .insert({ society_id: open, user_id: uid, status: "member" }),
         "add member",
+      );
+    if (p === people.uniadmin)
+      check(
+        await admin.from("university_admins").insert({ university_id: university, user_id: uid }),
+        "make a university admin",
       );
   }
 
