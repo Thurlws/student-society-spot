@@ -126,6 +126,7 @@ export interface MessageReport {
   excerpt: string;
   createdAt: string;
   reportedByMe: boolean;
+  dismissed: boolean;
 }
 
 export interface Resource {

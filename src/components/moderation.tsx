@@ -174,7 +174,10 @@ export function ReportedMessages({ societyId }: { societyId?: string }) {
     useData();
   const [busy, setBusy] = useState<string | null>(null);
   const open = messageReports.filter(
-    (r) => (societyId ? r.societyId === societyId : true) && (isAdmin || canManage(r.societyId)),
+    (r) =>
+      !r.dismissed &&
+      (societyId ? r.societyId === societyId : true) &&
+      (isAdmin || canManage(r.societyId)),
   );
   const byMessage = new Map<string, MessageReport[]>();
   for (const r of open) byMessage.set(r.messageId, [...(byMessage.get(r.messageId) ?? []), r]);
