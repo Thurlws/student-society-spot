@@ -172,6 +172,9 @@ insert into matrix (label, kind, sql, expected) values
 ('university_domains: read', 'count', $$select 1 from public.university_domains where domain in ('mytudublin.ie', 'tudublin.ie', 'matrixu.test')$$, '{denied,0,0,0,0,0,3,0,2}'),
 ('university_members: read', 'count', $$select 1 from public.university_members where user_id in @people$$, '{denied,1,1,1,1,1,10,1,8}'),
 ('university_admins: read', 'count', $$select 1 from public.university_admins where user_id in @people$$, '{denied,0,0,0,0,0,2,0,1}'),
+('audit_log: read', 'count', $$select 1 from public.audit_log where society_id in @societies$$, '{denied,0,0,0,0,0,6,0,6}'),
+('audit_log: read O''s', 'count', $$select 1 from public.audit_log where society_id = md5('O')::uuid$$, '{denied,0,0,0,0,0,2,0,0}'),
+('audit_log: read platform admin grants', 'count', $$select 1 from public.audit_log where action = 'platform_admin.added'$$, '{denied,0,0,0,0,0,1,0,0}'),
 ('role_invites: read a university admin invite', 'count', $$select 1 from public.role_invites where id = md5('uni invite')::uuid$$, '{0,0,0,0,0,0,1,0,1}'),
 -- MatrixU's society O from both universities.
 ('societies: read O', 'count', $$select 1 from public.societies where id = md5('O')::uuid$$, '{0,0,0,0,0,0,1,1,0}'),
@@ -263,6 +266,10 @@ insert into matrix (label, kind, sql, expected) values
 ('university_admins: make self TU Dublin admin', 'rows', $$insert into public.university_admins values (md5('tudublin')::uuid, auth.uid())$$, '{denied,denied,denied,denied,denied,denied,1,denied,denied}'),
 ('university_admins: appoint outsider at TU Dublin', 'rows', $$insert into public.university_admins values (md5('tudublin')::uuid, md5('outsider')::uuid)$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_admins: remove', 'rows', $$delete from public.university_admins where user_id = md5('uniadmin')::uuid$$, '{denied,0,0,0,0,0,1,0,0}'),
+
+('audit_log: add', 'rows', $$insert into public.audit_log (actor_role, action) values ('member', 'fake')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('audit_log: edit', 'rows', $$update public.audit_log set action = 'fake'$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('audit_log: delete', 'rows', $$delete from public.audit_log$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 
 -- Database functions. Signed-out visitors can call only email_domain_allowed.
 ('join_society(A)', 'call', $$select public.join_society(md5('A')::uuid)$$, '{denied,ok,ok,refused,refused,ok,ok,refused,ok}'),

@@ -169,6 +169,13 @@
       "when": 1792113760296,
       "tag": "0023_yearly_reverification",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792118026697,
+      "tag": "0024_audit_log",
+      "breakpoints": true
     }
   ]
 }
