@@ -4,7 +4,9 @@ import { pageAs, people } from "./support";
 test("a university admin creates a society and invites its committee", async ({ browser }) => {
   const admin = await pageAs(browser, people.uniadmin);
   await admin.goto("/admin", { waitUntil: "networkidle" });
-  await expect(admin.getByText("Add TU Dublin societies and choose who runs them.")).toBeVisible();
+  await expect(
+    admin.getByText("Run TU Dublin's societies and committees, and look after its members."),
+  ).toBeVisible();
 
   await admin.getByRole("button", { name: "New society" }).click();
   const dialog = admin.getByRole("dialog");
@@ -17,6 +19,7 @@ test("a university admin creates a society and invites its committee", async ({ 
   const society = admin.locator("section", {
     has: admin.getByRole("heading", { name: /E2E Admin Made Society/ }),
   });
+  await society.getByRole("button", { name: "Committee" }).click();
   await society.getByLabel("Committee member email").fill("e2e-newchair@mytudublin.ie");
   await society.getByLabel("Position").fill("President");
   await society.getByRole("button", { name: "Add", exact: true }).click();
@@ -30,6 +33,7 @@ test("a university admin creates a society and invites its committee", async ({ 
   await expect(admin.getByText("Invite an address at TU Dublin.")).toBeVisible();
 
   // Both changes are in the activity log, under the admin's name.
+  await admin.getByRole("tab", { name: "Activity" }).click();
   const activity = admin.locator("section", {
     has: admin.getByRole("heading", { name: "Activity" }),
   });
@@ -64,6 +68,7 @@ test("a university admin imports societies from a file", async ({ browser }) => 
   await expect(
     admin.getByRole("heading", { name: /E2E Imported Drama, Theatre and Film/ }),
   ).toBeVisible();
+  await admin.getByRole("tab", { name: "Activity" }).click();
   const activity = admin.locator("section", {
     has: admin.getByRole("heading", { name: "Activity" }),
   });
