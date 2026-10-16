@@ -1,6 +1,6 @@
 # Architecture
 
-Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 and its review fixes (branch `phase-2-followups`) and Phase 3 (branch `phase-3`), 2026-10-16.
+Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 and its review fixes (branch `phase-2-followups`), Phase 3 (branch `phase-3`) and Phase 4 (branch `claude/blissful-meitner-4f4ulx`), 2026-10-16.
 
 ## Shape
 
@@ -11,12 +11,17 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
   - `src/lib/livekit.functions.ts`: call tokens, guest links (codes stored hashed)
   - `src/lib/calls.functions.ts`: AI recaps, Q&A, caption transcription
   - `src/lib/society-ai.functions.ts`: recommendations, "ask", collaboration proposals
+  - `src/lib/account.functions.ts`: deleting your own account (refused while suspended)
+  - `src/lib/monitoring.functions.ts`: passes browser errors to the error tracker
   They authenticate with `requireSupabaseAuth` (Bearer token, `getClaims`). Some also use `supabaseAdmin` (service role, bypasses RLS).
+- **Server routes** (`src/routes/api/`): `/api/health` (public), `/api/health/sign-in` and `/api/health/test-alert` (need `MONITORING_TOKEN`). See [monitoring.md](monitoring.md).
+- **Errors:** `src/server.ts` and `src/start.ts` send server errors, and `reportFromBrowser` sends page crashes and failed sign-in emails, to a Sentry-compatible tracker (`src/lib/monitoring.server.ts`, no SDK) when `SENTRY_DSN` is set; scrubbed of addresses, tokens and keys.
+- **Admin data:** `/admin` reads and writes through `src/lib/api/admin.ts` (activity, people, suspension, import); its older society and committee forms still call Supabase directly.
 - **Auth:** Supabase Auth email link from `src/routes/welcome.tsx`; Microsoft through Lovable's OAuth broker (`src/integrations/lovable`), whose setup is unverified. `src/lib/auth.tsx` holds session, profile and `my_access()` roles. Pages under `src/routes/_authenticated/` redirect signed-out visitors to `/welcome`.
 
 ## Database (`drizzle/migrations/`)
 
-33 tables, about 50 SQL functions, RLS on every table. Permission helpers live in the `private` schema (0008, 0022).
+34 tables, about 70 SQL functions (counting triggers), RLS on every table. Permission helpers live in the `private` schema (0008, 0022, 0025).
 
 **Universities (0021, 0022).** Every society has a `university_id`, and every account one university, the one its email domain belongs to (`university_members`, filled by `handle_new_user`). People see only their own university's active societies and what hangs off them; platform admins see everything; university admins see and manage all of their own university's societies. Society-scoped admin checks use `private.can_manage_society(society_id, uid)` / `private.can_manage_university(university_id, uid)` (platform admin, or that university's admin), not `has_role(... 'platform_admin')`. The app's main loader asks only for the user's own university's societies, so platform admins don't get every university in the directory; `/admin` shows the rest.
 
@@ -46,10 +51,16 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 | 0021 | Universities, their email domains, members and admins; `societies.university_id` (TU Dublin backfill); society addresses unique per university |
 | 0022 | University-aware visibility, admin rights, invites, sign-up and email change; `email_domain_allowed` callable while signed out |
 | 0023 | Yearly re-verification: `university_members.verified_at`, refreshed on sign-in; nightly `end_lapsed_sessions` |
+| 0024 | `audit_log`, filled by triggers on privileged actions; read by platform admins and the university's admins; nobody can edit it |
+| 0025 | Suspension: `university_members.suspended_at`/`suspension_reason`, `private.is_suspended` in every permission helper, `suspend_user`, `reinstate_user`, `find_people`; `my_access().suspended` |
+| 0026 | Retention: nightly `purge_expired_data` (periods in `docs/privacy/retention.md`) |
+| 0027 | `sign_in_health()` for the monitoring endpoint (service role only) |
+| 0028 | `import_societies` for the CSV import on `/admin` |
 
 ## Environments
 
-- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. There is no staging environment.
+- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. `dev/supabase/check-migrations.sql` says which migrations it has.
+- **Staging:** not set up yet; the plan is in [staging.md](staging.md).
 - **Local:** `dev/supabase/config.toml`, run with `bun run db:start`. It replays all migrations in filename order, and Mailpit at http://127.0.0.1:54324 catches emails. `bun run db:check-sign-in` checks the sign-in email paths.
 - **CI:** `.github/workflows/ci.yml` on pull requests and pushes to `main`: `check` (typecheck, unit tests, build, lint) with Bun 1.4.2 and Node 24; `database` (Postgres only, then `db:test`); `journeys` (Supabase without storage, realtime and studio, then Playwright in Chromium).
 - **Other hosts:** not used yet. What changes when we leave Lovable is in [hosting.md](hosting.md).
@@ -68,4 +79,7 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 - In containers without IPv6, `vite dev` fails to bind `::`; use `npx vite dev --host 127.0.0.1 --port 8080` (the Playwright config does).
 - Since Phase 3, TU Dublin appears only where it's TU Dublin's data: the imported society details (`source = 'tudublin'`), the course list in `src/data/tud-courses.json` (offered to TU Dublin members), the welcome page's example societies, the sign-in email templates and the brand colour. Everything else comes from the `universities` tables.
 - Functions created in the `private` schema are executable by `PUBLIC` (Supabase's default privileges only cover `public`). Revoke from `public, anon` and grant to `authenticated`, as 0022 does; the permission matrix fails if signed-out visitors can call one.
-- Unit tests (`src/test/`, 31) cover helpers, calendar files, sign-in error messages and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test`, about 1550 checks): the role-by-table permission matrix (`permission_matrix.test.sql`), the rules inside the write functions, and one file per feature. Browser journeys are Playwright tests in `e2e/` (`bun run e2e`, 12 tests). All three run in CI.
+- Unit tests (`src/test/`, 49) cover helpers, calendar files, sign-in error messages, audit sentences, error reporting, the import file reader and rendering. Database tests are pgTAP files in `dev/supabase/tests/` (`bun run db:test`, about 1790 checks): the role-by-table permission matrix (`permission_matrix.test.sql`), the rules inside the write functions, and one file per feature. Browser journeys are Playwright tests in `e2e/` (`bun run e2e`, 14 tests). All three run in CI.
+- A suspended account must get nothing from a policy or function that rests on its own rows alone (`user_id = auth.uid()`). The helpers cover everything that goes through them; 0025 also gates the society directory, `join_society`, `recommend_societies`, comments on member requests, AI quotas and call participation. A new policy or function that trusts `auth.uid()` directly needs `private.is_suspended` too, or its own reason not to.
+- Some admin-facing code is published before its migration reaches production. `src/lib/api/admin.ts` treats a missing table or function (`missingInDatabase`) as "not there yet" and the section hides itself, like `mustOrMissing` in `fetch.ts`.
+- `pkill -f <pattern>` kills your own shell when the pattern is in the command line. Find the process with `ps -eo pid,args | grep "[v]ite dev"` and kill it by id.
