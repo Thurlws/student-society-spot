@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { pageHead } from "@/lib/seo";
 import { PageHeader, EmptyState } from "@/components/cards";
+import { ReportedMessages } from "@/components/moderation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,6 +66,7 @@ function AdminPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Admin" subtitle="Add your university's societies and choose who runs them." actions={<Button onClick={() => setEditing("new")}><Plus />New society</Button>} />
+      <ReportedMessages />
       {isLoading && <div className="h-32 animate-pulse rounded-xl bg-muted" />}
       {data && data.societies.length === 0 && <EmptyState title="No societies yet" body="Create the first society to get started." />}
       {data?.societies.map((s) => (

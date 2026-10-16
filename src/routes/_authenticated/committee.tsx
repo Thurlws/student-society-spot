@@ -11,6 +11,7 @@ import { SocietyAvatar } from "@/components/society-avatar";
 import { CommitteeRequestsSummary } from "@/components/support-requests";
 import { EventDialog } from "@/components/event-dialog";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
+import { ReportedMessages } from "@/components/moderation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,6 +84,8 @@ function Committee() {
           </button>
         ))}
       </div>
+
+      <ReportedMessages societyId={s.id} />
 
       <CommitteeRequestsSummary societyId={s.id} />
 

@@ -66,6 +66,8 @@ insert into public.announcements (id, society_id, author_id, title, body) values
 insert into public.messages (id, channel_id, author_id, body) values
   (md5('message A')::uuid, md5('A general')::uuid, md5('member')::uuid, 'Hello A'),
   (md5('message B')::uuid, md5('B general')::uuid, md5('other')::uuid, 'Hello B');
+insert into public.message_reports (id, message_id, society_id, author_id, reported_by, reason, excerpt) values
+  (md5('report A')::uuid, md5('message A')::uuid, md5('A')::uuid, md5('member')::uuid, md5('committee')::uuid, 'Rude', 'Hello A');
 insert into public.notifications (id, user_id, kind, title) values
   (md5('notification member')::uuid, md5('member')::uuid, 'events', 'For the member'),
   (md5('notification student')::uuid, md5('student')::uuid, 'events', 'For the student');
@@ -139,6 +141,7 @@ insert into matrix (label, kind, sql, expected) values
 ('announcements: read', 'count', $$select 1 from public.announcements where society_id in @societies$$, '{0,1,1,1,1,1,2}'),
 ('channels: read', 'count', $$select 1 from public.channels where society_id in @societies$$, '{0,0,0,6,3,3,0}'),
 ('messages: read', 'count', $$select 1 from public.messages where id in (md5('message A')::uuid, md5('message B')::uuid)$$, '{0,0,0,2,1,1,0}'),
+('message_reports: read', 'count', $$select 1 from public.message_reports where id = md5('report A')::uuid$$, '{0,0,0,0,1,0,1}'),
 ('notifications: read', 'count', $$select 1 from public.notifications where id in (md5('notification member')::uuid, md5('notification student')::uuid)$$, '{0,1,0,1,0,0,0}'),
 ('support_requests: read', 'count', $$select 1 from public.support_requests where society_id in @societies$$, '{0,0,0,1,1,0,0}'),
 ('support_request_activity: read', 'count', $$select 1 from public.support_request_activity where id = md5('activity A')::uuid$$, '{0,0,0,1,1,0,0}'),
@@ -194,6 +197,9 @@ insert into matrix (label, kind, sql, expected) values
 ('messages: post in A as someone else', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A general')::uuid, md5('bystander')::uuid, 'Hi')$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('messages: edit', 'rows', $$update public.messages set body = 'Edited' where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0}'),
 ('messages: delete directly', 'rows', $$delete from public.messages where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0}'),
+('message_reports: file directly', 'rows', $$insert into public.message_reports (message_id, society_id, author_id, reported_by, excerpt) values (md5('message B')::uuid, md5('B')::uuid, md5('other')::uuid, auth.uid(), 'x')$$, '{denied,denied,denied,denied,denied,denied,denied}'),
+('message_reports: dismiss directly', 'rows', $$update public.message_reports set dismissed_at = now() where id = md5('report A')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied}'),
+('message_reports: delete directly', 'rows', $$delete from public.message_reports where id = md5('report A')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('notifications: mark read', 'rows', $$update public.notifications set read_at = now() where id in (md5('notification member')::uuid, md5('notification student')::uuid)$$, '{0,1,0,1,0,0,0}'),
 ('notifications: create', 'rows', $$insert into public.notifications (user_id, kind, title) values (auth.uid(), 'events', 'Fake')$$, '{denied,denied,denied,denied,denied,denied,denied}'),
 ('notifications: delete', 'rows', $$delete from public.notifications where id in (md5('notification member')::uuid, md5('notification student')::uuid)$$, '{0,0,0,0,0,0,0}'),
@@ -237,6 +243,9 @@ insert into matrix (label, kind, sql, expected) values
 ('set_support_request_status(A''s request)', 'call', $$select public.set_support_request_status(md5('request A')::uuid, 'in_progress', '')$$, '{denied,refused,refused,refused,ok,refused,refused}'),
 ('comment_on_support_request(A''s request)', 'call', $$select public.comment_on_support_request(md5('request A')::uuid, 'Any update?')$$, '{denied,refused,refused,ok,ok,refused,refused}'),
 ('share_recap(A''s private recap)', 'call', $$select public.share_recap(md5('recap A private')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused}'),
+('report_message(B''s message)', 'call', $$select public.report_message(md5('message B')::uuid, 'Spam')$$, '{denied,refused,refused,ok,refused,refused,refused}'),
+('delete_message(A''s message)', 'call', $$select public.delete_message(md5('message A')::uuid)$$, '{denied,refused,refused,ok,ok,refused,ok}'),
+('dismiss_message_reports(A''s message)', 'call', $$select public.dismiss_message_reports(md5('message A')::uuid)$$, '{denied,refused,refused,refused,ok,refused,ok}'),
 ('my_access()', 'call', $$select public.my_access()$$, '{denied,ok,ok,ok,ok,ok,ok}'),
 ('recommend_societies()', 'count', $$select 1 from public.recommend_societies() where society_id in @societies$$, '{denied,2,1,0,1,1,2}'),
 ('event_attendee_counts()', 'count', $$select 1 from public.event_attendee_counts() where event_id in @events$$, '{denied,2,2,2,2,2,2}'),
@@ -264,8 +273,9 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
 select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
-        'create_event', 'decide_membership', 'event_attendee_counts', 'join_society', 'leave_society', 'my_access',
-        'recommend_societies', 'register_for_event', 'schedule_meeting', 'set_support_request_status', 'share_recap',
+        'create_event', 'decide_membership', 'delete_message', 'dismiss_message_reports', 'event_attendee_counts', 'join_society',
+        'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'report_message', 'schedule_meeting',
+        'set_support_request_status', 'share_recap',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
 select is_empty($$select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace

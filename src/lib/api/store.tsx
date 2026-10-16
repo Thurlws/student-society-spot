@@ -5,7 +5,7 @@ import { initialsOf, useAuth } from "@/lib/auth";
 import { loadAppData, type AppData } from "@/lib/api/fetch";
 import { todayIso } from "@/lib/format";
 import {
-  announcementInput, cancelReasonInput, eventInput, firstIssue, messageInput, societyEditInput, supportRequestInput,
+  announcementInput, cancelReasonInput, eventInput, firstIssue, messageInput, reportReasonInput, societyEditInput, supportRequestInput,
   type AnnouncementInput, type EventAvailability, type EventInput, type NotificationPrefs, type Outcome, type SupportRequestInput,
 } from "@/lib/validation";
 import type { CallRecap, Event, MembershipStatus, SupportRequest, SupportRequestStatus, User } from "@/lib/types";
@@ -17,7 +17,7 @@ import type { CallRecap, Event, MembershipStatus, SupportRequest, SupportRequest
  */
 const EMPTY: AppData = {
   societies: [], societyUuid: {}, slugOf: {}, committeeIds: {}, events: [], registrations: [], memberships: {}, announcements: [],
-  channels: [], messages: [], resources: [], notifications: [], prefs: { announcements: true, events: true, discussions: false, email: false },
+  channels: [], messages: [], messageReports: [], resources: [], notifications: [], prefs: { announcements: true, events: true, discussions: false, email: false },
   allInterests: [], requests: [], resolvedRequests: [], supportRequests: [], proposals: [], savedProposals: [], rooms: [], recaps: [], recommendations: [],
 };
 
@@ -99,6 +99,7 @@ function useDataValue() {
     announcements: data.announcements,
     channels: data.channels,
     messages: data.messages,
+    messageReports: data.messageReports,
     resources: data.resources,
     allInterests: data.allInterests,
     notifications,
@@ -173,6 +174,14 @@ function useDataValue() {
       if (!p.success) return fail(firstIssue(p.error));
       return act(() => supabase.from("messages").insert({ channel_id: channelId, author_id: user.id, body: p.data }));
     },
+    /** Authors delete their own; the committee and platform admins can remove any message in their channels. */
+    deleteMessage: (id: string) => act(() => supabase.rpc("delete_message", { _message_id: id })),
+    reportMessage: async (id: string, reason: string) => {
+      const p = reportReasonInput.safeParse(reason);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() => supabase.rpc("report_message", { _message_id: id, _reason: p.data }));
+    },
+    dismissMessageReports: (messageId: string) => act(() => supabase.rpc("dismiss_message_reports", { _message_id: messageId })),
 
     supportRequests: data.supportRequests,
     getSupportRequest: (id: string) => data.supportRequests.find((r) => r.id === id),
