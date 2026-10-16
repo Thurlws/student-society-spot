@@ -1,21 +1,26 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(4);
+select plan(5);
 
 -- A drop-in room (no host) and a scheduled call hosted by a member.
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-00000000f001', 'recap.committee@mytudublin.ie', 'authenticated', 'authenticated'),
   ('00000000-0000-0000-0000-00000000f002', 'recap.host@mytudublin.ie', 'authenticated', 'authenticated'),
-  ('00000000-0000-0000-0000-00000000f003', 'recap.stranger@mytudublin.ie', 'authenticated', 'authenticated');
+  ('00000000-0000-0000-0000-00000000f003', 'recap.stranger@mytudublin.ie', 'authenticated', 'authenticated'),
+  ('00000000-0000-0000-0000-00000000f004', 'recap.former@mytudublin.ie', 'authenticated', 'authenticated');
 insert into public.societies (id, slug, name, short_name) values ('00000000-0000-0000-0000-00000000f100', 'test-recap-soc', 'Test Recap Society', 'RecapSoc');
 insert into public.society_roles (society_id, user_id) values ('00000000-0000-0000-0000-00000000f100', '00000000-0000-0000-0000-00000000f001');
+insert into public.society_memberships (society_id, user_id, status) values ('00000000-0000-0000-0000-00000000f100', '00000000-0000-0000-0000-00000000f002', 'member');
+-- f004 hosted a call, then left the society.
 insert into public.call_rooms (id, society_id, slug, name, kind, starts_at, host_id) values
-  ('00000000-0000-0000-0000-00000000f200', '00000000-0000-0000-0000-00000000f100', 'hosted', 'Hosted call', 'meeting', now(), '00000000-0000-0000-0000-00000000f002');
+  ('00000000-0000-0000-0000-00000000f200', '00000000-0000-0000-0000-00000000f100', 'hosted', 'Hosted call', 'meeting', now(), '00000000-0000-0000-0000-00000000f002'),
+  ('00000000-0000-0000-0000-00000000f201', '00000000-0000-0000-0000-00000000f100', 'former', 'Former host''s call', 'meeting', now(), '00000000-0000-0000-0000-00000000f004');
 insert into public.call_recaps (id, room_id, society_id, title, summary)
   select '00000000-0000-0000-0000-00000000f301', id, society_id, 'Lounge chat', '{"overview":"Private chat"}' from public.call_rooms
   where society_id = '00000000-0000-0000-0000-00000000f100' and slug = 'lounge';
 insert into public.call_recaps (id, room_id, society_id, title, summary) values
-  ('00000000-0000-0000-0000-00000000f302', '00000000-0000-0000-0000-00000000f200', '00000000-0000-0000-0000-00000000f100', 'Hosted call', '{"overview":"Plans"}');
+  ('00000000-0000-0000-0000-00000000f302', '00000000-0000-0000-0000-00000000f200', '00000000-0000-0000-0000-00000000f100', 'Hosted call', '{"overview":"Plans"}'),
+  ('00000000-0000-0000-0000-00000000f303', '00000000-0000-0000-0000-00000000f201', '00000000-0000-0000-0000-00000000f100', 'Former host''s call', '{"overview":"Old plans"}');
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000f003","role":"authenticated"}';
@@ -23,6 +28,10 @@ select throws_ok($$select public.share_recap('00000000-0000-0000-0000-00000000f3
   'P0001', 'Only the committee or the call''s host can share a recap.', 'a stranger cannot share a recap from a room without a host');
 select throws_ok($$select public.share_recap('00000000-0000-0000-0000-00000000f302')$$,
   'P0001', 'Only the committee or the call''s host can share a recap.', 'a stranger cannot share a hosted call''s recap');
+
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000f004","role":"authenticated"}';
+select throws_ok($$select public.share_recap('00000000-0000-0000-0000-00000000f303')$$,
+  'P0001', 'Only the committee or the call''s host can share a recap.', 'a host who has left the society cannot share the recap');
 
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000f002","role":"authenticated"}';
 select lives_ok($$select public.share_recap('00000000-0000-0000-0000-00000000f302')$$, 'the host can share their call''s recap');

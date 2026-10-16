@@ -3,14 +3,14 @@ import { pageAs, people, societies } from "./support";
 
 test("a member reports a message and the committee removes it", async ({ browser }) => {
   const member = await pageAs(browser, people.member);
-  await member.goto(`/societies/${societies.open.slug}`);
+  await member.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
   await member.getByRole("tab", { name: "discussions" }).click();
   await member.getByLabel("Message", { exact: true }).fill("Nobody should come to this society");
   await member.getByRole("button", { name: "Send" }).click();
   await expect(member.getByText("Nobody should come to this society")).toBeVisible();
 
   const student = await pageAs(browser, people.student);
-  await student.goto(`/societies/${societies.open.slug}`);
+  await student.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
   await student.getByRole("button", { name: "Join society" }).click();
   await student.getByRole("tab", { name: "discussions" }).click();
   await student
@@ -24,7 +24,7 @@ test("a member reports a message and the committee removes it", async ({ browser
   await expect(student.getByText("Reported. Thanks for letting the committee know.")).toBeVisible();
 
   const chair = await pageAs(browser, people.chair);
-  await chair.goto("/committee");
+  await chair.goto("/committee", { waitUntil: "networkidle" });
   await chair.getByRole("combobox").click();
   await chair.getByRole("option", { name: societies.open.shortName }).click();
   const queue = chair.locator("section", {
@@ -32,10 +32,11 @@ test("a member reports a message and the committee removes it", async ({ browser
   });
   await expect(queue.getByText("Nobody should come to this society")).toBeVisible();
   await expect(queue.getByText("Putting people off joining")).toBeVisible();
-  await queue.getByRole("button", { name: "Remove message" }).click();
+  await queue.getByRole("button", { name: `Remove message from ${people.member.name}` }).click();
+  await chair.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
   await expect(chair.getByText("Message removed")).toBeVisible();
 
-  await member.reload();
+  await member.reload({ waitUntil: "networkidle" });
   await member.getByRole("tab", { name: "discussions" }).click();
   await expect(member.getByText("Nobody should come to this society")).toHaveCount(0);
 });

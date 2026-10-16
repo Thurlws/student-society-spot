@@ -5,7 +5,7 @@ test("the profile form edits the society picked on the committee dashboard", asy
   browser,
 }) => {
   const chair = await pageAs(browser, people.chair);
-  await chair.goto("/committee");
+  await chair.goto("/committee", { waitUntil: "networkidle" });
   await chair.getByRole("combobox").click();
   await chair.getByRole("option", { name: societies.open.shortName }).click();
   await chair.getByRole("button", { name: /Edit society profile/ }).click();

@@ -5,7 +5,7 @@ test("the committee creates an event, a student registers, then the committee mo
   browser,
 }) => {
   const chair = await pageAs(browser, people.chair);
-  await chair.goto("/committee");
+  await chair.goto("/committee", { waitUntil: "networkidle" });
   await chair.getByRole("combobox").click();
   await chair.getByRole("option", { name: societies.open.shortName }).click();
   await chair.getByRole("button", { name: /Create event/ }).click();
@@ -22,11 +22,11 @@ test("the committee creates an event, a student registers, then the committee mo
   const eventUrl = chair.url();
 
   const student = await pageAs(browser, people.student);
-  await student.goto(eventUrl);
+  await student.goto(eventUrl, { waitUntil: "networkidle" });
   await student.getByRole("button", { name: "Register" }).click();
   await expect(student.getByText("You're registered", { exact: true })).toBeVisible();
 
-  await chair.reload();
+  await chair.reload({ waitUntil: "networkidle" });
   await chair.getByRole("button", { name: "Edit event" }).click();
   await chair.getByRole("dialog").getByLabel("Start").fill("19:00");
   await chair.getByRole("dialog").getByLabel("Venue").fill("Bolton St, room 2");
@@ -42,7 +42,7 @@ test("the committee creates an event, a student registers, then the committee mo
   await chair.getByRole("alertdialog").getByRole("button", { name: "Cancel event" }).click();
   await expect(chair.getByText(`${societies.open.shortName} cancelled this event`)).toBeVisible();
 
-  await student.goto(eventUrl);
+  await student.goto(eventUrl, { waitUntil: "networkidle" });
   await expect(student.getByText("The room is double-booked.")).toBeVisible();
   await expect(student.getByRole("button", { name: "Cancelled" })).toBeDisabled();
   await openNotifications(student);

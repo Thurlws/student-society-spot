@@ -1,19 +1,20 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(21);
 
 -- Reporting, removing and dismissing messages. Ids are md5('<name>')::uuid.
 insert into auth.users (id, email, aud, role)
   select md5(n)::uuid, n || '.mod@mytudublin.ie', 'authenticated', 'authenticated'
-  from unnest('{chair,troll,reader,outsider,admin}'::text[]) n;
+  from unnest('{chair,cochair,troll,reader,outsider,admin}'::text[]) n;
 insert into public.user_roles (user_id, role) values (md5('admin')::uuid, 'platform_admin');
 insert into public.societies (id, slug, name, short_name) values (md5('soc')::uuid, 'mod-soc', 'Moderation Test Society', 'ModSoc');
-insert into public.society_roles (society_id, user_id) values (md5('soc')::uuid, md5('chair')::uuid);
+insert into public.society_roles (society_id, user_id) values (md5('soc')::uuid, md5('chair')::uuid), (md5('soc')::uuid, md5('cochair')::uuid);
 insert into public.society_memberships (society_id, user_id, status) values
   (md5('soc')::uuid, md5('troll')::uuid, 'member'), (md5('soc')::uuid, md5('reader')::uuid, 'member');
 insert into public.messages (id, channel_id, author_id, body)
   select md5(v.id)::uuid, c.id, md5(v.author)::uuid, v.body from public.channels c
-  cross join (values ('rude', 'troll', 'You are all idiots'), ('fine', 'reader', 'See you Thursday'), ('typo', 'reader', 'Se you Thursday')) v(id, author, body)
+  cross join (values ('rude', 'troll', 'You are all idiots'), ('fine', 'reader', 'See you Thursday'), ('typo', 'reader', 'Se you Thursday'),
+    ('chairpost', 'chair', 'Committee only, no plebs'), ('spam', 'troll', 'Buy followers here')) v(id, author, body)
   where c.society_id = md5('soc')::uuid and c.slug = 'general';
 
 create function pg_temp.act_as(_name text) returns void language plpgsql as $$
@@ -48,6 +49,27 @@ select pg_temp.act_as('chair');
 select lives_ok($$select public.delete_message(md5('rude')::uuid)$$, 'the committee removes the message');
 reset role;
 select is((select count(*)::int from public.message_reports where message_id = md5('rude')::uuid), 0, 'its reports go with it');
+
+
+-- Reports about a committee member's own message go to the rest of the committee.
+set local role authenticated;
+select pg_temp.act_as('reader');
+select lives_ok($$select public.report_message(md5('chairpost')::uuid, 'Rude to members')$$, 'a member reports a committee member''s message');
+select pg_temp.act_as('chair');
+select is_empty($$select 1 from public.message_reports where message_id = md5('chairpost')::uuid$$, 'the committee member it''s about can''t see who reported it');
+select throws_ok($$select public.dismiss_message_reports(md5('chairpost')::uuid)$$, 'P0001',
+  'Reports about your own message are for the rest of the committee to handle.', 'or dismiss it');
+reset role;
+select results_eq($$select user_id from public.notifications where dedupe_key = 'mr:' || md5('chairpost')::uuid$$,
+  array[md5('cochair')::uuid], 'only the rest of the committee is notified');
+select is((select link->'search'->>'society' from public.notifications where dedupe_key = 'mr:' || md5('chairpost')::uuid),
+  'mod-soc', 'the notification opens that society''s dashboard');
+set local role authenticated;
+select pg_temp.act_as('cochair');
+select lives_ok($$select public.report_message(md5('spam')::uuid, '')$$, 'a committee member reports a message');
+reset role;
+select results_eq($$select user_id from public.notifications where dedupe_key = 'mr:' || md5('spam')::uuid$$,
+  array[md5('chair')::uuid], 'and isn''t notified about their own report');
 
 select * from finish();
 rollback;
