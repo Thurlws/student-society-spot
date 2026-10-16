@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { reportError } from "./lib/monitoring.server";
+import { flushLogs, reportError } from "./lib/monitoring.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -52,11 +52,16 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    // Sends to the error tracker, if one is set up. On Workers, waitUntil keeps the report
-    // going after the response is sent.
+    // On Workers, waitUntil keeps reports and log lines going after the response is sent. Nitro
+    // hands it over on the request rather than as ctx.
+    type WaitUntil = (p: Promise<unknown>) => void;
+    const host = ctx as { waitUntil?: WaitUntil } | undefined;
+    const keepAlive =
+      host?.waitUntil?.bind(host) ?? (request as Request & { waitUntil?: WaitUntil }).waitUntil;
+    const waitUntil = (p: Promise<unknown>) => keepAlive?.(p);
+    // Sends to the error tracker, if one is set up.
     const report = (error: unknown) => {
-      const sent = reportError(error, { source: "server", route: new URL(request.url).pathname });
-      (ctx as { waitUntil?: (p: Promise<unknown>) => void } | undefined)?.waitUntil?.(sent);
+      waitUntil(reportError(error, { source: "server", route: new URL(request.url).pathname }));
     };
     try {
       const handler = await getServerEntry();
@@ -69,6 +74,9 @@ export default {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
+    } finally {
+      // This request's log lines, and warnings sent from inside it, to the tracker.
+      waitUntil(flushLogs());
     }
   },
 };

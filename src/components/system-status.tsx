@@ -122,7 +122,7 @@ export function SystemPanel() {
           }
         >
           {s.errorAlerts
-            ? `Errors and warnings go to your error tracker (environment: ${s.environment}).`
+            ? `Errors and warnings go to Sentry as issues, and the server's log to its Logs page (environment: ${s.environment}).`
             : "Off. Add the SENTRY_DSN secret to get an email when something breaks."}
         </Row>
         <Row state={s.uptimeToken ? "ok" : "off"} title="Uptime checks">

@@ -90,7 +90,7 @@ export const PROVIDERS: { name: string; does: string; data: string; where: strin
   {
     name: "Sentry",
     does: "Tells the SocConnect team when something breaks",
-    data: "Error reports: what failed, on which page, and technical details. Email addresses and sign-in tokens are removed first; no names or messages",
+    data: "Error reports and the server's activity log: what failed or ran, on which page, how long it took, and technical details. Email addresses and sign-in tokens are removed first; no names, messages or who did what",
     where: "EU (Frankfurt), to confirm the transfer terms for its US parent company",
   },
   // Only while the bot check is switched on (VITE_TURNSTILE_SITE_KEY).
