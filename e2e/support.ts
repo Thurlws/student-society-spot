@@ -47,6 +47,7 @@ export const people = {
   },
   returning: { email: "e2e-returning@mytudublin.ie", name: "Rita Returning" },
   newcomer: { email: "e2e-newcomer@mytudublin.ie" },
+  early: { email: "e2e-early@mytudublin.ie" },
 };
 export const societies = {
   open: { slug: "e2e-open", name: "E2E Open Society", shortName: "E2E Open" },

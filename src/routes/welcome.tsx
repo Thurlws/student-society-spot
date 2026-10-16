@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Compass, MessagesSquare, Waypoints, Mail, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { pageHead } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { signInError, signInFailureIsOurs, useAuth } from "@/lib/auth";
 import { reportFromBrowser } from "@/lib/report-error";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -145,6 +146,14 @@ function SignInCard() {
   const [error, setError] = useState("");
   // Matches Supabase's 60 s per-address cooldown, so "Resend" never hits it.
   const [cooldown, setCooldown] = useState(0);
+  // Until the page has loaded, the buttons stay disabled (a click would do nothing, and
+  // pressing Enter would reload the page), and an address typed meanwhile is kept.
+  const hydrated = useHydrated();
+  const emailInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const typed = emailInput.current?.value;
+    if (typed) setEmail(typed);
+  }, []);
 
   useEffect(() => {
     if (!cooldown) return;
@@ -235,6 +244,7 @@ function SignInCard() {
       <div className="space-y-1.5">
         <Label htmlFor="email">University email</Label>
         <Input
+          ref={emailInput}
           id="email"
           type="email"
           autoComplete="email"
@@ -245,13 +255,19 @@ function SignInCard() {
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={busy}>
+      <Button type="submit" className="w-full" disabled={busy || !hydrated}>
         {busy ? <Loader2 className="animate-spin" /> : <Mail />}Email me a sign-in link
       </Button>
       <div className="relative py-1 text-center text-xs text-muted-foreground">
         <span className="bg-card px-2">or</span>
       </div>
-      <Button type="button" variant="outline" className="w-full" onClick={microsoft}>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={microsoft}
+        disabled={!hydrated}
+      >
         <svg viewBox="0 0 21 21" className="size-4" aria-hidden>
           <path fill="#f25022" d="M0 0h10v10H0z" />
           <path fill="#7fba00" d="M11 0h10v10H11z" />
