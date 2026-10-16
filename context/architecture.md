@@ -1,6 +1,6 @@
 # Architecture
 
-Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 and its review fixes (branch `phase-2-followups`), Phase 3 (branch `phase-3`) and Phase 4 (branch `claude/blissful-meitner-4f4ulx`), 2026-10-16.
+Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. Updated for Phase 2 and its review fixes (branch `phase-2-followups`), Phase 3 (branch `phase-3`), Phase 4 (branch `claude/blissful-meitner-4f4ulx`) and the readiness fixes (branch `claude/festive-curie-inphrm`), 2026-10-16.
 
 ## Shape
 
@@ -56,6 +56,8 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 | 0026 | Retention: nightly `purge_expired_data` (periods in `docs/privacy/retention.md`) |
 | 0027 | `sign_in_health()` for the monitoring endpoint (service role only) |
 | 0028 | `import_societies` for the CSV import on `/admin` |
+| 0029 | A society's name, short name, category, logo and banner change only through admins or an import (audit finding 17) |
+| 0030 | Only proposals the person can read can be saved (finding 27) |
 
 ## Environments
 
