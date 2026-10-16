@@ -33,7 +33,7 @@ Line numbers are from commit `e83c5c6`. "Fixed in code" means merged code and mi
 | 14 | No message moderation; no edit or cancel for events and announcements | 0001:88-94, `src/lib/api/store.tsx` | T2.2, T2.3 | Fixed in code 2026-10-16 (migrations 0014-0016) |
 | 15 | Missing indexes on `user_id` lookups and announcements by society and date | 0000, 0001 | T1.5 | Fixed in code (migration 0010) |
 | 16 | README described the old browser-only demo | `README.md` | T0.3 | Fixed 2026-10-15 |
-| 17 | Committees can rename their society or change its logo | 0006:19-33 | Later | Open |
+| 17 | Committees can rename their society or change its logo | 0006:19-33 | Later | Mitigated 2026-10-16: every rename is in the audit log (0024). Still open as a rule |
 
 ### Nice to have
 
@@ -80,6 +80,15 @@ Two reviews of the merged Phase 2 code (database and app), branch `phase-2-follo
 | 40 | `bun run db:*` failed (`Invalid Argument '-s'`) | `package.json` | Fixed 2026-10-16: the scripts call the Supabase CLI directly |
 
 Left as they are: cancellation and change notices follow the "Event updates" setting, which says it covers them; `update_event` sets the tags to the category, as `create_event` does; `src/test/livekit-token.test.ts` imports `jose`, which only resolves through LiveKit's dependencies.
+
+### Found in Phase 4 (2026-10-16)
+
+| # | Finding | Where | Status |
+|---|---|---|---|
+| 41 | Every page loaded its fonts from Google Fonts, sending each visitor's IP address to Google | `src/routes/__root.tsx` | Fixed 2026-10-16: fonts bundled from `@fontsource-variable` |
+| 42 | "Download my data" left out the university membership, reports the person made, their comments on member requests, calls they joined and saved proposals | `settings.tsx` | Fixed 2026-10-16 (`src/lib/api/my-data.ts`) |
+| 43 | The 7-day transcript purge had no test | 0003 | Fixed 2026-10-16 (`retention.test.sql`) |
+| 44 | Captions were on by default, so joining a call meant consenting to AI processing of your voice unless you noticed the button | `call-experience.tsx` | Fixed 2026-10-16: off until each person turns theirs on |
 
 ## Phases
 
@@ -146,9 +155,25 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 4. Optional: appoint TU Dublin university admins (for example Students' Union staff) from `/admin` → Universities.
 5. Before a second university goes live: decide the sign-in email wording. `dev/supabase/templates/` says "the app for TU Dublin societies", which helps TU Dublin students trust the email but is wrong for anyone else. The templates can't know the recipient's university unless Lovable's template data includes it.
 
-### Phase 4: pilot readiness
+### Phase 4: pilot readiness (code done 2026-10-16, branch `claude/blissful-meitner-4f4ulx`)
 
-T4.1 privacy notice, sub-processors, retention, DPIA, processing-agreement template (P0, M). T4.2 audit log (P1, S). T4.3 suspension (P1, S). T4.4 monitoring and alerts (P1, S). T4.5 staging project (P1, M). T4.6 onboarding runbook and society import (P2, M).
+| Task | Status |
+|---|---|
+| T4.1 Privacy pack | Code and drafts done. `/privacy` notice (public, linked from welcome, the account menu, Settings and the suspension notice); `docs/privacy/`: sub-processors, retention schedule, draft DPIA with open decisions, processing agreement template; nightly `purge_expired_data` (0026); captions off by default; fonts bundled; fuller data download. Waiting on: a privacy contact address, the team's legal identity, confirming providers' regions and terms, and the DPO's decisions (D1-D6 in `docs/privacy/dpia.md`, above all the legal basis for sensitive societies) |
+| T4.2 Audit log | Done (0024): admin and committee grants, invites, society and university changes, domains, moderation removals, dismissed reports, cancelled events, account deletions, suspensions and imports; read on `/admin` → Activity; nobody can edit it. Membership decisions and removed messages' authors left out on purpose (special-category data) |
+| T4.3 Suspension | Done (0025): `suspend_user`, `reinstate_user`, `find_people`; every permission helper treats a suspended account as having no rights; the person sees the reason; `/admin` → People, and "Suspend author" in the reports queue. A suspended account can't delete itself |
+| T4.4 Monitoring | Code done: `/api/health`, `/api/health/sign-in` (sign-in link use, 0027), `/api/health/test-alert`; server and browser errors to a Sentry-compatible EU tracker. Waiting on: a tracker account, an uptime monitor and three secrets ([monitoring.md](monitoring.md)) |
+| T4.5 Staging | Runbook done ([staging.md](staging.md)) and `dev/supabase/check-migrations.sql`. Waiting on: the owner creating the staging project in Lovable |
+| T4.6 Onboarding | Done: CSV society import on `/admin` (0028, same rules as 0006) and the runbook ([onboarding.md](onboarding.md)) |
+
+**Rollout (with or after Phase 3):**
+
+1. Read this first: the first night after 0026 is applied, `purge_expired_data` deletes everything already past its period (read notifications older than 90 days, AI usage older than 30 days, call recaps older than a year, and so on; see `docs/privacy/retention.md`). If anything should be kept, change the periods before applying it.
+2. Apply migrations 0024 to 0028 together with the Phase 4 code. The code works without them (the new admin sections stay hidden and the import says it needs the update), but suspension, the audit log and retention only exist once they're in.
+3. Run `dev/supabase/check-migrations.sql` in Lovable Cloud's SQL editor: every row from 0007 to 0028 should say `yes`. This also answers whether 0007 onwards reached production.
+4. Check the nightly jobs: `select jobname, schedule from cron.job;` lists `purge-call-transcripts`, `end-lapsed-sessions` and `purge-expired-data`.
+5. Set `PRIVACY_CONTACT_EMAIL` in `src/lib/privacy.ts` when there is an address.
+6. Monitoring: follow [monitoring.md](monitoring.md) (tracker, secrets, test alert, uptime checks).
 
 ### Phase 5: when demand justifies it
 
@@ -158,4 +183,4 @@ Realtime notifications, per-page loading and pagination, SSO per university, ema
 
 - **TU Dublin demo:** finish T1.1 (domain and templates), then roll out Phases 1 and 2 (T2.4 is done).
 - **Trinity or UCD demo:** T2.1 and Phase 3 are done in code (2026-10-16). Still needed: that university's society data, its domains and an admin set up in `/admin`, and the sign-in email wording (Phase 3 rollout, step 5).
-- **Limited pilot:** all of Phases 0 to 4. About 7 to 12 more developer-weeks plus time with the university's DPO and IT team.
+- **Limited pilot:** all of Phases 0 to 4. Phase 4's code is done (2026-10-16); what's left is outside the code: the DPO's review and decisions, the agreement, provider confirmations, the privacy contact, monitoring and staging accounts, CAPTCHA and the custom sending domain.

@@ -71,6 +71,8 @@ bun run e2e      # browser journeys; needs the local database too
 
 CI runs all of these on every pull request and every push to `main` (`.github/workflows/ci.yml`), in three jobs: `check`, `database` and `journeys`.
 
+To see which migrations a database has (production, staging), run [`dev/supabase/check-migrations.sql`](dev/supabase/check-migrations.sql) in its SQL editor.
+
 `dev/supabase/tests/permission_matrix.test.sql` tries every table and every database function as a signed-out visitor, a student, an applicant, a member, the society's committee, another society's committee, a platform admin, a student at another university and a university admin. When you add a table or a function that signed-in users can call, add rows for it there. The test fails until you do.
 
 ### Browser journeys
@@ -131,11 +133,18 @@ Society calls are real multi-person calls when the LiveKit variables are set. Cr
 - Captions record 7-second audio clips while someone speaks and send them to the server for AI transcription. Spoken and typed lines are shared with everyone in the call and feed the recap. Anyone in the call can switch captions off.
 - Committees can create guest links (`/join/<code>`) that expire and have a use limit.
 
+## Privacy and operations
+
+- The privacy notice is at `/privacy`; its contacts, retention periods and providers are in `src/lib/privacy.ts`. The drafts a university's data protection officer needs (providers, retention schedule, impact assessment, processing agreement) are in [`docs/privacy/`](docs/privacy/README.md).
+- Admins run their university from `/admin`: societies and committees, an import from a spreadsheet, reported messages, suspensions and an activity log. [`context/onboarding.md`](context/onboarding.md) walks through adding a university.
+- Health checks and error alerts: [`context/monitoring.md`](context/monitoring.md). Staging: [`context/staging.md`](context/staging.md).
+
 ## Known issues
 
 - Sign-in emails from Lovable's default sender land in Microsoft 365 quarantine at TU Dublin. The fix needs a custom sending domain; see [`context/sign-in-email-bug.md`](context/sign-in-email-bug.md).
 - A second university needs its own society data and a decision on the sign-in email wording, which names TU Dublin. See Phase 3 in [`context/roadmap.md`](context/roadmap.md).
-- The October 2026 audit's open items, and what's planned next (multiple universities, pilot readiness), are in [`context/roadmap.md`](context/roadmap.md).
+- The privacy notice has no contact address yet, and the providers' regions and terms still need confirming ([`docs/privacy/README.md`](docs/privacy/README.md)).
+- The October 2026 audit's open items, and what's left before a pilot, are in [`context/roadmap.md`](context/roadmap.md).
 
 ## Project layout
 
@@ -152,6 +161,7 @@ drizzle/migrations/   database schema, policies and functions as SQL
 dev/                  local Supabase stack, pgTAP tests (dev/supabase/tests) and dev scripts
 e2e/                  Playwright journeys
 context/              notes for whoever picks up the work next
+docs/privacy/         drafts for a university's data protection officer
 ```
 
 ## License
