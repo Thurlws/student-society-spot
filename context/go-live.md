@@ -7,7 +7,7 @@ Written 2026-10-16, after Phases 0 to 4. The code for the TU Dublin demo, the se
 | # | Step | Where | Status |
 |---|---|---|---|
 | 1 | Merge the open branch into `main` and publish in Lovable | GitHub, Lovable | |
-| 2 | Apply migrations 0007 to 0030 to Lovable Cloud together with the published code. **Read first:** the first night after 0026, `purge_expired_data` deletes everything already past its period ([roadmap.md](roadmap.md), Phase 4 rollout, step 1). If Lovable doesn't apply them from GitHub by itself, ask it to apply the pending migrations in `drizzle/migrations` | Lovable Cloud | 2026-10-16: production answers `email_domain_allowed`, so 0022 at least is there |
+| 2 | Apply migrations 0007 to 0030: paste [`dev/supabase/apply-0007-0030.sql`](../dev/supabase/apply-0007-0030.sql) into Lovable → More → Cloud → SQL editor and run it. One transaction, so all or nothing; a second run changes nothing. Lovable doesn't apply migration files that arrive from GitHub. The first night's purge (0026) finds nothing old enough to delete, because the backend started on 2026-10-10 | Lovable Cloud SQL editor | 2026-10-16: the owner's check showed none of 0007 to 0030 in production |
 | 3 | Run [`dev/supabase/check-migrations.sql`](../dev/supabase/check-migrations.sql) in the SQL editor: every row `yes` | Lovable Cloud SQL editor | |
 | 4 | `select jobname, schedule from cron.job;` lists `purge-call-transcripts`, `end-lapsed-sessions` and `purge-expired-data` | SQL editor | |
 | 5 | Every account has a university: the Phase 3 rollout query returns 0 | SQL editor | |

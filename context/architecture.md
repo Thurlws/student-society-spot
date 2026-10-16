@@ -61,7 +61,7 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 
 ## Environments
 
-- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. `dev/supabase/check-migrations.sql` says which migrations it has.
+- **Production:** Lovable Cloud (Supabase). Its public URL and key are in the committed `.env`. Lovable hosts the app and publishes from `main`. It holds real student data. `dev/supabase/check-migrations.sql` says which migrations it has. Lovable doesn't apply migration files that arrive from GitHub: each one is pasted into Lovable's SQL editor (More → Cloud → SQL editor). On 2026-10-16 production had none of 0007 to 0030; `dev/supabase/apply-0007-0030.sql` applies them in one transaction.
 - **Staging:** not set up yet; the plan is in [staging.md](staging.md).
 - **Local:** `dev/supabase/config.toml`, run with `bun run db:start`. It replays all migrations in filename order, and Mailpit at http://127.0.0.1:54324 catches emails. `bun run db:check-sign-in` checks the sign-in email paths.
 - **CI:** `.github/workflows/ci.yml` on pull requests and pushes to `main`: `check` (typecheck, unit tests, build, lint) with Bun 1.4.2 and Node 24; `database` (Postgres only, then `db:test`); `journeys` (Supabase without storage, realtime and studio, then Playwright in Chromium).

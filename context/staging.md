@@ -35,7 +35,7 @@ This merges instead of force-pushing, so Lovable's history in the staging reposi
 
 Then, in the staging project:
 
-1. Wait for Lovable to sync, and apply the migrations if Lovable asks.
+1. Wait for Lovable to sync, then paste the new migration file into the staging project's SQL editor (More → Cloud → SQL editor) and run it. Lovable doesn't apply migration files that arrive from GitHub (found on production, 2026-10-16).
 2. Run [`dev/supabase/check-migrations.sql`](../dev/supabase/check-migrations.sql) in the SQL editor. Every row should say `yes`.
 3. Open `https://<staging>/api/health`: `{"status":"ok"}`.
 4. By hand: sign in as a new and a returning user (real mailboxes), join a society, register for an event, open `/admin`.
