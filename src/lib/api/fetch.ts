@@ -55,6 +55,16 @@ const must = <T>(r: { data: T | null; error: { message: string } | null }): T =>
   return (r.data ?? []) as T;
 };
 
+/**
+ * Like must(), but a table that doesn't exist yet reads as empty, so the app keeps loading
+ * if the code is published before its migration reaches production. Other errors still throw.
+ */
+const mustOrMissing = <T>(r: {
+  data: T | null;
+  error: { message: string; code?: string } | null;
+}): T =>
+  r.error && (r.error.code === "PGRST205" || r.error.code === "42P01") ? ([] as T) : must(r);
+
 export async function loadAppData(uid: string, committeeSocietyIds: string[]): Promise<AppData> {
   const [
     soc,
@@ -365,8 +375,9 @@ export async function loadAppData(uid: string, committeeSocietyIds: string[]): P
         createdAt: m.created_at,
       }))
       .reverse(),
+    // Empty until migration 0016 is in production.
     messageReports: (
-      must(reportRes) as unknown as {
+      mustOrMissing(reportRes) as unknown as {
         id: string;
         message_id: string;
         society_id: string;
