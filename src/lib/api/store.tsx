@@ -100,7 +100,7 @@ function useDataValue() {
   const loaded = !!q.data || !!q.error;
 
   const committeeSlugs = auth.access.committee.map((c) => c.slug);
-  const name = auth.profile?.display_name || auth.email.split("@")[0] || "You";
+  const name = auth.profile?.display_name.trim() || "You";
   const user: User = {
     id: uidAuth ?? "signed-out",
     name,
@@ -284,7 +284,15 @@ function useDataValue() {
       );
     },
     /** Authors delete their own; the committee and admins can remove any message in their channels. */
-    deleteMessage: (id: string) => act(() => supabase.rpc("delete_message", { _message_id: id })),
+    // The reason goes to the author when someone else removes their message (migration 0032).
+    deleteMessage: (id: string, reason = "") =>
+      act(async () => {
+        const r = await supabase.rpc("delete_message", { _message_id: id, _reason: reason });
+        // Until 0032 is in production the function takes no reason.
+        return r.error?.code === "PGRST202"
+          ? supabase.rpc("delete_message", { _message_id: id })
+          : r;
+      }),
     reportMessage: async (id: string, reason: string) => {
       const p = reportReasonInput.safeParse(reason);
       if (!p.success) return fail(firstIssue(p.error));

@@ -179,6 +179,7 @@ function Discover() {
               key={s.id}
               society={s}
               reason={fits.data?.reasons[s.id] ?? ""}
+              reasonByAi={!!fits.data?.reasons[s.id]}
               action={<JoinButton society={s} full />}
             />
           ))}

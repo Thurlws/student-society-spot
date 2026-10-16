@@ -1,25 +1,35 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
   Archive,
   ArchiveRestore,
+  ChevronDown,
   FileUp,
   Loader2,
+  Pencil,
   Plus,
+  Search,
   ShieldCheck,
   Trash2,
   UserPlus,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type University } from "@/lib/auth";
+import { useData } from "@/lib/api/store";
+import type { Society } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
 import { PageHeader, EmptyState } from "@/components/cards";
 import { ReportedMessages } from "@/components/moderation";
 import { ActivityLog } from "@/components/activity-log";
 import { PeopleAdmin } from "@/components/people-admin";
 import { SocietyImportDialog } from "@/components/society-import-dialog";
+import { SocietyAvatar } from "@/components/society-avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,7 +61,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const TABS = ["societies", "reports", "people", "activity", "university"] as const;
+type Tab = (typeof TABS)[number];
+
 export const Route = createFileRoute("/_authenticated/admin")({
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab } =>
+    TABS.includes(s["tab"] as Tab) ? { tab: s["tab"] as Tab } : {},
   head: () => pageHead("Admin", "Create and manage societies and their committees."),
   component: AdminPage,
 });
@@ -71,6 +86,8 @@ type SocietyRow = {
   requires_approval: boolean;
   meets: string;
   status: string;
+  icon: string;
+  logo_url: string | null;
 };
 type RoleRow = {
   id: string;
@@ -104,7 +121,7 @@ function useAdminData(universityId: string) {
         supabase
           .from("societies")
           .select(
-            "id, slug, name, short_name, category, tagline, description, accent, requires_approval, meets, status",
+            "id, slug, name, short_name, category, tagline, description, accent, requires_approval, meets, status, icon, logo_url",
           )
           .eq("university_id", universityId)
           .order("name"),
@@ -139,6 +156,9 @@ function useAdminData(universityId: string) {
 
 function AdminPage() {
   const { access } = useAuth();
+  const { messageReports, canManage } = useData();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
   // Platform admins pick a university; university admins manage their own.
   const { data: universities } = useQuery({
     queryKey: ["admin", "universities"],
@@ -164,6 +184,15 @@ function AdminPage() {
       />
     );
 
+  // The University tab is for platform admins; anyone else lands on Societies.
+  const tab: Tab =
+    search.tab === "university" && !access.is_admin ? "societies" : (search.tab ?? "societies");
+  const openReports = new Set(
+    messageReports
+      .filter((r) => !r.dismissed && (access.is_admin || canManage(r.societyId)))
+      .map((r) => r.messageId),
+  ).size;
+
   const setStatus = async (s: SocietyRow, status: "active" | "archived") => {
     const { error } = await supabase.from("societies").update({ status }).eq("id", s.id);
     if (error) return void toast.error(error.message);
@@ -172,93 +201,88 @@ function AdminPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader
         title="Admin"
-        subtitle={`Add ${university?.short_name ?? "your university's"} societies and choose who runs them.`}
+        subtitle={`Run ${university?.short_name ?? "your university"}'s societies and committees, and look after its members.`}
         actions={
-          <>
-            {access.is_admin && universities && (
-              <Select value={universityId} onValueChange={setPicked}>
-                <SelectTrigger className="w-56" aria-label="University">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.short_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Button variant="outline" onClick={() => setImporting(true)} disabled={!universityId}>
-              <FileUp />
-              Import societies
-            </Button>
-            <Button onClick={() => setEditing("new")} disabled={!universityId}>
-              <Plus />
-              New society
-            </Button>
-          </>
+          access.is_admin &&
+          universities && (
+            <Select value={universityId} onValueChange={setPicked}>
+              <SelectTrigger className="w-56 bg-card" aria-label="University">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {universities.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.short_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )
         }
       />
-      {access.is_admin && university && data && (
-        <Universities
-          university={university}
-          domains={data.domains}
-          admins={data.admins}
-          invites={data.invites.filter((i) => i.university_id === university.id)}
-          onCreated={setPicked}
-        />
-      )}
-      <ReportedMessages />
-      {universityId && <PeopleAdmin universityId={universityId} />}
-      {isLoading && <div className="h-32 animate-pulse rounded-xl bg-muted" />}
-      {data && data.societies.length === 0 && (
-        <EmptyState title="No societies yet" body="Create the first society to get started." />
-      )}
-      {data?.societies.map((s) => (
-        <section key={s.id} className="rounded-xl border bg-card p-6 shadow-soft">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="font-semibold">
-                {s.name}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  /societies/{s.slug}
-                </span>
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {s.category}
-                {s.status === "archived" && ", archived"}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditing(s)}>
-                Edit
-              </Button>
-              {s.status === "active" ? (
-                <Button variant="outline" size="sm" onClick={() => setStatus(s, "archived")}>
-                  <Archive />
-                  Archive
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={() => setStatus(s, "active")}>
-                  <ArchiveRestore />
-                  Restore
-                </Button>
-              )}
-            </div>
-          </div>
-          <Committee
-            society={s}
-            domain={data.domains[0]}
-            roles={data.roles.filter((r) => r.society_id === s.id)}
-            invites={data.invites.filter((i) => i.society_id === s.id)}
+      <Tabs
+        value={tab}
+        onValueChange={(t) =>
+          navigate({
+            to: "/admin",
+            search: t === "societies" ? {} : { tab: t as Tab },
+            replace: true,
+          })
+        }
+      >
+        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+          <AdminTab value="societies" label="Societies" count={data?.societies.length} />
+          <AdminTab value="reports" label="Reports" count={openReports || undefined} alert />
+          <AdminTab value="people" label="People" />
+          <AdminTab value="activity" label="Activity" />
+          {access.is_admin && <AdminTab value="university" label="University" />}
+        </TabsList>
+
+        <TabsContent value="societies" className="mt-6">
+          <SocietiesPanel
+            data={data}
+            loading={isLoading}
+            universityId={universityId}
+            onNew={() => setEditing("new")}
+            onImport={() => setImporting(true)}
+            onEdit={setEditing}
+            onStatus={setStatus}
           />
-        </section>
-      ))}
-      {universityId && <ActivityLog universityId={universityId} />}
+        </TabsContent>
+        <TabsContent value="reports" className="mt-6">
+          {openReports ? (
+            <ReportedMessages />
+          ) : (
+            <EmptyState
+              icon={ShieldCheck}
+              title="No open reports"
+              body="When a member reports a message, it shows up here and on the society's committee dashboard."
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="people" className="mt-6">
+          {universityId && <PeopleAdmin universityId={universityId} />}
+        </TabsContent>
+        <TabsContent value="activity" className="mt-6">
+          {universityId && <ActivityLog universityId={universityId} />}
+        </TabsContent>
+        {access.is_admin && (
+          <TabsContent value="university" className="mt-6">
+            {university && data && (
+              <Universities
+                university={university}
+                domains={data.domains}
+                admins={data.admins}
+                invites={data.invites.filter((i) => i.university_id === university.id)}
+                onCreated={setPicked}
+              />
+            )}
+          </TabsContent>
+        )}
+      </Tabs>
       {importing && (
         <SocietyImportDialog
           universityId={universityId}
@@ -272,6 +296,206 @@ function AdminPage() {
           universityId={universityId}
           onClose={() => setEditing(null)}
         />
+      )}
+    </div>
+  );
+}
+
+function AdminTab({
+  value,
+  label,
+  count,
+  alert,
+}: {
+  value: Tab;
+  label: string;
+  count?: number | undefined;
+  alert?: boolean;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="gap-1.5 rounded-full data-[state=active]:bg-primary-soft data-[state=active]:text-primary data-[state=active]:shadow-none"
+    >
+      {label}
+      {count !== undefined && (
+        <span
+          className={cn(
+            "rounded-full px-1.5 text-[11px] tabular-nums",
+            alert ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {count}
+        </span>
+      )}
+    </TabsTrigger>
+  );
+}
+
+type AdminData = NonNullable<ReturnType<typeof useAdminData>["data"]>;
+
+/** The university's societies as a searchable list; each row opens its committee. */
+function SocietiesPanel({
+  data,
+  loading,
+  universityId,
+  onNew,
+  onImport,
+  onEdit,
+  onStatus,
+}: {
+  data: AdminData | undefined;
+  loading: boolean;
+  universityId: string;
+  onNew: () => void;
+  onImport: () => void;
+  onEdit: (s: SocietyRow) => void;
+  onStatus: (s: SocietyRow, status: "active" | "archived") => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [show, setShow] = useState<"active" | "archived" | "all">("active");
+  const [open, setOpen] = useState<string | null>(null);
+  const societies = data?.societies ?? [];
+  const counts = {
+    active: societies.filter((s) => s.status === "active").length,
+    archived: societies.filter((s) => s.status === "archived").length,
+  };
+  const q = query.trim().toLowerCase();
+  const list = societies.filter(
+    (s) =>
+      (show === "all" || s.status === show) &&
+      (!q || `${s.name} ${s.short_name} ${s.category}`.toLowerCase().includes(q)),
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            aria-label="Search societies"
+            placeholder="Search by name or category"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="bg-card pl-9"
+          />
+        </div>
+        <Select value={show} onValueChange={(v) => setShow(v as typeof show)}>
+          <SelectTrigger className="bg-card sm:w-44" aria-label="Show">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active ({counts.active})</SelectItem>
+            <SelectItem value="archived">Archived ({counts.archived})</SelectItem>
+            <SelectItem value="all">All ({societies.length})</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onImport} disabled={!universityId}>
+            <FileUp />
+            Import societies
+          </Button>
+          <Button onClick={onNew} disabled={!universityId}>
+            <Plus />
+            New society
+          </Button>
+        </div>
+      </div>
+
+      {loading && <div className="h-32 animate-pulse rounded-xl bg-muted" />}
+      {data && societies.length === 0 && (
+        <EmptyState
+          title="No societies yet"
+          body="Create the first society, or import a list from the Students' Union."
+        />
+      )}
+      {data && societies.length > 0 && list.length === 0 && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No societies match. Try another search, or show archived societies too.
+        </p>
+      )}
+      {list.length > 0 && (
+        <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-soft">
+          {list.map((s) => {
+            const roles = data!.roles.filter((r) => r.society_id === s.id);
+            const invites = data!.invites.filter((i) => i.society_id === s.id);
+            const expanded = open === s.id;
+            const committee = [
+              roles.length ? `${roles.length} on the committee` : "No committee yet",
+              invites.length ? `${invites.length} invited` : "",
+            ]
+              .filter(Boolean)
+              .join(", ");
+            return (
+              <li key={s.id}>
+                <section aria-labelledby={`soc-${s.id}`}>
+                  <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <SocietyAvatar
+                      size="sm"
+                      society={{
+                        name: s.name,
+                        icon: s.icon,
+                        accent: s.accent as Society["accent"],
+                        logoUrl: s.logo_url ?? undefined,
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        id={`soc-${s.id}`}
+                        className="flex items-center gap-2 text-sm font-semibold"
+                      >
+                        <span className="truncate">{s.name}</span>
+                        {s.status === "archived" && <Badge variant="outline">Archived</Badge>}
+                      </h3>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {s.category}, {committee}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-expanded={expanded}
+                        onClick={() => setOpen(expanded ? null : s.id)}
+                      >
+                        <Users />
+                        Committee
+                        <ChevronDown
+                          className={cn("transition-transform", expanded && "rotate-180")}
+                        />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => onEdit(s)}>
+                        <Pencil />
+                        Edit
+                      </Button>
+                      {s.status === "active" ? (
+                        <Button variant="ghost" size="sm" onClick={() => onStatus(s, "archived")}>
+                          <Archive />
+                          Archive
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => onStatus(s, "active")}>
+                          <ArchiveRestore />
+                          Restore
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {expanded && (
+                    <div className="border-t bg-surface px-4 py-4">
+                      <Committee
+                        society={s}
+                        domain={data!.domains[0]}
+                        roles={roles}
+                        invites={invites}
+                      />
+                    </div>
+                  )}
+                </section>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
@@ -324,8 +548,8 @@ function Committee({
   };
 
   return (
-    <div className="mt-5 border-t pt-4">
-      <h3 className="text-sm font-semibold">Committee</h3>
+    <div>
+      <h4 className="text-sm font-semibold">Committee</h4>
       <ul className="mt-2 space-y-1 text-sm">
         {roles.map((r) => (
           <li key={r.id} className="flex items-center justify-between gap-2">

@@ -33,7 +33,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OfficialInfo } from "@/components/official-info";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
-import { MessageActions } from "@/components/moderation";
+import { MessageList } from "@/components/message-list";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -353,42 +353,12 @@ function SocietyPage({ societyId }: { societyId: string }) {
                     Only members of {s.shortName} can read this channel.
                   </p>
                 </div>
-                <div className="flex-1 space-y-4 overflow-y-auto p-5">
-                  {messages.filter((m) => m.channelId === channel).length === 0 && (
-                    <p className="text-center text-sm text-muted-foreground">
-                      No messages yet. Say hello.
-                    </p>
-                  )}
-                  {messages
-                    .filter((m) => m.channelId === channel)
-                    .map((m) => (
-                      <div key={m.id} className="flex gap-3">
-                        <span
-                          className={cn(
-                            "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                            m.authorId === user.id ? "bg-ink text-ink-foreground" : "bg-muted",
-                          )}
-                        >
-                          {m.author
-                            .split(" ")
-                            .map((p) => p[0])
-                            .join("")}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm">
-                            <span className="font-semibold">{m.author}</span>{" "}
-                            <span className="text-xs text-muted-foreground">
-                              {timeAgo(m.createdAt)}
-                            </span>
-                          </p>
-                          <p className="whitespace-pre-line break-words text-sm text-foreground/90">
-                            {m.body}
-                          </p>
-                        </div>
-                        <MessageActions message={m} societyId={s.id} societyName={s.shortName} />
-                      </div>
-                    ))}
-                </div>
+                <MessageList
+                  channelId={channel}
+                  messages={messages.filter((m) => m.channelId === channel)}
+                  societyId={s.id}
+                  societyName={s.shortName}
+                />
                 <form
                   className="flex gap-2 border-t p-3"
                   onSubmit={async (e) => {

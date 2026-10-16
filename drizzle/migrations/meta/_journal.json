@@ -218,6 +218,20 @@
       "when": 1792120311276,
       "tag": "0030_saved_proposals_visible",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792120371276,
+      "tag": "0031_display_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792120431276,
+      "tag": "0032_removal_notices",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { needsName, useAuth } from "@/lib/auth";
 import { SuspendedNotice } from "@/components/suspended-notice";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -23,11 +23,16 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function Gate() {
-  const { ready, session, profile, access } = useAuth();
+  const { ready, session, profile, access, email } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Onboarding also catches people who never said what to call them (see needsName).
   const needsOnboarding =
-    ready && !!profile && !profile.onboarded_at && !access.suspended && pathname !== "/onboarding";
+    ready &&
+    !!profile &&
+    (!profile.onboarded_at || needsName(profile.display_name, email)) &&
+    !access.suspended &&
+    pathname !== "/onboarding";
 
   useEffect(() => {
     if (ready && !session) navigate({ to: "/welcome" });

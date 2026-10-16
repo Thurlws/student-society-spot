@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(24);
 
 -- Reporting, removing and dismissing messages. Ids are md5('<name>')::uuid.
 insert into auth.users (id, email, aud, role)
@@ -14,7 +14,7 @@ insert into public.society_memberships (society_id, user_id, status) values
 insert into public.messages (id, channel_id, author_id, body)
   select md5(v.id)::uuid, c.id, md5(v.author)::uuid, v.body from public.channels c
   cross join (values ('rude', 'troll', 'You are all idiots'), ('fine', 'reader', 'See you Thursday'), ('typo', 'reader', 'Se you Thursday'),
-    ('chairpost', 'chair', 'Committee only, no plebs'), ('spam', 'troll', 'Buy followers here')) v(id, author, body)
+    ('chairpost', 'chair', 'Committee only, no plebs'), ('spam', 'troll', 'Buy followers here'), ('advert', 'troll', 'Cheap tickets here')) v(id, author, body)
   where c.society_id = md5('soc')::uuid and c.slug = 'general';
 
 create function pg_temp.act_as(_name text) returns void language plpgsql as $$
@@ -46,9 +46,19 @@ select is((select count(*)::int from public.message_reports where society_id = m
 select lives_ok($$select public.dismiss_message_reports(md5('rude')::uuid)$$, 'an admin can dismiss them');
 select throws_ok($$select public.dismiss_message_reports(md5('rude')::uuid)$$, 'P0001', 'There are no open reports for this message.', 'dismissing twice is refused');
 select pg_temp.act_as('chair');
-select lives_ok($$select public.delete_message(md5('rude')::uuid)$$, 'the committee removes the message');
+select lives_ok($$select public.delete_message(md5('rude')::uuid, 'Insults other members')$$, 'the committee removes the message, saying why');
 reset role;
 select is((select count(*)::int from public.message_reports where message_id = md5('rude')::uuid), 0, 'its reports go with it');
+-- Digital Services Act, article 17: the author is told what was removed, by whom and why.
+select results_eq($$select body from public.notifications where user_id = md5('troll')::uuid and title = 'Your message was removed'$$,
+  array['Your message in ModSoc #general ("You are all idiots") was removed by the committee. Reason: Insults other members. If you think it was a mistake, send the committee a request from the society''s page.'],
+  'its author is told it was removed, by whom and why');
+select is((select count(*)::int from public.notifications where user_id = md5('reader')::uuid and title = 'Your message was removed'), 0,
+  'deleting your own message tells nobody');
+set local role authenticated;
+select pg_temp.act_as('admin');
+select lives_ok($$select public.delete_message(md5('advert')::uuid)$$, 'an admin removes a message without giving a reason');
+reset role;
 
 
 -- Reports about a committee member's own message go to the rest of the committee.

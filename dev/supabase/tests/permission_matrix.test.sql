@@ -32,6 +32,9 @@ insert into auth.users (id, email, aud, role)
   select md5(n)::uuid, n || '.matrix@' || case when n in ('outsider', 'ochair') then 'matrixu.test' else 'mytudublin.ie' end,
     'authenticated', 'authenticated'
   from unnest('{student,applicant,member,committee,other,admin,bystander,outsider,uniadmin,ochair}'::text[]) n;
+-- Sign-up leaves names empty (0031); give everyone one with "Matrix" in it to search for.
+update public.profiles p set display_name = 'Matrix ' || initcap(split_part(u.email, '.', 1))
+  from auth.users u where u.id = p.id and u.email like '%.matrix@%';
 insert into public.user_roles (user_id, role) values (md5('admin')::uuid, 'platform_admin');
 insert into public.university_admins (university_id, user_id) values
   (md5('tudublin')::uuid, md5('uniadmin')::uuid), (md5('matrixu')::uuid, md5('ochair')::uuid);
