@@ -9,6 +9,7 @@ Working notes that carry state between sessions, for people and coding agents. T
 | [sign-in-email-bug.md](sign-in-email-bug.md) | Open bug: returning users don't get the sign-in email. Evidence so far and the Lovable Cloud checklist |
 | [hosting.md](hosting.md) | Why we stay on Lovable for now, rules that keep leaving cheap, every Lovable dependency, and the exit checklist |
 | [monitoring.md](monitoring.md) | Health checks, error alerts, how to set them up and what to do when one fires |
+| [staging.md](staging.md) | The staging project: why, how to set it up in Lovable, and how a migration goes through it |
 
 Design decisions that are already settled live in [`../AGENTS.md`](../AGENTS.md). Setup and commands are in [`../README.md`](../README.md).
 
