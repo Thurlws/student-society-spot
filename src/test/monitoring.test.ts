@@ -1,5 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
-import { allowReport, buildEnvelope, log, parseDsn, scrub } from "@/lib/monitoring.server";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  allowReport,
+  buildEnvelope,
+  buildLogEnvelope,
+  flushLogs,
+  log,
+  logEntry,
+  parseDsn,
+  scrub,
+} from "@/lib/monitoring.server";
 
 describe("Error reporting", () => {
   it("reads a Sentry DSN, and refuses anything else", () => {
@@ -68,5 +77,102 @@ describe("Error reporting", () => {
     const allowed = Array.from({ length: 25 }, () => allowReport(t)).filter(Boolean).length;
     expect(allowed).toBe(20);
     expect(allowReport(t + 61_000)).toBe(true);
+  });
+});
+
+describe("Logs to Sentry", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  /** The envelopes posted to the tracker, as [item header, payload] pairs. */
+  function captureFetch() {
+    const sent: { item: { type: string; item_count?: number }; payload: unknown }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: { body: string }) => {
+        const [, item, payload] = init.body.split("\n");
+        sent.push({ item: JSON.parse(item!), payload: JSON.parse(payload!) });
+        return new Response("{}");
+      }),
+    );
+    return sent;
+  }
+
+  it("turns a log line into Sentry's format, typed and scrubbed", () => {
+    const entry = logEntry(
+      "warn",
+      "server_fn.failed",
+      { fn: "joinSociety", ms: 42, ratio: 0.5, ok: false, empty: null, who: "jane@mytudublin.ie" },
+      "No row for jane@mytudublin.ie",
+      "production",
+      1_760_000_000_123,
+    );
+    expect(entry.timestamp).toBe(1_760_000_000.123);
+    expect(entry.trace_id).toMatch(/^[0-9a-f]{32}$/);
+    expect(entry.level).toBe("warn");
+    expect(entry.body).toBe("server_fn.failed: No row for [email]");
+    expect(entry.attributes).toMatchObject({
+      event: { value: "server_fn.failed", type: "string" },
+      fn: { value: "joinSociety", type: "string" },
+      ms: { value: 42, type: "integer" },
+      ratio: { value: 0.5, type: "double" },
+      ok: { value: false, type: "boolean" },
+      who: { value: "[email]", type: "string" },
+      error: { value: "No row for [email]", type: "string" },
+      "sentry.environment": { value: "production", type: "string" },
+    });
+    expect(entry.attributes).not.toHaveProperty("empty");
+  });
+
+  it("numbers lines that share a millisecond, and restarts when it changes", () => {
+    const seq = (ms: number) =>
+      logEntry("info", "x", {}, undefined, "production", ms).attributes[
+        "sentry.timestamp.sequence"
+      ]!.value;
+    expect([seq(5), seq(5), seq(5), seq(6), seq(6)]).toEqual([0, 1, 2, 0, 1]);
+  });
+
+  it("builds a log envelope", () => {
+    const entry = logEntry("info", "server_fn", { fn: "a" }, undefined, "production");
+    const [header, item, payload] = buildLogEnvelope(
+      [entry, entry],
+      new Date("2026-10-16T10:00:00Z"),
+    ).split("\n");
+    expect(JSON.parse(header!)).toEqual({ sent_at: "2026-10-16T10:00:00.000Z" });
+    expect(JSON.parse(item!)).toEqual({
+      type: "log",
+      item_count: 2,
+      content_type: "application/vnd.sentry.items.log+json",
+    });
+    expect(JSON.parse(payload!)).toEqual({ version: 2, items: [entry, entry] });
+  });
+
+  it("sends the request's lines in envelopes of at most 100, with warnings as issues too", async () => {
+    vi.stubEnv("SENTRY_DSN", "https://abc@o1.ingest.de.sentry.io/1");
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const sent = captureFetch();
+    for (let i = 0; i < 149; i++) log("info", "server_fn", { fn: "f", ms: i });
+    log("warn", "ai.fallback", { area: "ai" });
+    await flushLogs();
+    const logs = sent.filter((s) => s.item.type === "log");
+    expect(logs.map((s) => s.item.item_count)).toEqual([100, 50]);
+    expect(sent.filter((s) => s.item.type === "event")).toHaveLength(1);
+    // Nothing is left for the next request.
+    sent.length = 0;
+    await flushLogs();
+    expect(sent).toHaveLength(0);
+  });
+
+  it("keeps everything on the server without SENTRY_DSN", async () => {
+    vi.stubEnv("SENTRY_DSN", "");
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const sent = captureFetch();
+    log("info", "server_fn", { fn: "f", ms: 1 });
+    await flushLogs();
+    expect(sent).toHaveLength(0);
   });
 });

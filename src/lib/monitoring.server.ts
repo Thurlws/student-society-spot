@@ -108,32 +108,133 @@ export function allowReport(now = Date.now()) {
   return true;
 }
 
-/** Sends one error to the tracker. Never throws: reporting must not break the request. */
-export async function reportError(error: unknown, context: ErrorContext) {
-  const dsn = parseDsn(process.env["SENTRY_DSN"]);
-  if (!dsn || !allowReport()) return;
-  try {
-    await fetch(dsn.endpoint, {
+const environment = () => process.env["SENTRY_ENVIRONMENT"] || "production";
+
+// Sends still on their way, so the end of a request can wait for them (flushLogs).
+const sending = new Set<Promise<void>>();
+function track(p: Promise<void>) {
+  sending.add(p);
+  void p.finally(() => sending.delete(p));
+  return p;
+}
+
+/** Posts one envelope. Never throws: the tracker being down is not worth a second error. */
+function post(dsn: Dsn, body: string) {
+  return track(
+    fetch(dsn.endpoint, {
       method: "POST",
       headers: {
         "content-type": "application/x-sentry-envelope",
         "x-sentry-auth": `Sentry sentry_version=7, sentry_key=${dsn.key}, sentry_client=socconnect/1`,
       },
-      body: buildEnvelope(error, context, process.env["SENTRY_ENVIRONMENT"] || "production"),
+      body,
       signal: AbortSignal.timeout(3000),
-    });
-  } catch {
-    // The tracker being down is not worth a second error.
-  }
+    }).then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+}
+
+/** Sends one error to the tracker. Never throws: reporting must not break the request. */
+export async function reportError(error: unknown, context: ErrorContext) {
+  const dsn = parseDsn(process.env["SENTRY_DSN"]);
+  if (!dsn || !allowReport()) return;
+  await post(dsn, buildEnvelope(error, context, environment()));
 }
 
 type LogFields = Record<string, string | number | boolean | null | undefined>;
+type LogLevel = "info" | "warn" | "error";
+type Attribute =
+  | { value: string; type: "string" }
+  | { value: number; type: "integer" | "double" }
+  | { value: boolean; type: "boolean" };
+export type LogEntry = {
+  timestamp: number;
+  trace_id: string;
+  level: LogLevel;
+  body: string;
+  attributes: Record<string, Attribute>;
+};
+
+function attribute(value: string | number | boolean): Attribute {
+  if (typeof value === "string") return { value: scrub(value), type: "string" };
+  if (typeof value === "boolean") return { value, type: "boolean" };
+  return { value, type: Number.isInteger(value) ? "integer" : "double" };
+}
+
+// Workers freeze the clock while a request runs, so log lines can share a millisecond; Sentry
+// orders those by this counter, which restarts whenever the millisecond changes.
+let lastMs = -1;
+let sequence = 0;
+
+/** A log line in Sentry's log format, with the same fields as the JSON line. */
+export function logEntry(
+  level: LogLevel,
+  event: string,
+  fields: LogFields,
+  detail: string | undefined,
+  env: string,
+  now = Date.now(),
+): LogEntry {
+  sequence = now === lastMs ? sequence + 1 : 0;
+  lastMs = now;
+  const attributes: Record<string, Attribute> = {
+    event: attribute(event),
+    "sentry.environment": attribute(env),
+    "sentry.sdk.name": attribute("socconnect"),
+    "sentry.sdk.version": attribute("1"),
+    "sentry.timestamp.sequence": attribute(sequence),
+  };
+  for (const [key, value] of Object.entries(fields))
+    if (value != null && !(typeof value === "number" && !Number.isFinite(value)))
+      attributes[key] = attribute(value);
+  if (detail) attributes["error"] = attribute(detail.slice(0, 500));
+  return {
+    timestamp: now / 1000,
+    trace_id: crypto.randomUUID().replace(/-/g, ""),
+    level,
+    body: scrub(detail ? `${event}: ${detail.slice(0, 500)}` : event),
+    attributes,
+  };
+}
+
+/** Up to 100 log lines as one Sentry envelope (its limit per envelope). */
+export function buildLogEnvelope(entries: LogEntry[], now = new Date()) {
+  return [
+    JSON.stringify({ sent_at: now.toISOString() }),
+    JSON.stringify({
+      type: "log",
+      item_count: entries.length,
+      content_type: "application/vnd.sentry.items.log+json",
+    }),
+    JSON.stringify({ version: 2, items: entries }),
+  ].join("\n");
+}
+
+// Log lines waiting for the end of the request. Capped, so a burst can't use up memory.
+const queue: LogEntry[] = [];
+const MAX_QUEUED = 1000;
 
 /**
- * One structured line in the server's log (JSON, scrubbed), for the host's log viewer. Warnings
- * and errors also go to the error tracker, so someone hears about them. Fields describe what
- * happened (event, function, area, status, counts, milliseconds); never put email addresses,
- * names, message text or ids of people in them.
+ * Sends the waiting log lines to the tracker, and waits for them and for any error reports
+ * still on their way. src/server.ts calls it after each request, inside waitUntil on Workers,
+ * so nothing is cut off when the response goes out. Never throws.
+ */
+export async function flushLogs() {
+  const dsn = parseDsn(process.env["SENTRY_DSN"]);
+  while (queue.length) {
+    const batch = queue.splice(0, 100);
+    if (dsn) void post(dsn, buildLogEnvelope(batch));
+  }
+  await Promise.all([...sending]);
+}
+
+/**
+ * One structured line in the server's log (JSON, scrubbed), for the host's log viewer and, when
+ * SENTRY_DSN is set, Sentry's Logs. Warnings and errors also go to the error tracker as issues,
+ * so someone hears about them. Fields describe what happened (event, function, area, status,
+ * counts, milliseconds); never put email addresses, names, message text or ids of people in them.
  */
 export function log(
   level: "info" | "warn" | "error",
@@ -154,6 +255,8 @@ export function log(
   if (level === "error") console.error(line);
   else if (level === "warn") console.warn(line);
   else console.log(line);
+  if (process.env["SENTRY_DSN"] && queue.length < MAX_QUEUED)
+    queue.push(logEntry(level, event, fields, detail, environment()));
   if (level === "info") return;
   const reported = new Error(detail ? `${event}: ${detail}` : event);
   reported.name = event;
