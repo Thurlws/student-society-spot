@@ -84,6 +84,8 @@ export function describeAuditEntry(e: AuditEntry, names: AuditNames) {
       if (fromSlug !== toSlug) return `${to}'s address changed from ${fromSlug} to ${toSlug}`;
       return `${to}'s short name changed from ${part(d["from"], "short_name")} to ${part(d["to"], "short_name")}`;
     }
+    case "societies.imported":
+      return `${Number(d["rows"]) || 0} societies were imported from a file: ${Number(d["created"]) || 0} new, ${Number(d["updated"]) || 0} updated`;
     case "society.links_changed":
       return `${society}'s official links were changed`;
     case "society.moved":
