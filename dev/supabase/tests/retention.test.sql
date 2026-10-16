@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(16);
 
 -- The nightly purge deletes what is past its retention period and nothing newer. Each table
 -- gets an "old" row just past its limit and a "new" one just inside it. Ids are md5('<name>')::uuid.
@@ -63,6 +63,11 @@ select results_eq($$select title from public.support_requests where submitted_by
   array['New resolved', 'Old but open'], 'resolved requests two years, open ones until resolved');
 select results_eq($$select action from public.audit_log$$, array['new'], 'the audit log two years');
 select is((select schedule from cron.job where jobname = 'purge-expired-data'), '30 3 * * *', 'it runs every night');
+
+-- Transcripts go after 7 days (migration 0003); the recap stays.
+update public.call_recaps set transcript = '[]', created_at = now() - interval '8 days' where id = md5('new recap')::uuid;
+select is(public.purge_old_transcripts(), 1, 'the transcript job clears one week-old transcript');
+select is((select transcript from public.call_recaps where id = md5('new recap')::uuid), null, 'and keeps the recap');
 
 set local role authenticated;
 select throws_ok($$select public.purge_expired_data()$$, '42501', null, 'signed-in users can''t run it');
