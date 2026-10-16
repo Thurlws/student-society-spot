@@ -197,6 +197,8 @@ insert into matrix (label, kind, sql, expected) values
 ('societies: edit A''s tagline', 'rows', $$update public.societies set tagline = 'New tagline' where id = md5('A')::uuid$$, '{0,0,0,0,1,0,1,0,1}'),
 ('societies: archive A', 'rows', $$update public.societies set status = 'archived' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
 ('societies: change A''s join link', 'rows', $$update public.societies set join_url = 'https://example.com' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
+('societies: rename A', 'rows', $$update public.societies set name = 'Students'' Union' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
+('societies: change A''s logo', 'rows', $$update public.societies set logo_url = 'https://example.com/logo.png' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
 ('societies: delete A', 'rows', $$delete from public.societies where id = md5('A')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
 ('society_tags: add to A', 'rows', $$insert into public.society_tags select md5('A')::uuid, id from public.interests where name = 'Music'$$, '{0,denied,denied,denied,denied,denied,1,denied,1}'),
 ('society_tags: remove from A', 'rows', $$delete from public.society_tags where society_id = md5('A')::uuid$$, '{0,0,0,0,0,0,1,0,1}'),
