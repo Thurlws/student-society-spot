@@ -311,15 +311,17 @@ function EditDialog({
 }) {
   const { getSociety, editSociety } = useData();
   const s = getSociety(societyId)!;
-  const [f, setF] = useState({ tagline: s.tagline, description: s.description, meets: s.meets });
+  const saved = () => ({ tagline: s.tagline, description: s.description, meets: s.meets });
+  const [f, setF] = useState(saved);
+  // Start from the selected society's saved profile each time the dialog opens. Radix doesn't
+  // call onOpenChange when the parent opens it, and the society picker can change meanwhile.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setF(saved());
+  }
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (o) setF({ tagline: s.tagline, description: s.description, meets: s.meets });
-        else onClose();
-      }}
-    >
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -341,16 +343,18 @@ function EditDialog({
           }}
         >
           <div className="space-y-1.5">
-            <Label>Tagline</Label>
+            <Label htmlFor="soc-tagline">Tagline</Label>
             <Input
+              id="soc-tagline"
               value={f.tagline}
               onChange={(e) => setF({ ...f, tagline: e.target.value })}
               maxLength={140}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Description</Label>
+            <Label htmlFor="soc-description">Description</Label>
             <Textarea
+              id="soc-description"
               rows={8}
               value={f.description}
               onChange={(e) => setF({ ...f, description: e.target.value })}
@@ -358,8 +362,9 @@ function EditDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>When & where you meet</Label>
+            <Label htmlFor="soc-meets">When & where you meet</Label>
             <Input
+              id="soc-meets"
               value={f.meets}
               onChange={(e) => setF({ ...f, meets: e.target.value })}
               maxLength={140}
