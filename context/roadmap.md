@@ -186,6 +186,21 @@ Hosting: we stay on Lovable until a university pilot provides infrastructure. Se
 
 **Production has none of migrations 0007 to 0030** (2026-10-16, `check-migrations.sql` run by the owner in Lovable's SQL editor). Lovable doesn't apply migration files that arrive from GitHub; it only applies changes its own agent makes. That answers the open question about how Lovable treats our migrations. `dev/supabase/apply-0007-0030.sql` applies all of them in one transaction (rehearsed on a local copy at 0006 with sample data: every check says yes and all 1,820 database tests pass). The owner applied it the same day; the checks after it found the three nightly jobs, every account with a university, and no platform admins. From now on, every new migration is applied by pasting it into the SQL editor. An earlier note here said production had 0022 because it answered `email_domain_allowed`; that was wrong, since 0000 already defined that function.
 
+### Owner feedback and EU rules (2026-10-16, branch `claude/festive-curie-inphrm`)
+
+| Change | Status |
+|---|---|
+| Display names required | Done (0031): sign-up no longer uses the start of the email address (usually a student number) as the name, onboarding asks "What should people call you?", existing student-number names are cleared so those people are asked once, and a trigger refuses a blank name or the email's start. The DPIA already said student numbers aren't collected; the old default contradicted it |
+| Discussions grouped by sender | Done: one name and avatar per run of messages, a new group after 7 minutes or a new day, date lines, newest message kept in view (`src/lib/message-groups.ts`, tested) |
+| Admin page | Done: tabs (Societies, Reports, People, Activity, University), searchable society list with an Active/Archived filter, committees open per row |
+| Settings page | Done: one Profile section with email, university and roles; Interests; Notifications with descriptions; Your data and account (download, sign out, delete) |
+| Terms of use | Done: `/terms`, linked from the sign-in card, the welcome footer, the account menu, Settings and the suspension notice. Needs a lawyer's review (go-live step 22) |
+| Cookies | Done: `/privacy#cookies` lists everything on the device (`DEVICE_STORAGE`); all strictly necessary, so no banner. The guest call name moved to session storage |
+| Digital Services Act | Done (0032): removing someone else's message tells the author what, by whom and why; the terms cover rules, reporting illegal content and moderation |
+| AI Act labelling | Done: AI-written society suggestions now say "Written by AI" (recaps, answers and proposals already did) |
+
+Apply 0031 and 0032 with `dev/supabase/apply-0031-0032.sql` (go-live step 2b).
+
 ### Phase 5: when demand justifies it
 
 Realtime notifications, per-page loading and pagination, SSO per university, email digests, analytics for societies officers, links into official membership systems.
