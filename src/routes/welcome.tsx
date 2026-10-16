@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { pageHead } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { emailAllowed, signInError, useAuth } from "@/lib/auth";
+import { signInError, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,10 +153,18 @@ function SignInCard() {
 
   const sendLink = async () => {
     setError("");
-    if (!emailAllowed(email)) return setError("Please use your TU Dublin email (@mytudublin.ie).");
+    const address = email.trim().toLowerCase();
     setBusy(true);
+    // If the check itself fails, try anyway: the sign-up trigger has the final say.
+    const { data: allowed } = await supabase.rpc("email_domain_allowed", { _email: address });
+    if (allowed === false) {
+      setBusy(false);
+      return setError(
+        "SocConnect isn't available for that address yet. Use your university email.",
+      );
+    }
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
+      email: address,
       options: { emailRedirectTo: window.location.origin },
     });
     setBusy(false);
@@ -173,7 +181,7 @@ function SignInCard() {
     const msg = r.error?.message ?? "";
     if (r.error)
       setError(
-        /TU Dublin email/.test(msg) ? msg : "Microsoft sign-in failed. Try your email instead.",
+        /university email/.test(msg) ? msg : "Microsoft sign-in failed. Try your email instead.",
       );
   };
 
