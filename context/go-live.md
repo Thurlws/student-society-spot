@@ -7,11 +7,11 @@ Written 2026-10-16, after Phases 0 to 4. The code for the TU Dublin demo, the se
 | # | Step | Where | Status |
 |---|---|---|---|
 | 1 | Merge the open branch into `main` and publish in Lovable | GitHub, Lovable | |
-| 2 | Apply migrations 0007 to 0030: paste [`dev/supabase/apply-0007-0030.sql`](../dev/supabase/apply-0007-0030.sql) into Lovable → More → Cloud → SQL editor and run it. One transaction, so all or nothing; a second run changes nothing. Lovable doesn't apply migration files that arrive from GitHub. The first night's purge (0026) finds nothing old enough to delete, because the backend started on 2026-10-10 | Lovable Cloud SQL editor | 2026-10-16: the owner's check showed none of 0007 to 0030 in production |
+| 2 | Apply migrations 0007 to 0030: paste [`dev/supabase/apply-0007-0030.sql`](../dev/supabase/apply-0007-0030.sql) into Lovable → More → Cloud → SQL editor and run it. One transaction, so all or nothing; a second run changes nothing. Lovable doesn't apply migration files that arrive from GitHub. The first night's purge (0026) finds nothing old enough to delete, because the backend started on 2026-10-10 | Lovable Cloud SQL editor | Done 2026-10-16 by the owner (the run ended with `schedule 3`) |
 | 3 | Run [`dev/supabase/check-migrations.sql`](../dev/supabase/check-migrations.sql) in the SQL editor: every row `yes` | Lovable Cloud SQL editor | |
-| 4 | `select jobname, schedule from cron.job;` lists `purge-call-transcripts`, `end-lapsed-sessions` and `purge-expired-data` | SQL editor | |
-| 5 | Every account has a university: the Phase 3 rollout query returns 0 | SQL editor | |
-| 6 | Platform admins are who you expect: the Phase 1 rollout query, step 4 | SQL editor | |
+| 4 | `select jobname, schedule from cron.job;` lists `purge-call-transcripts`, `end-lapsed-sessions` and `purge-expired-data` | SQL editor | Done 2026-10-16: 3 jobs |
+| 5 | Every account has a university: the Phase 3 rollout query returns 0 | SQL editor | Done 2026-10-16: 0 |
+| 6 | Platform admins are who you expect: the Phase 1 rollout query, step 4 | SQL editor | Done 2026-10-16: nobody is a platform admin. The owner makes themselves one with a `platform_admin` row in `role_invites` (claimed at once for an existing account, at first sign-in otherwise) |
 | 7 | Sign-in sender: custom domain, the two email templates, Site URL and redirect URLs, then a test with a new and a returning real mailbox ([sign-in-email-bug.md](sign-in-email-bug.md), steps 2 to 5). Until then, demos rely on releasing the email from quarantine ([demo.md](demo.md)) | Lovable Cloud → Emails, Auth | |
 | 8 | Ask TU Dublin IT to allow the new sender domain ([sign-in-email-bug.md](sign-in-email-bug.md), step 6) | TU Dublin IT | |
 | 9 | Microsoft sign-in: decide whether to keep it (see below) | Lovable Cloud | |
