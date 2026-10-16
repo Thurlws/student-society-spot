@@ -34,6 +34,9 @@ async function safeError(e: unknown) {
   const message = e instanceof Error ? e.message : "AI is unavailable.";
   const status = typeof e === "object" && e && "status" in e ? Number(e.status) : 0;
   if (status === 402 || status === 403) {
+    // Out of credits or refused by the gateway: every AI feature pauses for 15 minutes.
+    const { log } = await import("./monitoring.server");
+    log("error", "ai.paused", { area: "ai", status }, e);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("society_ai_state")

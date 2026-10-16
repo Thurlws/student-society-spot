@@ -53,6 +53,10 @@ export type ErrorContext = {
   route?: string;
   /** What the person was doing, for alert rules: "sign-in" for failed sign-in emails. */
   area?: string;
+  /** "warning" for a feature that's degraded but still works; errors otherwise. */
+  level?: "error" | "warning";
+  /** The server function it came from, as a tag to filter and group by. */
+  fn?: string;
 };
 
 /** One error as a Sentry envelope: a header line, an item header line and the event. */
@@ -69,11 +73,12 @@ export function buildEnvelope(
     event_id: eventId,
     timestamp: now.toISOString(),
     platform: "javascript",
-    level: "error",
+    level: context.level ?? "error",
     environment,
     tags: {
       source: context.source,
       ...(context.area ? { area: context.area } : {}),
+      ...(context.fn ? { fn: context.fn } : {}),
     },
     ...(context.route ? { transaction: scrub(context.route.split("?")[0]!) } : {}),
     exception: {
@@ -120,6 +125,46 @@ export async function reportError(error: unknown, context: ErrorContext) {
   } catch {
     // The tracker being down is not worth a second error.
   }
+}
+
+type LogFields = Record<string, string | number | boolean | null | undefined>;
+
+/**
+ * One structured line in the server's log (JSON, scrubbed), for the host's log viewer. Warnings
+ * and errors also go to the error tracker, so someone hears about them. Fields describe what
+ * happened (event, function, area, status, counts, milliseconds); never put email addresses,
+ * names, message text or ids of people in them.
+ */
+export function log(
+  level: "info" | "warn" | "error",
+  event: string,
+  fields: LogFields = {},
+  error?: unknown,
+) {
+  const detail = error instanceof Error ? error.message : error != null ? String(error) : undefined;
+  const line = scrub(
+    JSON.stringify({
+      t: new Date().toISOString(),
+      level,
+      event,
+      ...fields,
+      ...(detail ? { error: detail.slice(0, 500) } : {}),
+    }),
+  );
+  if (level === "error") console.error(line);
+  else if (level === "warn") console.warn(line);
+  else console.log(line);
+  if (level === "info") return;
+  const reported = new Error(detail ? `${event}: ${detail}` : event);
+  reported.name = event;
+  if (error instanceof Error && error.stack)
+    reported.stack = `${reported.name}: ${reported.message}\n${error.stack.split("\n").slice(1).join("\n")}`;
+  void reportError(reported, {
+    source: "server",
+    area: typeof fields["area"] === "string" ? fields["area"] : (event.split(".")[0] ?? event),
+    level: level === "warn" ? "warning" : "error",
+    ...(typeof fields["fn"] === "string" ? { fn: fields["fn"] } : {}),
+  });
 }
 
 /** Compares two strings without leaking how much of them matched through timing. */
