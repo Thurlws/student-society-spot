@@ -43,6 +43,9 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/committee")({
+  // Report notifications link here with the society they're about.
+  validateSearch: (s: Record<string, unknown>): { society?: string } =>
+    typeof s["society"] === "string" ? { society: s["society"] } : {},
   head: () =>
     pageHead(
       "Committee Dashboard",
@@ -55,7 +58,14 @@ function Committee() {
   const d = useData();
   const [modal, setModal] = useState<null | "ann" | "event" | "edit">(null);
   const seats = d.committeeSeats;
-  const [picked, setPicked] = useState<string | null>(null);
+  const { society } = Route.useSearch();
+  const [picked, setPicked] = useState(society ?? null);
+  // A notification can change the society in the URL while the page is already open.
+  const [linked, setLinked] = useState(society);
+  if (society !== linked) {
+    setLinked(society);
+    setPicked(society ?? null);
+  }
   if (!seats.length) {
     return (
       <EmptyState
