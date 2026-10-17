@@ -15,6 +15,8 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { loadTranscript } from "@/lib/api/fetch";
 import { useData } from "@/lib/api/store";
 import { formatDate } from "@/lib/format";
 import { askAboutCall } from "@/lib/calls.functions";
@@ -62,6 +64,12 @@ function RecapPage() {
   const [pending, setPending] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  // Not part of the 60 s reload: a transcript can be hundreds of lines and never changes.
+  const transcript = useQuery({
+    queryKey: ["recap-transcript", recapId],
+    queryFn: () => loadTranscript(recapId),
+    staleTime: Infinity,
+  });
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [recap?.qa.length, pending.length, busy]);
@@ -213,13 +221,33 @@ function RecapPage() {
           </div>
           <Collapsible className="rounded-xl border bg-card shadow-soft">
             <CollapsibleTrigger className="group flex w-full items-center justify-between px-5 py-4 text-sm font-semibold">
-              {recap.transcriptDeleted
+              {transcript.data === null
                 ? "Transcript deleted after 7 days"
-                : `Full transcript (${recap.transcript.length} lines)`}
+                : transcript.data
+                  ? `Full transcript (${transcript.data.length} lines)`
+                  : "Full transcript"}
               <ChevronDown className="size-4 transition group-data-[state=open]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent className="max-h-96 space-y-2 overflow-y-auto border-t px-5 py-4 text-sm">
-              {recap.transcript.map((l, i) => (
+              {transcript.isPending && (
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading the transcript…
+                </p>
+              )}
+              {transcript.isError && (
+                <p className="text-muted-foreground">
+                  Couldn't load the transcript.{" "}
+                  <Button
+                    variant="link"
+                    className="h-auto p-0"
+                    onClick={() => transcript.refetch()}
+                  >
+                    Try again
+                  </Button>
+                </p>
+              )}
+              {transcript.data?.map((l, i) => (
                 <p key={i}>
                   <span className="text-xs text-muted-foreground">{clock(l.at)}</span>{" "}
                   <span className="font-medium">{l.speaker}:</span> {l.text}
