@@ -45,22 +45,53 @@ function friendly(e: unknown): AiError {
   return new AiError(status, e instanceof Error ? e.message : "The AI request failed.");
 }
 
-export async function aiText(instructions: string, messages: ModelMessage[]) {
+// streamText passes a failed request to onError, then rejects with a generic "No output
+// generated" that has lost the gateway's status, so 402/403 never paused AI and 429 never got
+// its message. Each call keeps the original error to rethrow instead.
+function keepError() {
+  const kept: { error?: unknown } = {};
+  return { kept, onError: ({ error }: { error: unknown }) => void (kept.error ??= error) };
+}
+
+// For a sentence or two the model needn't reason first, which takes seconds per call.
+const quickOpts = { openai: { forceReasoning: true, reasoningEffort: "none", store: false } };
+
+export async function aiText(
+  instructions: string,
+  messages: ModelMessage[],
+  { quick = false }: { quick?: boolean } = {},
+) {
+  const run = async (providerOptions: typeof opts | typeof quickOpts) => {
+    const { kept, onError } = keepError();
+    try {
+      const result = streamText({
+        model: provider().responses(MODEL),
+        instructions,
+        messages,
+        maxRetries: 0,
+        providerOptions,
+        onError,
+      });
+      return await result.text;
+    } catch (e) {
+      throw friendly(kept.error ?? e);
+    }
+  };
+  if (!quick) return run(opts);
   try {
-    const result = streamText({
-      model: provider().responses(MODEL),
-      instructions,
-      messages,
-      maxRetries: 0,
-      providerOptions: opts,
-    });
-    return await result.text;
+    return await run(quickOpts);
   } catch (e) {
-    throw friendly(e);
+    // Not every model takes reasoning "none". If the gateway refuses it, say so (a tracker
+    // issue) and answer with the usual settings rather than not at all.
+    if (!(e instanceof AiError) || e.status !== 400) throw e;
+    const { log } = await import("./monitoring.server");
+    log("warn", "ai.quick_refused", { area: "ai" }, e);
+    return run(opts);
   }
 }
 
 export async function aiObject<T>(instructions: string, prompt: string, schema: z.ZodType<T>) {
+  const { kept, onError } = keepError();
   try {
     const result = streamText({
       model: provider().responses(MODEL),
@@ -69,10 +100,11 @@ export async function aiObject<T>(instructions: string, prompt: string, schema: 
       output: Output.object({ schema }),
       maxRetries: 0,
       providerOptions: opts,
+      onError,
     });
     return (await result.output) as T;
   } catch (e) {
-    throw friendly(e);
+    throw friendly(kept.error ?? e);
   }
 }
 

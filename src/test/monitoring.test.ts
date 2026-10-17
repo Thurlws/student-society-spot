@@ -8,6 +8,7 @@ import {
   logEntry,
   parseDsn,
   scrub,
+  type LogEntry,
 } from "@/lib/monitoring.server";
 
 describe("Error reporting", () => {
@@ -165,6 +166,22 @@ describe("Logs to Sentry", () => {
     sent.length = 0;
     await flushLogs();
     expect(sent).toHaveLength(0);
+  });
+
+  it("gives a warning's log line and its issue the same trace", async () => {
+    vi.stubEnv("SENTRY_DSN", "https://abc@o1.ingest.de.sentry.io/1");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const sent = captureFetch();
+    log("warn", "server_fn.slow", { fn: "f", ms: 6000 });
+    await flushLogs();
+    const line = (sent.find((s) => s.item.type === "log")!.payload as { items: LogEntry[] })
+      .items[0]!;
+    const event = sent.find((s) => s.item.type === "event")!.payload as {
+      contexts: { trace: { trace_id: string; span_id: string } };
+    };
+    expect(line.trace_id).toMatch(/^[0-9a-f]{32}$/);
+    expect(event.contexts.trace.trace_id).toBe(line.trace_id);
+    expect(event.contexts.trace.span_id).toMatch(/^[0-9a-f]{16}$/);
   });
 
   it("keeps everything on the server without SENTRY_DSN", async () => {
