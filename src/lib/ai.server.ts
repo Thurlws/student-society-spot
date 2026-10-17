@@ -45,7 +45,16 @@ function friendly(e: unknown): AiError {
   return new AiError(status, e instanceof Error ? e.message : "The AI request failed.");
 }
 
+// streamText passes a failed request to onError, then rejects with a generic "No output
+// generated" that has lost the gateway's status, so 402/403 never paused AI and 429 never got
+// its message. Each call keeps the original error to rethrow instead.
+function keepError() {
+  const kept: { error?: unknown } = {};
+  return { kept, onError: ({ error }: { error: unknown }) => void (kept.error ??= error) };
+}
+
 export async function aiText(instructions: string, messages: ModelMessage[]) {
+  const { kept, onError } = keepError();
   try {
     const result = streamText({
       model: provider().responses(MODEL),
@@ -53,14 +62,16 @@ export async function aiText(instructions: string, messages: ModelMessage[]) {
       messages,
       maxRetries: 0,
       providerOptions: opts,
+      onError,
     });
     return await result.text;
   } catch (e) {
-    throw friendly(e);
+    throw friendly(kept.error ?? e);
   }
 }
 
 export async function aiObject<T>(instructions: string, prompt: string, schema: z.ZodType<T>) {
+  const { kept, onError } = keepError();
   try {
     const result = streamText({
       model: provider().responses(MODEL),
@@ -69,10 +80,11 @@ export async function aiObject<T>(instructions: string, prompt: string, schema: 
       output: Output.object({ schema }),
       maxRetries: 0,
       providerOptions: opts,
+      onError,
     });
     return (await result.output) as T;
   } catch (e) {
-    throw friendly(e);
+    throw friendly(kept.error ?? e);
   }
 }
 
