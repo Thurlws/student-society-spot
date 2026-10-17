@@ -341,7 +341,7 @@ export function CallExperience({
     setPhase("summarizing");
     try {
       const r = await summarize({
-        data: { roomId: room.id, transcript: lines, durationSec: elapsedRef.current },
+        data: { roomId: room.id, transcript: lines.slice(-2000), durationSec: elapsedRef.current },
       });
       if (r.source === "fallback")
         toast.message("AI summary unavailable, so we saved a basic recap from the transcript.");

@@ -16,7 +16,9 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { setMicrosoftSignIn } from "@/lib/system.functions";
 import { useAuth, type University } from "@/lib/auth";
 import { useData } from "@/lib/api/store";
 import { committeePositions } from "@/lib/validation";
@@ -134,9 +136,10 @@ function useAdminData(universityId: string) {
           .from("role_invites")
           .select("id, email, society_id, university_id, position")
           .is("claimed_at", null),
+        // "*" so the Microsoft tenant comes along once 0040 is in, and nothing breaks before.
         supabase
           .from("university_domains")
-          .select("domain")
+          .select("*")
           .eq("university_id", universityId)
           .order("domain"),
         supabase
@@ -150,6 +153,12 @@ function useAdminData(universityId: string) {
         roles: (r.data ?? []) as unknown as RoleRow[],
         invites: (i.data ?? []) as InviteRow[],
         domains: (d.data ?? []).map((x) => x.domain),
+        // Domain → whether Microsoft sign-in is on; empty until migration 0040.
+        microsoft: Object.fromEntries(
+          (d.data ?? [])
+            .filter((x) => "microsoft_tenant_id" in x)
+            .map((x) => [x.domain, x.microsoft_tenant_id !== null]),
+        ) as Record<string, boolean>,
         admins: (a.data ?? []) as unknown as AdminRow[],
       };
     },
@@ -280,6 +289,7 @@ function AdminPage() {
               <Universities
                 university={university}
                 domains={data.domains}
+                microsoft={data.microsoft}
                 admins={data.admins}
                 invites={data.invites.filter((i) => i.university_id === university.id)}
                 onCreated={setPicked}
@@ -636,12 +646,14 @@ const domainError = (e: { code: string; message: string }) =>
 function Universities({
   university,
   domains,
+  microsoft,
   admins,
   invites,
   onCreated,
 }: {
   university: University;
   domains: string[];
+  microsoft: Record<string, boolean>;
   admins: AdminRow[];
   invites: InviteRow[];
   onCreated: (id: string) => void;
@@ -653,6 +665,7 @@ function Universities({
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
+  const setMicrosoft = useServerFn(setMicrosoftSignIn);
 
   const addDomain = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -665,6 +678,19 @@ function Universities({
     if (error) return void toast.error(domainError(error));
     setDomain("");
     void refresh();
+  };
+
+  const toggleMicrosoft = async (d: string, on: boolean) => {
+    setBusy(true);
+    try {
+      await setMicrosoft({ data: { domain: d, on } });
+      toast.success(`Microsoft sign-in is ${on ? "on" : "off"} for @${d}`);
+      void refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't change Microsoft sign-in.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const removeDomain = async (d: string) => {
@@ -726,7 +752,17 @@ function Universities({
         <ul className="mt-2 space-y-1 text-sm">
           {domains.map((d) => (
             <li key={d} className="flex items-center justify-between gap-2">
-              <span>@{d}</span>
+              <span className="mr-auto">@{d}</span>
+              {d in microsoft && (
+                <Label className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
+                  Microsoft sign-in
+                  <Switch
+                    checked={microsoft[d] === true}
+                    disabled={busy}
+                    onCheckedChange={(on) => toggleMicrosoft(d, on)}
+                  />
+                </Label>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" aria-label={`Remove @${d}`}>

@@ -34,6 +34,9 @@ from (values
   ('0034 channel management', to_regprocedure('public.create_channel(uuid, text, text, boolean)') is not null),
   ('0035 membership fees', to_regprocedure('public.pay_membership_fee_demo(uuid)') is not null),
   ('0036 calendar links', to_regclass('public.calendar_feeds') is not null),
-  ('0037 remove member', to_regprocedure('public.remove_member(uuid, text)') is not null)
+  ('0037 remove member', to_regprocedure('public.remove_member(uuid, text)') is not null),
+  ('0038 message insert columns', not has_column_privilege('authenticated', 'public.messages', 'created_at', 'INSERT')),
+  ('0039 recent messages', to_regprocedure('public.recent_messages(integer)') is not null),
+  ('0040 Microsoft tenants', to_regprocedure('public.check_microsoft_tenant()') is not null)
 ) as m(migration, applied)
 order by m.migration;

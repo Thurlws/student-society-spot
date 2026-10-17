@@ -22,13 +22,17 @@ export function parseDsn(dsn: string | undefined): Dsn | null {
   }
 }
 
-/** Removes email addresses, JWTs, bearer tokens and Supabase keys from text. */
+/** Removes email addresses, JWTs, bearer tokens, Supabase keys and secret links from text. */
 export function scrub(text: string) {
-  return text
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[email]")
-    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[token]")
-    .replace(/(Bearer\s+)\S+/gi, "$1[token]")
-    .replace(/(sb_(?:secret|publishable)_)[A-Za-z0-9_-]+/g, "$1[key]");
+  return (
+    text
+      // A calendar link's key and a guest call code are the whole secret, and they sit in the path.
+      .replace(/\/(api\/calendar|join)\/[\w.-]+/g, "/$1/[token]")
+      .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[email]")
+      .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[token]")
+      .replace(/(Bearer\s+)\S+/gi, "$1[token]")
+      .replace(/(sb_(?:secret|publishable)_)[A-Za-z0-9_-]+/g, "$1[key]")
+  );
 }
 
 /** V8 stack lines as Sentry frames, oldest call first. */
@@ -306,4 +310,24 @@ export async function refuseWithoutMonitoringToken(request: Request) {
   if (!(await sameSecret(request.headers.get("authorization") ?? "", `Bearer ${token}`)))
     return new Response("Unauthorized", { status: 401 });
   return null;
+}
+
+/**
+ * For /api/health/jobs: every nightly job ran within the last 26 hours and its last run worked.
+ * They all run once a night, so a missed night shows by the next morning.
+ */
+export function jobsHealth(
+  jobs: { job: string; last_run: string | null; status: string | null }[],
+  now = Date.now(),
+) {
+  const failing = jobs
+    .filter(
+      (j) =>
+        j.status !== "succeeded" || !j.last_run || now - Date.parse(j.last_run) > 26 * 3600_000,
+    )
+    .map((j) => j.job);
+  return {
+    status: failing.length || !jobs.length ? ("degraded" as const) : ("ok" as const),
+    failing,
+  };
 }

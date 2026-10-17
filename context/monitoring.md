@@ -6,8 +6,9 @@ Written 2026-10-16 (roadmap T4.4). The code is in place; the accounts aren't. No
 
 | Check | What it tells you | How |
 |---|---|---|
-| `GET /api/health` | The app server is up and the database answers | Public. 200 `{"status":"ok"}`, or 503 when the database doesn't answer within 5 seconds. Says nothing else |
+| `GET /api/health` | The app server is up, the database answers and sign-in (Supabase Auth) answers | Public. 200 `{"status":"ok"}`, or 503 when the database or Auth doesn't answer within 5 seconds, with `database` and `auth` saying which (Auth added 2026-10-17: with it down nobody can sign in, though pages load). Says nothing else |
 | `GET /api/health/sign-in` | Sign-in emails are arriving | Needs `Authorization: Bearer <MONITORING_TOKEN>`. Counts sign-in links sent between 24 hours and 30 minutes ago and how many were followed by a sign-in (`sign_in_health`, migration 0027). 503 when at least 5 links of one kind (new accounts or returning) went out and fewer than 3 in 10 were used. That is what the Microsoft 365 quarantine looked like ([sign-in-email-bug.md](sign-in-email-bug.md)) |
+| `GET /api/health/jobs` (2026-10-17) | The nightly jobs ran and worked | Needs the same token. 503 when `purge-expired-data`, `end-lapsed-sessions` or `purge-call-transcripts` failed its last run or hasn't run in 26 hours, with the names in `failing` (`nightly_job_runs`, migration 0033) |
 | `POST /api/health/test-alert` | Alerts reach someone | Needs the same token. Sends a test error to the error tracker |
 | Server errors | Crashes while rendering a page or running a server function | `src/server.ts` and `src/start.ts` send them to the tracker (`src/lib/monitoring.server.ts`) |
 | Browser errors | Pages that crash, and sign-in emails that fail to send because of us (the hourly email cap, a sending failure) | `reportFromBrowser` → server function `reportClientError` → the tracker. A person's own cooldown or a wrong address isn't reported |
@@ -32,13 +33,15 @@ Free accounts are enough: Sentry's Developer plan (one person, 5,000 errors and 
 5. **Uptime monitor** with a free plan (for example UptimeRobot or Better Stack):
    - `GET https://<app>/api/health` every 5 minutes, expecting `ok`; alert after two failures.
    - Optionally `GET https://<app>/api/health/sign-in` with header `Authorization: Bearer <MONITORING_TOKEN>` every 30 minutes; alert on any non-200. Free plans don't always allow headers; the System tab shows the same numbers.
+   - Optionally `GET https://<app>/api/health/jobs` with the same header, once an hour; alert on any non-200.
 6. Write down here who gets the alerts and the date it was set up.
 
 From a terminal, the same test alert: `curl -X POST -H "Authorization: Bearer $MONITORING_TOKEN" https://<app>/api/health/test-alert`.
 
 ## When an alert fires
 
-- **`/api/health` down:** check Lovable's status page and the Lovable Cloud project. If the database is paused or out of resources, that's in Lovable Cloud → Overview.
+- **`/api/health` down:** the body says which part (`database` or `auth`). Check Lovable's status page and the Lovable Cloud project. If the database is paused or out of resources, that's in Lovable Cloud → Overview; Auth problems show in Cloud → Users → Auth logs.
+- **`/api/health/jobs` degraded:** `select jobname, status, return_message, start_time from cron.job_run_details order by start_time desc limit 20;` in the SQL editor shows why. A failed purge means personal data is kept past its period ([retention](../docs/privacy/retention.md)) until it runs again.
 - **`/api/health/sign-in` degraded:** ask someone to request a link to a real university mailbox and see whether it arrives, then follow [sign-in-email-bug.md](sign-in-email-bug.md): auth logs in Lovable Cloud, the sending domain, quarantine.
 - **`area:sign-in` errors:** usually the hourly email cap (finding 7) or the email service. The error message says which.
 - **Server errors:** the stack shows the file. Reproduce on the local stack (`bun run db:start`), fix, and add a test.
@@ -46,4 +49,3 @@ From a terminal, the same test alert: `curl -X POST -H "Authorization: Bearer $M
 ## Not covered yet
 
 - Database load and slow queries: Lovable Cloud's own dashboard only.
-- Failed nightly jobs (`purge-expired-data`, `end-lapsed-sessions`, `purge-call-transcripts`): `select jobname, status, return_message, start_time from cron.job_run_details order by start_time desc limit 20;` in the SQL editor. A job that alerts on failure needs `pg_net` and a webhook; not worth it before the pilot.

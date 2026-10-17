@@ -35,6 +35,7 @@ import { Route as AuthenticatedRequestsRequestIdRouteImport } from './routes/_au
 import { Route as AuthenticatedSocietiesIndexRouteImport } from './routes/_authenticated/societies.index'
 import { Route as AuthenticatedSocietiesSocietyIdRouteImport } from './routes/_authenticated/societies.$societyId'
 import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar.$token'
+import { Route as ApiHealthJobsRouteImport } from './routes/api/health_.jobs'
 import { Route as ApiHealthSignInRouteImport } from './routes/api/health_.sign-in'
 import { Route as ApiHealthTestAlertRouteImport } from './routes/api/health_.test-alert'
 
@@ -177,6 +178,11 @@ const ApiCalendarTokenRoute = ApiCalendarTokenRouteImport.update({
   path: '/api/calendar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthJobsRoute = ApiHealthJobsRouteImport.update({
+  id: '/api/health_/jobs',
+  path: '/api/health/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthSignInRoute = ApiHealthSignInRouteImport.update({
   id: '/api/health_/sign-in',
   path: '/api/health/sign-in',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/health/jobs': typeof ApiHealthJobsRoute
   '/api/health/sign-in': typeof ApiHealthSignInRoute
   '/api/health/test-alert': typeof ApiHealthTestAlertRoute
   '/calls/': typeof AuthenticatedCallsIndexRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/health/jobs': typeof ApiHealthJobsRoute
   '/api/health/sign-in': typeof ApiHealthSignInRoute
   '/api/health/test-alert': typeof ApiHealthTestAlertRoute
   '/calls': typeof AuthenticatedCallsIndexRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_authenticated/requests/$requestId': typeof AuthenticatedRequestsRequestIdRoute
   '/_authenticated/societies/$societyId': typeof AuthenticatedSocietiesSocietyIdRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/health_/jobs': typeof ApiHealthJobsRoute
   '/api/health_/sign-in': typeof ApiHealthSignInRoute
   '/api/health_/test-alert': typeof ApiHealthTestAlertRoute
   '/_authenticated/calls/': typeof AuthenticatedCallsIndexRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/requests/$requestId'
     | '/societies/$societyId'
     | '/api/calendar/$token'
+    | '/api/health/jobs'
     | '/api/health/sign-in'
     | '/api/health/test-alert'
     | '/calls/'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/requests/$requestId'
     | '/societies/$societyId'
     | '/api/calendar/$token'
+    | '/api/health/jobs'
     | '/api/health/sign-in'
     | '/api/health/test-alert'
     | '/calls'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/_authenticated/requests/$requestId'
     | '/_authenticated/societies/$societyId'
     | '/api/calendar/$token'
+    | '/api/health_/jobs'
     | '/api/health_/sign-in'
     | '/api/health_/test-alert'
     | '/_authenticated/calls/'
@@ -377,6 +389,7 @@ export interface RootRouteChildren {
   AuthConfirmRoute: typeof AuthConfirmRoute
   JoinCodeRoute: typeof JoinCodeRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
+  ApiHealthJobsRoute: typeof ApiHealthJobsRoute
   ApiHealthSignInRoute: typeof ApiHealthSignInRoute
   ApiHealthTestAlertRoute: typeof ApiHealthTestAlertRoute
 }
@@ -565,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCalendarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health_/jobs': {
+      id: '/api/health_/jobs'
+      path: '/api/health/jobs'
+      fullPath: '/api/health/jobs'
+      preLoaderRoute: typeof ApiHealthJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health_/sign-in': {
       id: '/api/health_/sign-in'
       path: '/api/health/sign-in'
@@ -636,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthConfirmRoute: AuthConfirmRoute,
   JoinCodeRoute: JoinCodeRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
+  ApiHealthJobsRoute: ApiHealthJobsRoute,
   ApiHealthSignInRoute: ApiHealthSignInRoute,
   ApiHealthTestAlertRoute: ApiHealthTestAlertRoute,
 }

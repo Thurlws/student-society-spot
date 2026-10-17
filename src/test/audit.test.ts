@@ -22,6 +22,18 @@ describe("Audit log sentences", () => {
     );
   });
 
+  it("says when Microsoft sign-in changes for a domain", () => {
+    expect(
+      describeAuditEntry(
+        entry({
+          action: "domain.microsoft_sign_in",
+          details: { domain: "mytudublin.ie", on: true },
+        }),
+        names,
+      ),
+    ).toBe("Microsoft sign-in was turned on for @mytudublin.ie");
+  });
+
   it("says when the person or society is gone", () => {
     expect(
       describeAuditEntry(

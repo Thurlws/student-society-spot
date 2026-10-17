@@ -32,7 +32,7 @@ function fold(line: string) {
 }
 const calendar = (lines: string[]) => lines.map(fold).join("\r\n");
 
-/** Start and end as local Dublin date-times (floating), e.g. 20261105T193000. */
+/** Start and end as local Dublin date-times, e.g. 20261105T193000, for Google's ctz parameter. */
 function localTimes(e: Event) {
   const start = `${ymd(e.date)}T${hm(e.start)}`;
   // An end time earlier than the start (e.g. 18:00–02:00) means the event runs past midnight.
@@ -40,9 +40,11 @@ function localTimes(e: Event) {
   return { start, end };
 }
 
-/** Builds a single-event iCalendar file using floating local times. */
+/**
+ * A single-event iCalendar file. Times are UTC, like the feed: floating local times put the event
+ * at the wrong hour on any device that isn't set to Dublin time.
+ */
 export function eventToIcs(e: Event, societyName: string, now = new Date()) {
-  const { start, end } = localTimes(e);
   return calendar([
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -50,8 +52,8 @@ export function eventToIcs(e: Event, societyName: string, now = new Date()) {
     "BEGIN:VEVENT",
     `UID:event-${e.id}@socconnect`,
     `DTSTAMP:${stamp(now)}`,
-    `DTSTART:${start}`,
-    end ? `DTEND:${end}` : "DURATION:PT1H",
+    `DTSTART:${stamp(new Date(e.startsAt))}`,
+    e.endsAt ? `DTEND:${stamp(new Date(e.endsAt))}` : "DURATION:PT1H",
     `SUMMARY:${esc(e.title)}`,
     `LOCATION:${esc(e.venue)}`,
     `DESCRIPTION:${esc(`${societyName}: ${e.description}`)}`,

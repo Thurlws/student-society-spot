@@ -15,6 +15,7 @@ Written 2026-10-16 (roadmap T4.6). Everything here happens in the app, at `/admi
 
 1. `/admin` → pick any university → **New university**: name, short name, address (lower case, used internally) and the email domains, comma separated.
 2. In the **Universities** section, with the new university picked: **University admins** → the email address of each person who will run it, for example Students' Union staff. They become admins the first time they sign in. Their addresses must be at one of the university's domains.
+3. In the same section, **Email domains** → turn on **Microsoft sign-in** for each domain the university runs on Microsoft 365. SocConnect asks Microsoft which organisation owns the domain and lets in only that organisation's accounts (migration 0040). Leave it off for domains on Google or anything else; those people use the email link.
 
 ## 3. Bring in the societies (a university admin)
 
