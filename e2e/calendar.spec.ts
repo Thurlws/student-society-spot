@@ -10,9 +10,13 @@ test("a member puts their registered events in their own calendar", async ({ bro
     .first()
     .click();
   await expect(member.getByRole("heading", { name: "E2E quiz night" })).toBeVisible();
+  // The booking panel renders after the heading. Wait for it, then register unless a retry
+  // already did.
   const register = member.getByRole("button", { name: "Register" });
+  const registered = member.getByText("You're registered", { exact: true });
+  await expect(register.or(registered)).toBeVisible();
   if (await register.isVisible()) await register.click();
-  await expect(member.getByText("You're registered", { exact: true })).toBeVisible();
+  await expect(registered).toBeVisible();
   await expect(member.getByRole("link", { name: "Add to Google Calendar" })).toHaveAttribute(
     "href",
     /^https:\/\/calendar\.google\.com\/calendar\/render\?action=TEMPLATE&text=E2E\+quiz\+night/,
