@@ -317,6 +317,7 @@ insert into matrix (label, kind, sql, expected) values
 ('update_channel(A''s #events)', 'call', $$select public.update_channel(md5('A events')::uuid, 'notices', 'From the committee', true)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('delete_channel(A''s #events)', 'call', $$select public.delete_channel(md5('A events')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('delete_channel(A''s #general)', 'call', $$select public.delete_channel(md5('A general')::uuid)$$, '{denied,refused,refused,refused,refused,refused,refused,refused,refused}'),
+('remove_member(member at A)', 'call', $$select public.remove_member(md5('member at A')::uuid, 'Testing')$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('pay_membership_fee_demo(A)', 'call', $$select public.pay_membership_fee_demo(md5('A')::uuid)$$, '{denied,refused,refused,ok,refused,refused,refused,refused,refused}'),
 ('set_membership_fee_paid(member at A)', 'call', $$select public.set_membership_fee_paid(md5('member at A')::uuid, true)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('share_recap(A''s private recap)', 'call', $$select public.share_recap(md5('recap A private')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
@@ -365,7 +366,7 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
         'create_calendar_feed', 'create_channel', 'create_event', 'decide_membership', 'delete_calendar_feed', 'delete_channel', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
-        'find_people', 'import_societies', 'leave_society', 'my_access', 'pay_membership_fee_demo', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
+        'find_people', 'import_societies', 'leave_society', 'my_access', 'pay_membership_fee_demo', 'recommend_societies', 'register_for_event', 'reinstate_user', 'remove_member', 'report_message',
         'schedule_meeting', 'set_membership_fee_paid', 'set_support_request_status', 'share_recap', 'suspend_user',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_channel', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');

@@ -313,7 +313,9 @@ export async function loadAppData(
             societyId: slug,
             userId: r.user_id,
             name: r.display_name || "Student",
+            course: r.course,
             status: r.status,
+            since: (r.status === "member" && r.decided_at) || r.requested_at,
             fee: committeeFees.get(r.membership_id),
           });
         const base = {

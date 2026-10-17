@@ -15,7 +15,7 @@ export const PRIVACY_CONTACT_EMAIL = "";
 export const OPERATOR = "";
 
 export const NOTICE_UPDATED = "17 October 2026";
-export const TERMS_UPDATED = "16 October 2026";
+export const TERMS_UPDATED = "17 October 2026";
 
 /**
  * Everything SocConnect keeps on a visitor's device. All of it is strictly necessary for what the

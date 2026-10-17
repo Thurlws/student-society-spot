@@ -210,6 +210,20 @@ function useDataValue() {
       act(() =>
         supabase.rpc("decide_membership", { _membership_id: membershipId, _decision: decision }),
       ),
+    /** The committee ends someone's membership (0037); they're told, with the reason. */
+    removeMember: async (membershipId: string, reason: string) => {
+      const p = reportReasonInput.safeParse(reason);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(async () => {
+        const r = await supabase.rpc("remove_member", {
+          _membership_id: membershipId,
+          _reason: p.data,
+        });
+        return r.error?.code === "PGRST202"
+          ? { error: { message: "Removing members isn't switched on yet." } }
+          : r;
+      });
+    },
     /** Demo checkout (0035): records the fee as paid without taking any money. */
     payMembershipFeeDemo: (slug: string) =>
       act(() => supabase.rpc("pay_membership_fee_demo", { _society_id: sid(slug)! })),
