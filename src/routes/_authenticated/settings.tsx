@@ -132,7 +132,10 @@ function SettingsPage() {
                     key={i}
                     type="button"
                     aria-pressed={on}
-                    onClick={() => toggleInterest(i)}
+                    onClick={async () => {
+                      const o = await toggleInterest(i);
+                      if (!o.ok) toast.error(o.error);
+                    }}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60",
                       on

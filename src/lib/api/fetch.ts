@@ -48,6 +48,8 @@ export type AppData = {
   resources: (Resource & { url: string })[];
   prefs: NotificationPrefs;
   allInterests: string[];
+  /** Interest name → id, so a tap saves without looking the id up first. */
+  interestIds: Record<string, string>;
   requests: MembershipRequest[];
   resolvedRequests: ResolvedRequest[];
   supportRequests: SupportRequest[];
@@ -127,7 +129,7 @@ export async function loadAppData(
     supabase.from("channels").select("*"),
     supabase.from("resources").select("*"),
     supabase.from("notification_prefs").select("*").eq("user_id", uid).maybeSingle(),
-    supabase.from("interests").select("name").order("name"),
+    supabase.from("interests").select("id, name").order("name"),
     supabase
       .from("support_requests")
       .select(
@@ -490,6 +492,7 @@ export async function loadAppData(
         }
       : { announcements: true, events: true, discussions: false, email: false },
     allInterests: must(ints).map((i) => i.name),
+    interestIds: Object.fromEntries(must(ints).map((i) => [i.name, i.id])),
     proposals: must(props)
       .filter((x) => slugOf[x.society_a] && slugOf[x.society_b])
       .map((x) => ({
