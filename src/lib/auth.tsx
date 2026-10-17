@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearMarks } from "@/lib/unread";
 
 /** What to tell someone whose sign-in email request failed, from Supabase's error code. */
 export function signInError(e: { code?: string | undefined; message: string }) {
@@ -131,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh: async () => load((await supabase.auth.getSession()).data.session),
     signOut: async () => {
       await supabase.auth.signOut();
+      clearMarks();
     },
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

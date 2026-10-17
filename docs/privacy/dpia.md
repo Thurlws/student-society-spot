@@ -37,7 +37,7 @@ Expected scale for one pilot: 500 to 3,000 active students, 70 to 200 societies.
 | Calls | Who joined, display name in the call; only for people who turn captions on: 7-second audio clips, the transcript, an AI summary and answers | The person |
 | AI use | Questions asked, when AI features are used | The person |
 | Admin records | The activity log of privileged actions (section 6) | Automatic |
-| Technical | Sign-in session in the browser's local storage; a guest's name for a call in session storage; request logs at the hosting provider | Automatic |
+| Technical | Sign-in session in the browser's local storage; the newest message seen in each channel, in local storage until sign-out; a guest's name for a call in session storage; request logs at the hosting provider | Automatic |
 
 Not collected: student numbers, phone numbers, dates of birth, addresses, photos (avatars aren't uploaded), location, advertising identifiers. Society data imported from the university's public societies site leaves out student-number email addresses, phone numbers and committee names.
 
