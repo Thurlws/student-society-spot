@@ -27,9 +27,21 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// Functions that wait for the AI gateway, where a few seconds is normal.
+const AI_FUNCTIONS = new Set([
+  "explainSocietyFits",
+  "askSocConnect",
+  "generateSocietyProposal",
+  "summarizeCall",
+  "askAboutCall",
+  "transcribeClip",
+  "transcribeGuestClip",
+]);
+
 // One log line per server function call (its name and how long it took), and a warning to the
-// error tracker when one fails or takes over 5 seconds. Many failures are refusals people are
-// meant to see (a quota, a permission); the tracker groups them by function and message.
+// error tracker when one fails or takes over 5 seconds (10 for AI functions). Many failures are
+// refusals people are meant to see (a quota, a permission); the tracker groups them by function
+// and message.
 const logServerFunctions = createMiddleware({ type: "function" }).server(
   async ({ next, serverFnMeta }) => {
     const started = Date.now();
@@ -37,7 +49,8 @@ const logServerFunctions = createMiddleware({ type: "function" }).server(
     try {
       const result = await next();
       const ms = Date.now() - started;
-      log(ms > 5000 ? "warn" : "info", ms > 5000 ? "server_fn.slow" : "server_fn", { fn, ms });
+      const slow = ms > (AI_FUNCTIONS.has(fn) ? 10_000 : 5000);
+      log(slow ? "warn" : "info", slow ? "server_fn.slow" : "server_fn", { fn, ms });
       return result;
     } catch (error) {
       log("warn", "server_fn.failed", { fn, ms: Date.now() - started }, error);
