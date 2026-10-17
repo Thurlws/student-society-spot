@@ -111,8 +111,9 @@ function Terms() {
           </li>
           <li>
             They can remove messages that break these terms or the society's rules, archive a
-            society, and suspend an account. A suspended account can't see or do anything until the
-            suspension is lifted.
+            society, and suspend an account. A society's committee can also remove a member from the
+            society; you're told when that happens, and why if they give a reason. A suspended
+            account can't see or do anything until the suspension is lifted.
           </li>
           <li>
             If your message is removed, you get a notification saying so, with the reason when one

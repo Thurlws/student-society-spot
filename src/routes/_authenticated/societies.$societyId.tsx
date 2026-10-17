@@ -37,6 +37,7 @@ import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { MessageList } from "@/components/message-list";
 import { ChannelDialog } from "@/components/channel-dialog";
 import { FeeStatus } from "@/components/membership-fee";
+import { CommitteeMembers } from "@/components/committee-members";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -532,24 +533,28 @@ function SocietyPage({ societyId }: { societyId: string }) {
         </TabsContent>
 
         <TabsContent value="members" className="mt-6">
-          <div className="rounded-xl border bg-card p-6 shadow-soft">
-            <div className="flex items-center gap-3">
-              <Users className="size-5 text-primary" />
-              <p className="font-semibold">{s.memberCount} members</p>
+          {canManage(s.id) ? (
+            <CommitteeMembers society={s} />
+          ) : (
+            <div className="rounded-xl border bg-card p-6 shadow-soft">
+              <div className="flex items-center gap-3">
+                <Users className="size-5 text-primary" />
+                <p className="font-semibold">{s.memberCount} members</p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {shownMembers.map((n) => (
+                  <span key={n} className="rounded-full border bg-surface px-3 py-1 text-xs">
+                    {n}
+                  </span>
+                ))}
+                {s.memberCount > shownMembers.length && (
+                  <span className="rounded-full px-3 py-1 text-xs text-muted-foreground">
+                    + {s.memberCount - shownMembers.length} more
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {shownMembers.map((n) => (
-                <span key={n} className="rounded-full border bg-surface px-3 py-1 text-xs">
-                  {n}
-                </span>
-              ))}
-              {s.memberCount > shownMembers.length && (
-                <span className="rounded-full px-3 py-1 text-xs text-muted-foreground">
-                  + {s.memberCount - shownMembers.length} more
-                </span>
-              )}
-            </div>
-          </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

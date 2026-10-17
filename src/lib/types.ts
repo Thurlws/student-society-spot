@@ -82,7 +82,10 @@ export interface SocietyMember {
   societyId: string;
   userId: string;
   name: string;
+  course: string;
   status: "member" | "pending";
+  /** When they joined, or asked to. */
+  since: string;
   fee?: FeePayment | undefined;
 }
 
