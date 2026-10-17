@@ -311,3 +311,23 @@ export async function refuseWithoutMonitoringToken(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   return null;
 }
+
+/**
+ * For /api/health/jobs: every nightly job ran within the last 26 hours and its last run worked.
+ * They all run once a night, so a missed night shows by the next morning.
+ */
+export function jobsHealth(
+  jobs: { job: string; last_run: string | null; status: string | null }[],
+  now = Date.now(),
+) {
+  const failing = jobs
+    .filter(
+      (j) =>
+        j.status !== "succeeded" || !j.last_run || now - Date.parse(j.last_run) > 26 * 3600_000,
+    )
+    .map((j) => j.job);
+  return {
+    status: failing.length || !jobs.length ? ("degraded" as const) : ("ok" as const),
+    failing,
+  };
+}
