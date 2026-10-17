@@ -36,6 +36,7 @@ import { OfficialInfo } from "@/components/official-info";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { MessageList } from "@/components/message-list";
 import { ChannelDialog } from "@/components/channel-dialog";
+import { FeeStatus } from "@/components/membership-fee";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -272,6 +273,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
                   ? "Membership requests are reviewed by the committee."
                   : "Open to all students. You're in as soon as you join."}
               </p>
+              <FeeStatus society={s} />
             </div>
           </div>
         </TabsContent>

@@ -49,6 +49,8 @@ update public.channels c set id = md5(s.tag || ' ' || c.slug)::uuid
   from (values (md5('A')::uuid, 'A'), (md5('B')::uuid, 'B'), (md5('Z')::uuid, 'Z')) s(id, tag) where c.society_id = s.id;
 -- A's #events is committee-only (0034): members read it, only the committee posts.
 update public.channels set committee_only = true where id = md5('A events')::uuid;
+-- A charges a membership fee (0035).
+update public.societies set membership_fee_cents = 500 where id = md5('A')::uuid;
 update public.call_rooms r set id = md5(s.tag || ' ' || r.slug)::uuid
   from (values (md5('A')::uuid, 'A'), (md5('B')::uuid, 'B'), (md5('Z')::uuid, 'Z')) s(id, tag) where r.society_id = s.id;
 
@@ -200,6 +202,7 @@ insert into matrix (label, kind, sql, expected) values
 ('societies: create', 'rows', $$insert into public.societies (slug, name, short_name, university_id) values ('matrix-new', 'Matrix New Society', 'NewSoc', md5('tudublin')::uuid)$$, '{denied,denied,denied,denied,denied,denied,1,denied,1}'),
 ('societies: create in Matrix University', 'rows', $$insert into public.societies (slug, name, short_name, university_id) values ('matrix-new', 'Matrix New Society', 'NewSoc', md5('matrixu')::uuid)$$, '{denied,denied,denied,denied,denied,denied,1,denied,denied}'),
 ('societies: edit A''s tagline', 'rows', $$update public.societies set tagline = 'New tagline' where id = md5('A')::uuid$$, '{0,0,0,0,1,0,1,0,1}'),
+('societies: set A''s membership fee', 'rows', $$update public.societies set membership_fee_cents = 700 where id = md5('A')::uuid$$, '{0,0,0,0,1,0,1,0,1}'),
 ('societies: archive A', 'rows', $$update public.societies set status = 'archived' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
 ('societies: change A''s join link', 'rows', $$update public.societies set join_url = 'https://example.com' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
 ('societies: rename A', 'rows', $$update public.societies set name = 'Students'' Union' where id = md5('A')::uuid$$, '{0,0,0,0,refused,0,1,0,1}'),
@@ -212,6 +215,7 @@ insert into matrix (label, kind, sql, expected) values
 ('society_roles: remove A''s committee', 'rows', $$delete from public.society_roles where society_id = md5('A')::uuid$$, '{0,0,0,0,0,0,1,0,1}'),
 ('society_memberships: add self to B', 'rows', $$insert into public.society_memberships (society_id, user_id, status) values (md5('B')::uuid, auth.uid(), 'member')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('society_memberships: approve directly', 'rows', $$update public.society_memberships set status = 'member' where id = md5('applicant at B')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
+('society_memberships: mark own fee paid directly', 'rows', $$update public.society_memberships set fee_paid_at = now(), fee_paid_how = 'demo' where user_id = auth.uid()$$, '{0,0,0,0,0,0,0,0,0}'),
 ('society_memberships: delete', 'rows', $$delete from public.society_memberships where society_id in @societies$$, '{0,0,0,0,0,0,0,0,0}'),
 ('resources: add to A', 'rows', $$insert into public.resources (society_id, title, kind) values (md5('A')::uuid, 'Rota', 'Link')$$, '{denied,denied,denied,denied,1,denied,denied,denied,denied}'),
 ('resources: edit A''s', 'rows', $$update public.resources set title = 'Kit' where id = md5('resource A')::uuid$$, '{0,0,0,0,1,0,0,0,0}'),
@@ -308,6 +312,8 @@ insert into matrix (label, kind, sql, expected) values
 ('update_channel(A''s #events)', 'call', $$select public.update_channel(md5('A events')::uuid, 'notices', 'From the committee', true)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('delete_channel(A''s #events)', 'call', $$select public.delete_channel(md5('A events')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('delete_channel(A''s #general)', 'call', $$select public.delete_channel(md5('A general')::uuid)$$, '{denied,refused,refused,refused,refused,refused,refused,refused,refused}'),
+('pay_membership_fee_demo(A)', 'call', $$select public.pay_membership_fee_demo(md5('A')::uuid)$$, '{denied,refused,refused,ok,refused,refused,refused,refused,refused}'),
+('set_membership_fee_paid(member at A)', 'call', $$select public.set_membership_fee_paid(md5('member at A')::uuid, true)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('share_recap(A''s private recap)', 'call', $$select public.share_recap(md5('recap A private')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('report_message(B''s message)', 'call', $$select public.report_message(md5('message B')::uuid, 'Spam')$$, '{denied,refused,refused,ok,refused,refused,refused,refused,refused}'),
 ('delete_message(A''s message)', 'call', $$select public.delete_message(md5('message A')::uuid)$$, '{denied,refused,refused,ok,ok,refused,ok,refused,ok}'),
@@ -351,8 +357,8 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
         'create_channel', 'create_event', 'decide_membership', 'delete_channel', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
-        'find_people', 'import_societies', 'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
-        'schedule_meeting', 'set_support_request_status', 'share_recap', 'suspend_user',
+        'find_people', 'import_societies', 'leave_society', 'my_access', 'pay_membership_fee_demo', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
+        'schedule_meeting', 'set_membership_fee_paid', 'set_support_request_status', 'share_recap', 'suspend_user',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_channel', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
 select is_empty($$select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace

@@ -62,6 +62,7 @@ Checked against `main` at `e83c5c6` plus branch `phase-0-baseline`, 2026-10-15. 
 | 0032 | `delete_message(_message_id, _reason)` tells the author when someone else removes their message, and why (Digital Services Act, article 17) |
 | 0033 | `nightly_job_runs()`: when each nightly job last ran, for `/admin` → System (service role only) |
 | 0034 | Channel management: `create_channel`, `update_channel`, `delete_channel` (committee only; `#general` can't be deleted and keeps its slug); `channels.committee_only` (members read, only the committee posts) and `created_at`. Deleting a channel tells its messages' authors and adds one `channel.deleted` audit entry |
+| 0035 | Membership fees without a payment provider: `societies.membership_fee_cents` (set by the committee), `society_memberships.fee_paid_at/_cents/_how`, `pay_membership_fee_demo` (demo checkout, no money taken) and `set_membership_fee_paid` (committee marks a payment made elsewhere, or undoes one) |
 
 ## Environments
 

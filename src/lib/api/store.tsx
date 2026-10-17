@@ -9,6 +9,7 @@ import {
   cancelReasonInput,
   channelInput,
   eventInput,
+  membershipFeeInput,
   firstIssue,
   messageInput,
   reportReasonInput,
@@ -44,6 +45,9 @@ const EMPTY: AppData = {
   events: [],
   registrations: [],
   memberships: {},
+  feesEnabled: false,
+  myFees: {},
+  societyMembers: [],
   announcements: [],
   channels: [],
   channelManagement: false,
@@ -170,6 +174,10 @@ function useDataValue() {
     announcements: data.announcements,
     channels: data.channels,
     channelManagement: data.channelManagement,
+    feesEnabled: data.feesEnabled,
+    /** The fee you've paid to a society, if any. */
+    myFee: (slug: string) => data.myFees[slug],
+    societyMembers: data.societyMembers,
     messages: data.messages,
     messageReports: data.messageReports,
     resources: data.resources,
@@ -202,6 +210,22 @@ function useDataValue() {
       act(() =>
         supabase.rpc("decide_membership", { _membership_id: membershipId, _decision: decision }),
       ),
+    /** Demo checkout (0035): records the fee as paid without taking any money. */
+    payMembershipFeeDemo: (slug: string) =>
+      act(() => supabase.rpc("pay_membership_fee_demo", { _society_id: sid(slug)! })),
+    /** The committee marks a fee paid outside SocConnect, or undoes it. */
+    setMembershipFeePaid: (membershipId: string, paid: boolean) =>
+      act(() =>
+        supabase.rpc("set_membership_fee_paid", { _membership_id: membershipId, _paid: paid }),
+      ),
+    /** Euros as typed ("5", "5.50"), or empty for no fee. */
+    setMembershipFee: async (slug: string, euros: string) => {
+      const p = membershipFeeInput.safeParse(euros);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.from("societies").update({ membership_fee_cents: p.data }).eq("id", sid(slug)!),
+      );
+    },
     registerForEvent: (id: string) =>
       act(() => supabase.rpc("register_for_event", { _event_id: id })),
     cancelRegistration: (id: string) =>

@@ -1044,6 +1044,7 @@ export type Database = {
           join_url: string | null
           links: Json
           logo_url: string | null
+          membership_fee_cents: number | null
           meets: string
           name: string
           official_url: string | null
@@ -1072,6 +1073,7 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
+          membership_fee_cents?: number | null
           meets?: string
           name: string
           official_url?: string | null
@@ -1100,6 +1102,7 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
+          membership_fee_cents?: number | null
           meets?: string
           name?: string
           official_url?: string | null
@@ -1195,6 +1198,9 @@ export type Database = {
         Row: {
           decided_at: string | null
           decided_by: string | null
+          fee_paid_at: string | null
+          fee_paid_cents: number | null
+          fee_paid_how: string | null
           id: string
           message: string
           requested_at: string
@@ -1205,6 +1211,9 @@ export type Database = {
         Insert: {
           decided_at?: string | null
           decided_by?: string | null
+          fee_paid_at?: string | null
+          fee_paid_cents?: number | null
+          fee_paid_how?: string | null
           id?: string
           message?: string
           requested_at?: string
@@ -1215,6 +1224,9 @@ export type Database = {
         Update: {
           decided_at?: string | null
           decided_by?: string | null
+          fee_paid_at?: string | null
+          fee_paid_cents?: number | null
+          fee_paid_how?: string | null
           id?: string
           message?: string
           requested_at?: string
@@ -1690,6 +1702,10 @@ export type Database = {
       join_society: { Args: { _society_id: string }; Returns: string }
       leave_society: { Args: { _society_id: string }; Returns: undefined }
       my_access: { Args: never; Returns: Json }
+      pay_membership_fee_demo: {
+        Args: { _society_id: string }
+        Returns: undefined
+      }
       nightly_job_runs: { Args: never; Returns: Json }
       notify_members: {
         Args: {
@@ -1784,6 +1800,10 @@ export type Database = {
       }
       suspend_user: {
         Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
+      set_membership_fee_paid: {
+        Args: { _membership_id: string; _paid: boolean }
         Returns: undefined
       }
       update_channel: {

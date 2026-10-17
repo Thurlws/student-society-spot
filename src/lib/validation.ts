@@ -72,6 +72,18 @@ export const channelInput = z.object({
 });
 export type ChannelInput = z.input<typeof channelInput>;
 
+/** A membership fee in euros as typed, to cents; empty means no fee. Mirrors the 0035 limits. */
+export const membershipFeeInput = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/^€\s*/, "").replace(",", "."))
+  .refine((v) => v === "" || /^\d{1,3}(\.\d{1,2})?$/.test(v), "Use an amount like 5 or 7.50.")
+  .transform((v) => (v === "" ? null : Math.round(Number(v) * 100)))
+  .refine(
+    (c) => c === null || (c >= 1 && c <= 50000),
+    "Fees go from €0.01 to €500. Leave it empty for no fee.",
+  );
+
 export const societyEditInput = z.object({
   tagline: z.string().trim().min(3, "Add a tagline.").max(140),
   description: z.string().trim().min(10, "Add a description of at least 10 characters.").max(2000),
