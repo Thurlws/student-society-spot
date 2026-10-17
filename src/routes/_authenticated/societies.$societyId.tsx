@@ -17,8 +17,9 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useData } from "@/lib/api/store";
+import { loadMarks, nextMarks, saveMarks, unreadIn, type ReadMarks } from "@/lib/unread";
 import { todayIso } from "@/lib/format";
 import { timeAgo } from "@/lib/format";
 import { pageHead } from "@/lib/seo";
@@ -49,7 +50,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { Announcement, DiscussionChannel } from "@/lib/types";
+import type { Announcement, DiscussionChannel, DiscussionMessage } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/societies/$societyId")({
   head: () => pageHead("Society", "A student society on SocConnect."),
@@ -351,25 +352,13 @@ function SocietyPage({ societyId }: { societyId: string }) {
                     </Button>
                   )}
                 </div>
-                {socChannels.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setChannel(c.id)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
-                      channel === c.id
-                        ? "bg-card font-semibold text-primary shadow-soft"
-                        : "text-muted-foreground hover:bg-card",
-                    )}
-                  >
-                    {c.committeeOnly ? (
-                      <Megaphone className="size-3.5" aria-label="Committee only" />
-                    ) : (
-                      <Hash className="size-3.5" />
-                    )}
-                    {c.name}
-                  </button>
-                ))}
+                <ChannelList
+                  channels={socChannels}
+                  messages={messages}
+                  open={channel}
+                  me={user.id}
+                  onPick={setChannel}
+                />
               </div>
               <div className="flex h-[460px] flex-col">
                 <div className="flex items-start justify-between gap-3 border-b px-5 py-3">
@@ -559,6 +548,71 @@ function SocietyPage({ societyId }: { societyId: string }) {
       </Tabs>
     </div>
   );
+}
+
+/**
+ * The society's channels, each with how many messages came since you last opened it. Only
+ * rendered while the Discussions tab is open, so only a channel you can see is marked read.
+ */
+function ChannelList({
+  channels,
+  messages,
+  open,
+  me,
+  onPick,
+}: {
+  channels: DiscussionChannel[];
+  messages: DiscussionMessage[];
+  open: string | undefined;
+  me: string;
+  onPick: (id: string) => void;
+}) {
+  // Read after the first render: the server has no localStorage.
+  const [marks, setMarks] = useState<ReadMarks | null>(null);
+  // Messages arrive oldest first, so each channel's last one is its newest.
+  const newest: Record<string, string> = {};
+  for (const c of channels) newest[c.id] = "";
+  for (const m of messages) if (m.channelId in newest) newest[m.channelId] = m.createdAt;
+  const newestKey = JSON.stringify(newest);
+  useEffect(() => {
+    const prev = marks ?? loadMarks();
+    const next = nextMarks(prev, JSON.parse(newestKey) as Record<string, string>, open);
+    if (next !== prev) saveMarks(next);
+    if (next !== marks) setMarks(next);
+    // marks is only read here, and setting it shouldn't run this again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newestKey, open]);
+
+  return channels.map((c) => {
+    const unread = c.id === open ? 0 : unreadIn(messages, c.id, marks?.[c.id], me);
+    return (
+      <button
+        key={c.id}
+        onClick={() => onPick(c.id)}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
+          open === c.id
+            ? "bg-card font-semibold text-primary shadow-soft"
+            : unread
+              ? "font-semibold text-foreground hover:bg-card"
+              : "text-muted-foreground hover:bg-card",
+        )}
+      >
+        {c.committeeOnly ? (
+          <Megaphone className="size-3.5" aria-label="Committee only" />
+        ) : (
+          <Hash className="size-3.5" />
+        )}
+        {c.name}
+        {unread > 0 && (
+          <span className="ml-auto rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-primary-foreground">
+            {unread}
+            <span className="sr-only"> new</span>
+          </span>
+        )}
+      </button>
+    );
+  });
 }
 
 function DeleteAnnouncementButton({ announcement }: { announcement: Announcement }) {
