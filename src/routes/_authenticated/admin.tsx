@@ -757,7 +757,7 @@ function Universities({
                 <Label className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                   Microsoft sign-in
                   <Switch
-                    checked={microsoft[d]}
+                    checked={microsoft[d] === true}
                     disabled={busy}
                     onCheckedChange={(on) => toggleMicrosoft(d, on)}
                   />
