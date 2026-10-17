@@ -173,7 +173,9 @@ function Committee() {
             onClick={() => setModal(q.k)}
             className="group flex items-center gap-4 rounded-xl border bg-card p-4 text-left shadow-soft transition-colors hover:border-primary/40 hover:bg-primary-soft/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+            {/* No fade: the tile and the icon swap colours, so halfway through they'd match and
+                the icon would blink out. */}
+            <span className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary group-hover:bg-primary group-hover:text-primary-foreground group-focus-visible:bg-primary group-focus-visible:text-primary-foreground">
               <q.icon className="size-5" />
             </span>
             <span>
