@@ -90,6 +90,15 @@ Left as they are: cancellation and change notices follow the "Event updates" set
 | 43 | The 7-day transcript purge had no test | 0003 | Fixed 2026-10-16 (`retention.test.sql`) |
 | 44 | Captions were on by default, so joining a call meant consenting to AI processing of your voice unless you noticed the button | `call-experience.tsx` | Fixed 2026-10-16: off until each person turns theirs on |
 
+### Found in Sentry (2026-10-17, branch `claude/changes`)
+
+| # | Finding | Where | Status |
+|---|---|---|---|
+| 45 | Every AI gateway failure reached the code as a generic "No output generated" with no status, so running out of credits (402/403) never paused AI and a busy gateway (429) never showed its notice | `ai.server.ts` | Fixed 2026-10-17: the original error is kept and rethrown (`ai-errors.test.ts`) |
+| 46 | Recommendation explanations took up to about 7 s (`server_fn.slow`): up to three AI calls one after another, with reasoning on, for one sentence each. Overlapping page loads all missed the cache and could use up the 20-an-hour `society_fit` quota | `explainSocietyFits` | Fixed 2026-10-17: one query each for societies and cache, AI calls side by side, reasoning off (`ai.quick_refused` if the model refuses that). Calls that overlap can still both miss the cache |
+| 47 | When AI was skipped (paused, out of credits, over the hourly limit) the plain "Matches your interests in ..." line was shown as "Written by AI" | `explainSocietyFits` | Fixed 2026-10-17: only AI-written sentences are returned as reasons |
+| 48 | A log line and the Sentry issue it raised had different trace ids, so the issue couldn't be traced back to its log line | `monitoring.server.ts` | Fixed 2026-10-17: one trace id for both |
+
 ## Phases
 
 Effort in working days for one developer who knows the code: XS up to half a day, S 1-2, M 3-5, L 1-2 weeks, XL more.
@@ -205,7 +214,7 @@ Applied to production with `dev/supabase/apply-0031-0032.sql` on 2026-10-16 (go-
 
 | Change | Status |
 |---|---|
-| Structured server log | Done: `log()` in `monitoring.server.ts`, one JSON line per event; every server function call logged by middleware (name, milliseconds); failing or slow ones (over 5 s), AI fallbacks and AI pauses go to the error tracker as warnings or errors, tagged by area and function. Checked with a stand-in tracker: a test alert arrives as an error, a refused call as a warning tagged with its function |
+| Structured server log | Done: `log()` in `monitoring.server.ts`, one JSON line per event; every server function call logged by middleware (name, milliseconds); failing or slow ones (over 5 s, 10 s for AI functions), AI fallbacks and AI pauses go to the error tracker as warnings or errors, tagged by area and function. Checked with a stand-in tracker: a test alert arrives as an error, a refused call as a warning tagged with its function |
 | `/admin` → System | Done: platform admins see whether error alerts, uptime checks, AI and calls are set up, sign-in links sent and used in the last 24 hours, and the nightly jobs' last runs (0033, `nightly_job_runs`), and can send a test alert without a terminal |
 | Bot check on sign-in (finding 7) | Cloudflare Turnstile, with the site key in `.env` since 2026-10-16. Checked with Cloudflare's test key: invisible, and the token goes with the sign-in request. Enforcement needs the secret key in Lovable Cloud's auth settings, which Lovable's docs don't mention (go-live step 19) |
 | Sentry in the privacy notice | Done, ahead of the owner setting it up (EU region) |
