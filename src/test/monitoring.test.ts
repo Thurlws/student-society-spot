@@ -8,6 +8,7 @@ import {
   logEntry,
   parseDsn,
   scrub,
+  jobsHealth,
   type LogEntry,
 } from "@/lib/monitoring.server";
 
@@ -29,6 +30,29 @@ describe("Error reporting", () => {
         "jane.doe@mytudublin.ie sent Bearer abc.def and eyJhbGciOi.eyJzdWIi.c2lnbmF0dXJl with sb_secret_N7UND0Ugj",
       ),
     ).toBe("[email] sent Bearer [token] and [token] with sb_secret_[key]");
+  });
+
+  it("says the nightly jobs are fine only when each ran last night and worked", () => {
+    const now = Date.parse("2026-10-17T09:00:00Z");
+    const ran = (job: string, at: string, status = "succeeded") => ({ job, last_run: at, status });
+    expect(jobsHealth([ran("purge-expired-data", "2026-10-17T02:30:00Z")], now)).toEqual({
+      status: "ok",
+      failing: [],
+    });
+    expect(
+      jobsHealth(
+        [
+          ran("purge-expired-data", "2026-10-17T02:30:00Z", "failed"),
+          ran("end-lapsed-sessions", "2026-10-15T02:45:00Z"),
+          { job: "purge-call-transcripts", last_run: null, status: null },
+        ],
+        now,
+      ),
+    ).toEqual({
+      status: "degraded",
+      failing: ["purge-expired-data", "end-lapsed-sessions", "purge-call-transcripts"],
+    });
+    expect(jobsHealth([], now).status).toBe("degraded");
   });
 
   it("scrubs the secret out of calendar and guest call links", () => {
