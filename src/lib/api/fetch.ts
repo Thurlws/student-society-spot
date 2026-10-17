@@ -293,51 +293,61 @@ export async function loadAppData(
   const resolvedRequests: ResolvedRequest[] = [];
   const societyMembers: SocietyMember[] = [];
   // Fees paid at the committee's societies; the committee can read those membership rows.
+  // Read alongside the member lists, not before them, so the page isn't slower to load.
+  const [feeRows, memberLists] = await Promise.all([
+    feesEnabled && committeeSocietyIds.length
+      ? supabase
+          .from("society_memberships")
+          .select("*")
+          .in("society_id", committeeSocietyIds)
+          .then(must)
+      : [],
+    Promise.all(
+      committeeSocietyIds.map(async (sid) => ({
+        sid,
+        rows: must(await supabase.rpc("society_members", { _society_id: sid })),
+      })),
+    ),
+  ]);
   const committeeFees = new Map<string, FeePayment>();
-  if (feesEnabled && committeeSocietyIds.length)
-    for (const m of must(
-      await supabase.from("society_memberships").select("*").in("society_id", committeeSocietyIds),
-    )) {
-      const fee = feeOf(m);
-      if (fee) committeeFees.set(m.id, fee);
-    }
-  await Promise.all(
-    committeeSocietyIds.map(async (sid) => {
-      const rows = must(await supabase.rpc("society_members", { _society_id: sid }));
-      const slug = slugOf[sid];
-      if (!slug) return;
-      for (const r of rows) {
-        if (r.status === "member" || r.status === "pending")
-          societyMembers.push({
-            membershipId: r.membership_id,
-            societyId: slug,
-            userId: r.user_id,
-            name: r.display_name || "Student",
-            course: r.course,
-            status: r.status,
-            since: (r.status === "member" && r.decided_at) || r.requested_at,
-            fee: committeeFees.get(r.membership_id),
-          });
-        const base = {
-          id: r.membership_id,
+  for (const m of feeRows) {
+    const fee = feeOf(m);
+    if (fee) committeeFees.set(m.id, fee);
+  }
+  for (const { sid, rows } of memberLists) {
+    const slug = slugOf[sid];
+    if (!slug) continue;
+    for (const r of rows) {
+      if (r.status === "member" || r.status === "pending")
+        societyMembers.push({
+          membershipId: r.membership_id,
           societyId: slug,
           userId: r.user_id,
           name: r.display_name || "Student",
           course: r.course,
-          message: r.message,
-          requestedAt: r.requested_at,
-        };
-        if (r.status === "pending") requests.push(base);
-        else if (r.decided_at)
-          resolvedRequests.push({
-            ...base,
-            outcome: r.status === "member" ? "approved" : "declined",
-            resolvedAt: r.decided_at,
-            resolvedBy: "",
-          });
-      }
-    }),
-  );
+          status: r.status,
+          since: (r.status === "member" && r.decided_at) || r.requested_at,
+          fee: committeeFees.get(r.membership_id),
+        });
+      const base = {
+        id: r.membership_id,
+        societyId: slug,
+        userId: r.user_id,
+        name: r.display_name || "Student",
+        course: r.course,
+        message: r.message,
+        requestedAt: r.requested_at,
+      };
+      if (r.status === "pending") requests.push(base);
+      else if (r.decided_at)
+        resolvedRequests.push({
+          ...base,
+          outcome: r.status === "member" ? "approved" : "declined",
+          resolvedAt: r.decided_at,
+          resolvedBy: "",
+        });
+    }
+  }
   resolvedRequests.sort((a, b) => b.resolvedAt.localeCompare(a.resolvedAt));
 
   const activity = new Map<string, SupportRequest["activity"]>();
