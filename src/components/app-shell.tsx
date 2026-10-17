@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { search } from "@/lib/search";
 import { useData } from "@/lib/api/store";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -170,7 +171,30 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
 
 function GlobalSearch() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState("");
   const { societies, events } = useData();
+  // Matched and ordered here, not by cmdk: its letters-in-order matching found "Students'
+  // Association" for "dental", and its ordering moved DOM nodes that React then put back
+  // elsewhere, so the best match could end up below the fold.
+  const foundSocieties = search(
+    societies,
+    query,
+    (s) => s.name,
+    (s) => `${s.shortName} ${s.tags.join(" ")}`,
+  );
+  const foundEvents = search(
+    events,
+    query,
+    (e) => e.title,
+    (e) => e.tags.join(" "),
+  );
+  // The best match is highlighted, so Enter opens it.
+  const best = foundSocieties[0]?.id ?? foundEvents[0]?.id ?? "";
+  useEffect(() => setSelected(best), [best]);
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
   const navigate = useNavigate();
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -192,42 +216,56 @@ function GlobalSearch() {
         <span className="flex-1 text-left">Search societies & events</span>
         <kbd className="hidden rounded border bg-muted px-1.5 text-[10px] sm:inline">⌘K</kbd>
       </button>
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search societies, events, tags…" />
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        commandProps={{ shouldFilter: false, value: selected, onValueChange: setSelected }}
+      >
+        <CommandInput
+          placeholder="Search societies, events, tags…"
+          value={query}
+          onValueChange={setQuery}
+        />
         <CommandList>
           <CommandEmpty>No matches.</CommandEmpty>
-          <CommandGroup heading="Societies">
-            {societies.map((s) => (
-              <CommandItem
-                key={s.id}
-                value={`${s.name} ${s.shortName} ${s.tags.join(" ")}`}
-                onSelect={() => {
-                  setOpen(false);
-                  navigate({ to: "/societies/$societyId", params: { societyId: s.id } });
-                }}
-              >
-                <SocietyAvatar society={s} size="xs" />
-                <span>{s.name}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{s.category}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandGroup heading="Events">
-            {events.map((e) => (
-              <CommandItem
-                key={e.id}
-                value={`${e.title} ${e.tags.join(" ")}`}
-                onSelect={() => {
-                  setOpen(false);
-                  navigate({ to: "/events/$eventId", params: { eventId: e.id } });
-                }}
-              >
-                <CalendarDays className="size-4" />
-                <span>{e.title}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{formatDate(e.date)}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {foundSocieties.length > 0 && (
+            <CommandGroup heading="Societies">
+              {foundSocieties.map((s) => (
+                <CommandItem
+                  key={s.id}
+                  value={s.id}
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/societies/$societyId", params: { societyId: s.id } });
+                  }}
+                >
+                  <SocietyAvatar society={s} size="xs" />
+                  <span>{s.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{s.category}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {foundEvents.length > 0 && (
+            <CommandGroup heading="Events">
+              {foundEvents.map((e) => (
+                <CommandItem
+                  key={e.id}
+                  value={e.id}
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: "/events/$eventId", params: { eventId: e.id } });
+                  }}
+                >
+                  <CalendarDays className="size-4" />
+                  <span>{e.title}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {formatDate(e.date)}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
