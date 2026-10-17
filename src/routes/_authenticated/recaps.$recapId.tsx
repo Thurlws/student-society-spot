@@ -16,7 +16,7 @@ import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { loadTranscript } from "@/lib/api/fetch";
+import { loadRecap, recapStillWriting } from "@/lib/api/fetch";
 import { useData } from "@/lib/api/store";
 import { formatDate } from "@/lib/format";
 import { askAboutCall } from "@/lib/calls.functions";
@@ -64,12 +64,22 @@ function RecapPage() {
   const [pending, setPending] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  // Not part of the 60 s reload: a transcript can be hundreds of lines and never changes.
-  const transcript = useQuery({
-    queryKey: ["recap-transcript", recapId],
-    queryFn: () => loadTranscript(recapId),
+  // Not part of the app's reload: a transcript can be hundreds of lines. Re-read every few
+  // seconds only while the AI is still writing the summary.
+  const detail = useQuery({
+    queryKey: ["recap", recapId],
+    queryFn: () => loadRecap(recapId),
     staleTime: Infinity,
+    refetchInterval: (q) => (recapStillWriting(q.state.data) ? 3000 : false),
   });
+  const transcript = detail.data?.transcript;
+  const writing = recapStillWriting(detail.data);
+  // When the AI's summary lands, the app's copy (lists, the calls page) gets it too.
+  const freshSource = detail.data?.summary.source;
+  const appSource = recap?.summary.source;
+  useEffect(() => {
+    if (freshSource === "ai" && appSource === "fallback") void refresh();
+  }, [freshSource, appSource, refresh]);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [recap?.qa.length, pending.length, busy]);
@@ -87,6 +97,7 @@ function RecapPage() {
       />
     ) : null;
   const s = getSociety(recap.societyId);
+  const summary = detail.data?.summary ?? recap.summary;
 
   const send = async (question: string) => {
     if (!question.trim() || busy) return;
@@ -119,7 +130,12 @@ function RecapPage() {
         <div className="flex items-center gap-4">
           {s && <SocietyAvatar society={s} size="lg" />}
           <div>
-            {recap.summary.source === "fallback" ? (
+            {writing ? (
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Basic summary for now, the AI is writing its own…
+              </p>
+            ) : summary.source === "fallback" ? (
               <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 <FileText className="size-3.5" />
                 Basic summary (the AI wasn't available)
@@ -167,10 +183,10 @@ function RecapPage() {
         <div className="space-y-4 lg:col-span-3">
           <section className="rounded-xl border bg-card p-6 shadow-soft">
             <h2 className="text-sm font-semibold">Summary</h2>
-            <p className="mt-2 leading-relaxed text-muted-foreground">{recap.summary.overview}</p>
-            {recap.summary.topics.length > 0 && (
+            <p className="mt-2 leading-relaxed text-muted-foreground">{summary.overview}</p>
+            {summary.topics.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {recap.summary.topics.map((t) => (
+                {summary.topics.map((t) => (
                   <span
                     key={t}
                     className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs text-primary"
@@ -187,9 +203,9 @@ function RecapPage() {
                 <CheckCircle2 className="size-4 text-success" />
                 Decisions
               </h2>
-              {recap.summary.decisions.length ? (
+              {summary.decisions.length ? (
                 <ul className="mt-3 space-y-2 text-sm">
-                  {recap.summary.decisions.map((d) => (
+                  {summary.decisions.map((d) => (
                     <li key={d} className="flex gap-2">
                       <span className="mt-2 size-1.5 shrink-0 rounded-full bg-success" />
                       {d}
@@ -205,9 +221,9 @@ function RecapPage() {
                 <ListTodo className="size-4 text-primary" />
                 Action items
               </h2>
-              {recap.summary.actionItems.length ? (
+              {summary.actionItems.length ? (
                 <ul className="mt-3 space-y-2.5 text-sm">
-                  {recap.summary.actionItems.map((a, i) => (
+                  {summary.actionItems.map((a, i) => (
                     <li key={i}>
                       <span className="font-medium">{a.owner}</span>
                       <span className="block text-muted-foreground">{a.task}</span>
@@ -221,33 +237,29 @@ function RecapPage() {
           </div>
           <Collapsible className="rounded-xl border bg-card shadow-soft">
             <CollapsibleTrigger className="group flex w-full items-center justify-between px-5 py-4 text-sm font-semibold">
-              {transcript.data === null
+              {transcript === null
                 ? "Transcript deleted after 7 days"
-                : transcript.data
-                  ? `Full transcript (${transcript.data.length} lines)`
+                : transcript
+                  ? `Full transcript (${transcript.length} lines)`
                   : "Full transcript"}
               <ChevronDown className="size-4 transition group-data-[state=open]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent className="max-h-96 space-y-2 overflow-y-auto border-t px-5 py-4 text-sm">
-              {transcript.isPending && (
+              {detail.isPending && (
                 <p className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
                   Loading the transcript…
                 </p>
               )}
-              {transcript.isError && (
+              {detail.isError && (
                 <p className="text-muted-foreground">
                   Couldn't load the transcript.{" "}
-                  <Button
-                    variant="link"
-                    className="h-auto p-0"
-                    onClick={() => transcript.refetch()}
-                  >
+                  <Button variant="link" className="h-auto p-0" onClick={() => detail.refetch()}>
                     Try again
                   </Button>
                 </p>
               )}
-              {transcript.data?.map((l, i) => (
+              {transcript?.map((l, i) => (
                 <p key={i}>
                   <span className="text-xs text-muted-foreground">{clock(l.at)}</span>{" "}
                   <span className="font-medium">{l.speaker}:</span> {l.text}

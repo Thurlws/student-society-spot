@@ -30,6 +30,12 @@ export const DEVICE_STORAGE: { name: string; kind: string; why: string; kept: st
     kept: "Until you sign out, or a year after your last sign-in",
   },
   {
+    name: "socconnect-read",
+    kind: "Local storage",
+    why: "Remembers the newest message you've seen in each channel, to show how many are new. Only channel ids and times, never the messages",
+    kept: "Until you sign out",
+  },
+  {
     name: "socconnect-guest-name",
     kind: "Session storage",
     why: "Remembers the name you typed to join a call as a guest",
