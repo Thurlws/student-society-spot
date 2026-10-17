@@ -467,7 +467,8 @@ function useDataValue() {
         await supabase
           .from("profile_interests")
           .insert({ profile_id: uidAuth, interest_id: row.id });
-      await auth.refresh();
+      // Recommendations follow interests, and the rest of the data only reloads every 10 minutes.
+      await Promise.all([auth.refresh(), refresh()]);
     },
     setPref: (k: keyof NotificationPrefs, v: boolean) =>
       act(() =>
