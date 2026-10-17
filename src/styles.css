@@ -127,6 +127,11 @@
   * {
     border-color: var(--color-border);
   }
+  /* Tailwind 4 leaves buttons with the arrow cursor; anything clickable gets the hand. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
   html {
     -webkit-font-smoothing: antialiased;
   }
