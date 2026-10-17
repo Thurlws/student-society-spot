@@ -31,6 +31,14 @@ describe("Error reporting", () => {
     ).toBe("[email] sent Bearer [token] and [token] with sb_secret_[key]");
   });
 
+  it("scrubs the secret out of calendar and guest call links", () => {
+    expect(scrub(`/api/calendar/${"ab12".repeat(16)}.ics`)).toBe("/api/calendar/[token]");
+    expect(scrub("crashed on https://socconnect.app/join/k7m2pq9xa3bc, again")).toBe(
+      "crashed on https://socconnect.app/join/[token], again",
+    );
+    expect(scrub("/societies/join-us")).toBe("/societies/join-us");
+  });
+
   it("builds an envelope without the query string or personal data", () => {
     const error = new Error("No row for jane@mytudublin.ie");
     error.stack =
