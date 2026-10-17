@@ -30,6 +30,9 @@ from (values
   ('0030 saved proposals visible', exists (select 1 from pg_policies where tablename = 'saved_proposals' and policyname = 'Save own' and with_check like '%collaboration_proposals%')),
   ('0031 display names', to_regprocedure('private.check_display_name()') is not null),
   ('0032 removal notices', to_regprocedure('public.delete_message(uuid, text)') is not null),
-  ('0033 nightly job runs', to_regprocedure('public.nightly_job_runs()') is not null)
+  ('0033 nightly job runs', to_regprocedure('public.nightly_job_runs()') is not null),
+  ('0034 channel management', to_regprocedure('public.create_channel(uuid, text, text, boolean)') is not null),
+  ('0035 membership fees', to_regprocedure('public.pay_membership_fee_demo(uuid)') is not null),
+  ('0036 calendar links', to_regclass('public.calendar_feeds') is not null)
 ) as m(migration, applied)
 order by m.migration;

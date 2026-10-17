@@ -239,6 +239,27 @@
       "when": 1792120491276,
       "tag": "0033_nightly_job_runs",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792120551276,
+      "tag": "0034_channel_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792120611276,
+      "tag": "0035_membership_fees",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792120671276,
+      "tag": "0036_calendar_feeds",
+      "breakpoints": true
     }
   ]
 }
