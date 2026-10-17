@@ -99,6 +99,9 @@ export interface Event {
   date: string; // ISO date YYYY-MM-DD
   start: string; // HH:mm
   end?: string | undefined;
+  /** The same moments as ISO datetimes, for calendar files that must work in any time zone. */
+  startsAt: string;
+  endsAt?: string | undefined;
   venue: string;
   category: string;
   capacity?: number | undefined;

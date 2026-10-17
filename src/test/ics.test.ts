@@ -10,6 +10,8 @@ const event: Event = {
   date: "2026-11-05",
   start: "19:30",
   end: "22:00",
+  startsAt: "2026-11-05T19:30:00Z",
+  endsAt: "2026-11-05T22:00:00Z",
   venue: "Aungier St, room 2.01",
   category: "Social",
   attendees: 0,
@@ -21,14 +23,21 @@ describe("eventToIcs", () => {
     const ics = eventToIcs(event, "Gaming Society", new Date("2026-10-16T09:15:42Z"));
     expect(ics).toContain(`UID:event-${event.id}@socconnect`);
     expect(ics).toContain("DTSTAMP:20261016T091542Z");
-    expect(ics).toContain("DTSTART:20261105T193000");
+    expect(ics).toContain("DTSTART:20261105T193000Z");
     expect(ics).toContain("LOCATION:Aungier St\\, room 2.01");
     expect(ics.toLowerCase()).not.toContain("demo");
   });
 
-  it("ends on the next day when the end time is before the start", () => {
-    const ics = eventToIcs({ ...event, start: "21:00", end: "01:00" }, "Gaming Society");
-    expect(ics).toContain("DTEND:20261106T010000");
+  it("writes UTC, so summer events land at the right hour on a device in any time zone", () => {
+    // 19:30 in Dublin in June is 18:30 UTC; a floating 19:30 would show at 19:30 wherever it's opened.
+    const june = { ...event, startsAt: "2026-06-10T18:30:00Z", endsAt: "2026-06-11T00:30:00Z" };
+    const ics = eventToIcs(june, "Gaming Society");
+    expect(ics).toContain("DTSTART:20260610T183000Z");
+    expect(ics).toContain("DTEND:20260611T003000Z");
+  });
+
+  it("gives an event without an end an hour", () => {
+    expect(eventToIcs({ ...event, endsAt: undefined }, "G")).toContain("DURATION:PT1H");
   });
 });
 
