@@ -271,6 +271,8 @@ export async function loadAppData(
         date: start.date,
         start: start.time,
         end: e.ends_at ? toDublin(e.ends_at).time : undefined,
+        startsAt: e.starts_at,
+        endsAt: e.ends_at ?? undefined,
         venue: e.venue,
         category: e.category,
         capacity: e.capacity ?? undefined,
