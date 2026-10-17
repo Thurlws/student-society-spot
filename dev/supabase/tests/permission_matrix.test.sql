@@ -245,6 +245,7 @@ insert into matrix (label, kind, sql, expected) values
 ('messages: post in A', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A general')::uuid, auth.uid(), 'Hi')$$, '{denied,denied,denied,1,1,denied,denied,denied,denied}'),
 ('messages: post in A''s committee-only channel', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A events')::uuid, auth.uid(), 'Hi')$$, '{denied,denied,denied,denied,1,denied,denied,denied,denied}'),
 ('messages: post in A as someone else', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A general')::uuid, md5('bystander')::uuid, 'Hi')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('messages: post in A dated next year', 'rows', $$insert into public.messages (channel_id, author_id, body, created_at) values (md5('A general')::uuid, auth.uid(), 'Hi', now() + interval '1 year')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('messages: edit', 'rows', $$update public.messages set body = 'Edited' where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
 ('messages: delete directly', 'rows', $$delete from public.messages where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
 ('message_reports: file directly', 'rows', $$insert into public.message_reports (message_id, society_id, author_id, reported_by, excerpt) values (md5('message B')::uuid, md5('B')::uuid, md5('other')::uuid, auth.uid(), 'x')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
