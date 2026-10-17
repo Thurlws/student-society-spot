@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           created_at: string
@@ -1656,6 +1674,20 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
+      calendar_feed_events: {
+        Args: { _token: string }
+        Returns: {
+          cancelled: boolean
+          description: string
+          ends_at: string | null
+          id: string
+          society: string
+          starts_at: string
+          title: string
+          venue: string
+        }[]
+      }
+      create_calendar_feed: { Args: never; Returns: string }
       create_channel: {
         Args: {
           _committee_only?: boolean
@@ -1665,6 +1697,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_calendar_feed: { Args: never; Returns: undefined }
       delete_channel: { Args: { _channel_id: string }; Returns: undefined }
       delete_message: {
         Args: { _message_id: string; _reason?: string }

@@ -51,6 +51,8 @@ update public.channels c set id = md5(s.tag || ' ' || c.slug)::uuid
 update public.channels set committee_only = true where id = md5('A events')::uuid;
 -- A charges a membership fee (0035).
 update public.societies set membership_fee_cents = 500 where id = md5('A')::uuid;
+-- member has a calendar link (0036).
+insert into public.calendar_feeds (user_id, token_hash) values (md5('member')::uuid, 'matrix-feed');
 update public.call_rooms r set id = md5(s.tag || ' ' || r.slug)::uuid
   from (values (md5('A')::uuid, 'A'), (md5('B')::uuid, 'B'), (md5('Z')::uuid, 'Z')) s(id, tag) where r.society_id = s.id;
 
@@ -177,6 +179,7 @@ insert into matrix (label, kind, sql, expected) values
 ('ai_usage: read', 'count', $$select 1 from public.ai_usage where user_id in @people$$, '{0,1,0,0,0,0,0,0,0}'),
 ('society_fit_cache: read', 'count', $$select 1 from public.society_fit_cache where society_id in @societies$$, '{0,1,0,0,0,0,0,0,0}'),
 ('society_ai_state: read', 'count', $$select 1 from public.society_ai_state$$, '{0,0,0,0,0,0,0,0,0}'),
+('calendar_feeds: read', 'count', $$select 1 from public.calendar_feeds where user_id in @people$$, '{denied,0,0,1,0,0,0,0,0}'),
 ('universities: read', 'count', $$select 1 from public.universities where id in (md5('tudublin')::uuid, md5('matrixu')::uuid)$$, '{denied,1,1,1,1,1,2,1,1}'),
 ('university_domains: read', 'count', $$select 1 from public.university_domains where domain in ('mytudublin.ie', 'tudublin.ie', 'matrixu.test')$$, '{denied,0,0,0,0,0,3,0,2}'),
 ('university_members: read', 'count', $$select 1 from public.university_members where user_id in @people$$, '{denied,1,1,1,1,1,10,1,8}'),
@@ -283,6 +286,8 @@ insert into matrix (label, kind, sql, expected) values
 ('university_members: lift a suspension directly', 'rows', $$update public.university_members set suspended_at = null where user_id = md5('bystander')::uuid$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_admins: remove', 'rows', $$delete from public.university_admins where user_id = md5('uniadmin')::uuid$$, '{denied,0,0,0,0,0,1,0,0}'),
 
+('calendar_feeds: add directly', 'rows', $$insert into public.calendar_feeds (user_id, token_hash) values (auth.uid(), 'x')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
+('calendar_feeds: delete directly', 'rows', $$delete from public.calendar_feeds$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('audit_log: add', 'rows', $$insert into public.audit_log (actor_role, action) values ('member', 'fake')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('audit_log: edit', 'rows', $$update public.audit_log set action = 'fake'$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('audit_log: delete', 'rows', $$delete from public.audit_log$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
@@ -327,6 +332,9 @@ insert into matrix (label, kind, sql, expected) values
 ('find_people(MatrixU)', 'count', $$select 1 from public.find_people(md5('matrixu')::uuid, 'matrix')$$, '{denied,0,0,0,0,0,2,0,0}'),
 ('import_societies(TU Dublin)', 'call', $$select public.import_societies(md5('tudublin')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,ok}'),
 ('import_societies(MatrixU)', 'call', $$select public.import_societies(md5('matrixu')::uuid, '[{"id": "matrix-1", "name": "Matrix Imported Society"}]')$$, '{denied,refused,refused,refused,refused,refused,ok,refused,refused}'),
+('create_calendar_feed()', 'call', $$select public.create_calendar_feed()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
+('delete_calendar_feed()', 'call', $$select public.delete_calendar_feed()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
+('calendar_feed_events(a link)', 'count', $$select 1 from public.calendar_feed_events('matrix')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('my_access()', 'call', $$select public.my_access()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
 ('recommend_societies()', 'count', $$select 1 from public.recommend_societies() where society_id in @societies$$, '{denied,2,1,0,1,1,2,0,2}'),
 ('event_attendee_counts()', 'count', $$select 1 from public.event_attendee_counts() where event_id in @events$$, '{denied,2,2,2,2,2,2,0,2}'),
@@ -356,7 +364,7 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
 select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
-        'create_channel', 'create_event', 'decide_membership', 'delete_channel', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
+        'create_calendar_feed', 'create_channel', 'create_event', 'decide_membership', 'delete_calendar_feed', 'delete_channel', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
         'find_people', 'import_societies', 'leave_society', 'my_access', 'pay_membership_fee_demo', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
         'schedule_meeting', 'set_membership_fee_paid', 'set_support_request_status', 'share_recap', 'suspend_user',
         'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_channel', 'update_event'],

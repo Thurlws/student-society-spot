@@ -48,6 +48,10 @@ export const RETENTION: { what: string; kept: string }[] = [
     kept: "While the account or society exists, unless you or the committee delete them first",
   },
   { what: "Who registered for an event", kept: "A year after the event" },
+  {
+    what: "Your calendar link (a scrambled form of it, and when you made it)",
+    kept: "Until you turn it off, make a new one or delete your account",
+  },
   { what: "Call transcripts", kept: "7 days" },
   { what: "Call recaps (AI summary, answers, who took part)", kept: "A year" },
   { what: "Who joined a call", kept: "90 days" },

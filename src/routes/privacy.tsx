@@ -59,6 +59,10 @@ function Privacy() {
             no money and asks for no card or bank details.
           </li>
           <li>
+            <strong>Calendar link:</strong> if you make one, when you made it. The link itself isn't
+            stored, only a scrambled form of it that can't be turned back into the link.
+          </li>
+          <li>
             <strong>Calls:</strong> when you join a call. Your captions start off. If you turn them
             on, short recordings of your speech are sent to an AI service to be written down. The
             transcript is shared with everyone in the call and used to write an AI summary of the
@@ -139,6 +143,10 @@ function Privacy() {
             ],
             ["People in a call", "Your name, video, voice and captions while you're in it"],
             [
+              "Anyone with your calendar link, and the calendar app you add it to (Google Calendar, for example)",
+              "The events you've registered for: titles, times, places and societies. Only if you make a link; you can turn it off in Settings",
+            ],
+            [
               "Your university's admins",
               "Profiles of people at the university, reported message excerpts, the admin activity log. Not society memberships or channels.",
             ],
@@ -151,6 +159,12 @@ function Privacy() {
         <p>
           People at other universities see nothing of yours. Society logos and banners load from
           your university's own societies website, which sees your IP address when they load.
+        </p>
+        <p>
+          "Add to Google Calendar" on an event opens Google Calendar with that event filled in, so
+          Google sees it, and only when you choose to. Adding your calendar link to Google Calendar
+          lets Google fetch the events you've registered for; Google's own privacy policy then
+          applies to them.
         </p>
       </Section>
 
