@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/events/")({
   head: () =>
-    pageHead("Events", "Workshops, socials, talks and trips from every society on campus."),
+    pageHead("Calendar", "Workshops, socials, talks and trips from every society on campus."),
   component: EventsPage,
 });
 
@@ -53,7 +53,7 @@ function EventsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Events"
+        title="Calendar"
         subtitle="Workshops, socials, talks and trips from societies across campus."
         actions={
           <div className="flex rounded-lg border bg-card p-0.5">
@@ -158,20 +158,21 @@ function EventsPage() {
         </div>
       </div>
 
-      {list.length === 0 ? (
+      {view === "calendar" ? (
+        // The month shows even when nothing matches, so the days are always there.
+        <CalendarView ids={new Set(list.map((e) => e.id))} />
+      ) : list.length === 0 ? (
         <EmptyState
           icon={SearchX}
           title="No events found"
           body="Try another category or clear your search."
         />
-      ) : view === "grid" ? (
+      ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {list.map((e) => (
             <EventCard key={e.id} event={e} />
           ))}
         </div>
-      ) : (
-        <CalendarView ids={new Set(list.map((e) => e.id))} />
       )}
     </div>
   );
@@ -202,9 +203,14 @@ function CalendarView({ ids }: { ids: Set<string> }) {
   return (
     <div className="rounded-xl border bg-card p-4 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
-        <p className="flex items-center gap-2 font-display font-semibold">
-          {monthLabel(year, month)}
-        </p>
+        <div>
+          <p className="font-display font-semibold">{monthLabel(year, month)}</p>
+          {ids.size === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No upcoming events match. Try another category or clear your search.
+            </p>
+          )}
+        </div>
         <div className="flex gap-1">
           <Button size="sm" variant="outline" aria-label="Previous month" onClick={() => shift(-1)}>
             ‹

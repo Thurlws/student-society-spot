@@ -51,7 +51,7 @@ type NavItem = { to: string; label: string; icon: LucideIcon; committeeOnly?: bo
 const nav: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/societies", label: "Discover societies", icon: Compass },
-  { to: "/events", label: "Events", icon: CalendarDays },
+  { to: "/events", label: "Calendar", icon: CalendarDays },
   { to: "/my-societies", label: "My societies", icon: Users },
   { to: "/communications", label: "Communications", icon: MessagesSquare },
   { to: "/requests", label: "My requests", icon: MessageSquareText },
