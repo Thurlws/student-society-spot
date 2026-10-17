@@ -33,6 +33,7 @@ from (values
   ('0033 nightly job runs', to_regprocedure('public.nightly_job_runs()') is not null),
   ('0034 channel management', to_regprocedure('public.create_channel(uuid, text, text, boolean)') is not null),
   ('0035 membership fees', to_regprocedure('public.pay_membership_fee_demo(uuid)') is not null),
-  ('0036 calendar links', to_regclass('public.calendar_feeds') is not null)
+  ('0036 calendar links', to_regclass('public.calendar_feeds') is not null),
+  ('0037 remove member', to_regprocedure('public.remove_member(uuid, text)') is not null)
 ) as m(migration, applied)
 order by m.migration;
