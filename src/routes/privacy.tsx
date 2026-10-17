@@ -54,7 +54,9 @@ function Privacy() {
           <li>
             <strong>What you do in societies:</strong> which societies you join or ask to join,
             committee positions, events you register for, messages you post, requests you send to
-            committees, and messages you report.
+            committees, and messages you report. If a society charges a membership fee, whether
+            you've paid it and how. SocConnect takes no real payments yet: its demo checkout takes
+            no money and asks for no card or bank details.
           </li>
           <li>
             <strong>Calls:</strong> when you join a call. Your captions start off. If you turn them
@@ -133,7 +135,7 @@ function Privacy() {
             ],
             [
               "The society's committee",
-              "Its members and join requests, requests you send it, reports about its messages",
+              "Its members and join requests, whether you've paid its membership fee, requests you send it, reports about its messages",
             ],
             ["People in a call", "Your name, video, voice and captions while you're in it"],
             [

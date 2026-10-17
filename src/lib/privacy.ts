@@ -14,7 +14,7 @@ export const PRIVACY_CONTACT_EMAIL = "";
  */
 export const OPERATOR = "";
 
-export const NOTICE_UPDATED = "16 October 2026";
+export const NOTICE_UPDATED = "17 October 2026";
 export const TERMS_UPDATED = "16 October 2026";
 
 /**
@@ -44,7 +44,7 @@ export const RETENTION: { what: string; kept: string }[] = [
     kept: "Until you delete it. A year without signing in ends your sessions, and you need your university mailbox to get back in.",
   },
   {
-    what: "Memberships, committee positions, messages, announcements and events",
+    what: "Memberships (and whether you've paid the fee), committee positions, messages, announcements and events",
     kept: "While the account or society exists, unless you or the committee delete them first",
   },
   { what: "Who registered for an event", kept: "A year after the event" },

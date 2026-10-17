@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { CalendarDays, Check, Clock, MapPin, Users } from "lucide-react";
 import { useData } from "@/lib/api/store";
-import { dayParts, formatDate } from "@/lib/format";
+import { dayParts, formatDate, formatEuro } from "@/lib/format";
 import type { Event, Society } from "@/lib/types";
 import { SocietyAvatar, SocietyBanner, accentClasses } from "@/components/society-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +122,7 @@ export function SocietyCard({
             society.category,
             society.campus && `${society.campus} campus`,
             `${society.memberCount} members`,
+            society.membershipFeeCents && `${formatEuro(society.membershipFeeCents)} membership`,
           ]
             .filter(Boolean)
             .join(", ")}

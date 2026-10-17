@@ -100,3 +100,10 @@ export function greeting() {
   const h = toDublin(new Date()).hour;
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
+
+/** Cents as euros: 500 → "€5", 750 → "€7.50". Manual, like the dates, to match on server and client. */
+export function formatEuro(cents: number) {
+  const euros = Math.floor(cents / 100);
+  const rest = cents % 100;
+  return `€${euros}${rest ? `.${String(rest).padStart(2, "0")}` : ""}`;
+}

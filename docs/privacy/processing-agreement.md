@@ -78,7 +78,7 @@ Signed for the Processor: ____________ Date: ______
 | | |
 |---|---|
 | People | The Controller's students and staff with an address at its listed email domains who sign up; committee members; university admins the Controller appoints; call guests invited by committees (name only) |
-| Data | Email address, name, course, year, interests, notification settings, university, sign-in times; memberships, committee positions, event registrations, messages, member requests, reports; call participation and, for people who turn captions on, speech clips, transcripts, AI summaries and answers; AI feature use; the admin activity log; suspensions |
+| Data | Email address, name, course, year, interests, notification settings, university, sign-in times; memberships (with whether the membership fee was paid), committee positions, event registrations, messages, member requests, reports; call participation and, for people who turn captions on, speech clips, transcripts, AI summaries and answers; AI feature use; the admin activity log; suspensions |
 | Special category data | Membership of societies about religion, ethnicity, sexuality, health or disability can reveal it (Article 9). See the DPIA |
 | Processing | Collection, storage, organisation, retrieval, use, disclosure to the people the app's permissions allow, transfer to sub-processors, deletion |
 | Purposes | Running SocConnect for the Controller's societies; checking that users are current students; moderation, suspension, usage limits and the activity log; captions and AI recaps for people who turn them on |

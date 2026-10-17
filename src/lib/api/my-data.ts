@@ -15,10 +15,8 @@ export async function downloadMyData(uid: string, email: string | undefined) {
       .from("notification_prefs")
       .select("announcements, events, discussions, email")
       .eq("user_id", uid),
-    supabase
-      .from("society_memberships")
-      .select("status, message, requested_at, decided_at, societies(name)")
-      .eq("user_id", uid),
+    // "*" so the membership fee columns come along once migration 0035 is in the database.
+    supabase.from("society_memberships").select("*, societies(name)").eq("user_id", uid),
     supabase.from("society_roles").select("position, societies(name)").eq("user_id", uid),
     supabase
       .from("event_registrations")
