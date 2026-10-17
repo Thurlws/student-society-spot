@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // The dev server served this as plain source until a page needed it bundled, then rebundled
+    // and reloaded every open tab mid-session (it broke the suspension journey in CI). Bundled
+    // from the start instead.
+    optimizeDeps: { include: ["@tanstack/history"] },
+  },
 });
