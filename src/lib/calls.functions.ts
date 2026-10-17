@@ -64,14 +64,19 @@ export const askAboutCall = createServerFn({ method: "POST" })
       { role: "assistant" as const, content: answer },
     ];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("call_recaps").update({ qa }).eq("id", recap.id);
+    const { error } = await supabaseAdmin.from("call_recaps").update({ qa }).eq("id", recap.id);
+    if (error) {
+      // The answer still goes back; only its place in the recap's history is lost.
+      const { log } = await import("./monitoring.server");
+      log("warn", "recap.qa_not_saved", { area: "calls" }, error.message);
+    }
     return { answer };
   });
 
 async function transcribe(audio: string, mime: string) {
   const { aiTranscribe } = await import("./ai.server");
-  const bin = Uint8Array.from(atob(audio), (c) => c.charCodeAt(0));
   try {
+    const bin = Uint8Array.from(atob(audio), (c) => c.charCodeAt(0));
     return { text: await aiTranscribe(bin, mime), error: null as string | null };
   } catch (e) {
     return { text: "", error: e instanceof Error ? e.message : "Transcription failed" };
