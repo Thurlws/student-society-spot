@@ -119,6 +119,8 @@ Line numbers are from commit `9af30db`.
 | 60 | Assigning a member request looks the committee member up by display name, so two committee members with the same name can't both be picked | `fetch.ts:192`, `store.tsx:391` | Open |
 | 61 | `dev/supabase/apply-*.sql` (2,576 lines) repeat migrations production may already have | `dev/supabase/` | Open: delete once `check-migrations.sql` shows production is up to date |
 
+Found while fixing: a call with more than 600 caption lines (about an hour of talk) couldn't save a recap at all; the server refused the transcript. Fixed 2026-10-17: up to 2,000 lines, and the browser sends the last 2,000 of a longer call.
+
 ## Phases
 
 Effort in working days for one developer who knows the code: XS up to half a day, S 1-2, M 3-5, L 1-2 weeks, XL more.

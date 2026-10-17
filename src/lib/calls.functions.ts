@@ -12,7 +12,8 @@ export const summarizeCall = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       roomId: z.string().uuid(),
-      transcript: z.array(line).min(1).max(600),
+      // About four hours of captions; the browser sends the last 2,000 lines of anything longer.
+      transcript: z.array(line).min(1).max(2000),
       durationSec: z.number().int().min(0).max(86400),
     }),
   )
