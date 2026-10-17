@@ -280,6 +280,8 @@ insert into matrix (label, kind, sql, expected) values
 ('universities: delete MatrixU, which has a society', 'rows', $$delete from public.universities where id = md5('matrixu')::uuid$$, '{denied,0,0,0,0,0,23503,0,0}'),
 ('university_domains: add', 'rows', $$insert into public.university_domains values ('staff.matrixu.test', md5('matrixu')::uuid)$$, '{denied,denied,denied,denied,denied,denied,1,denied,denied}'),
 ('university_domains: remove', 'rows', $$delete from public.university_domains where domain = 'tudublin.ie'$$, '{denied,0,0,0,0,0,1,0,0}'),
+('university_domains: set a Microsoft tenant', 'rows', $$update public.university_domains set microsoft_tenant_id = gen_random_uuid() where domain = 'tudublin.ie'$$, '{denied,0,0,0,0,0,1,0,0}'),
+('university_domains: move to another university', 'rows', $$update public.university_domains set university_id = md5('matrixu')::uuid where domain = 'tudublin.ie'$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_members: move self to MatrixU', 'rows', $$update public.university_members set university_id = md5('matrixu')::uuid where user_id = auth.uid()$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_members: leave', 'rows', $$delete from public.university_members where user_id = auth.uid()$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('university_admins: make self TU Dublin admin', 'rows', $$insert into public.university_admins values (md5('tudublin')::uuid, auth.uid())$$, '{denied,denied,denied,denied,denied,denied,1,denied,denied}'),

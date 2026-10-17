@@ -16,7 +16,7 @@ Written 2026-10-16, after Phases 0 to 4. The code for the TU Dublin demo, the se
 | 6 | Platform admins are who you expect: the Phase 1 rollout query, step 4 | SQL editor | Done 2026-10-16: nobody is a platform admin. The owner makes themselves one with a `platform_admin` row in `role_invites` (claimed at once for an existing account, at first sign-in otherwise) |
 | 7 | Sign-in sender: custom domain, the two email templates, Site URL and redirect URLs, then a test with a new and a returning real mailbox ([sign-in-email-bug.md](sign-in-email-bug.md), steps 2 to 5). Until then, demos rely on releasing the email from quarantine ([demo.md](demo.md)) | Lovable Cloud → Emails, Auth | Waiting: Lovable's custom email sender needs a paid Lovable plan and a domain (2026-10-16). Options without either are in [sign-in-email-bug.md](sign-in-email-bug.md#without-a-domain-or-a-paid-plan) |
 | 8 | Ask TU Dublin IT to allow the new sender domain ([sign-in-email-bug.md](sign-in-email-bug.md), step 6) | TU Dublin IT | |
-| 9 | Microsoft sign-in: decide whether to keep it (see below) | Lovable Cloud | |
+| 9 | Microsoft sign-in stays on, limited to each university's own Microsoft organisation (0040): apply the migration, then run the two checks under [Microsoft sign-in](#microsoft-sign-in) | Lovable Cloud SQL editor | Code done 2026-10-17 (`claude/audit-fixes`); the checks need the owner |
 | 10 | Calls in the demo? Set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`; `/calls` should say "Live calls are on" | Lovable Cloud secrets | Done: the owner confirmed calls work (2026-10-16) |
 | 11 | The week-before list in [demo.md](demo.md) | | |
 
@@ -45,9 +45,27 @@ Written 2026-10-16, after Phases 0 to 4. The code for the TU Dublin demo, the se
 
 ## Microsoft sign-in
 
-"Sign in with Microsoft" goes through Lovable's sign-in broker, and nobody has checked how it's set up. The risk the audit raised: if it accepts any Microsoft tenant and trusts the email address the tenant reports, someone who controls a tenant could sign in as a student. Since migration 0007 the worst case is a student account, not an admin. Either:
+"Sign in with Microsoft" goes through Lovable's broker, which accepts any Microsoft account from any organisation; its docs say the tenant can't be restricted in managed mode. On its own, the address such an account reports proves nothing: whoever runs a Microsoft organisation can make an account report a university address. Signing up with it would make them a member of that university and give them any invite waiting for that address, platform admin, university admin and committee seats included (audit finding 49).
 
-- test it with a Microsoft tenant you control (sign in with an account whose email is set to a university address it doesn't own); if that's refused, keep it and note the date here; or
-- ask Lovable to turn the Microsoft provider off, and remove the button from `src/routes/welcome.tsx`.
+Since migration 0040, each university email domain records the Microsoft organisation (tenant) that owns it, and the database refuses a Microsoft identity from any other tenant, inside the sign-in itself, so nothing is created. A domain can only be verified in its owner's tenant, so this works for every university without limiting it to one. TU Dublin's two domains are set by the migration. For another university, a platform admin turns on **Microsoft sign-in** next to each domain in `/admin` → Universities; the server asks Microsoft which tenant owns the domain. Domains without it use the email link.
 
-Hiding the button alone doesn't close the risk, because the provider stays reachable.
+The check sees what Supabase Auth saves about each sign-in, so confirm the broker saves Microsoft sign-ins as Microsoft. After applying 0040, in the SQL editor:
+
+```sql
+-- 1. Microsoft sign-ins are saved as Microsoft: expect an "azure" row (or one with
+--    microsoft_issuer > 0) once anyone has used the button.
+select provider, count(*) as identities,
+  count(*) filter (where identity_data->>'iss' ~ '^https://(login\.microsoftonline\.com|sts\.windows\.net)/') as microsoft_issuer
+from auth.identities group by provider;
+
+-- 2. No Microsoft identity from before 0040 came from the wrong organisation: expect 0.
+select count(*) from auth.identities i
+where (i.provider = 'azure' or i.identity_data->>'iss' ~ '^https://login\.microsoftonline\.com/')
+  and not exists (select 1 from public.university_domains d
+    where d.domain = split_part(lower(i.identity_data->>'email'), '@', 2)
+      and lower(i.identity_data->>'iss') like '%' || d.microsoft_tenant_id::text || '%');
+```
+
+If check 1 shows Microsoft sign-ins under `email`, or without an issuer, the broker hides who signed them in and 0040 can't tell them apart. Then switch Lovable's Microsoft sign-in to **Your own credentials** (More → Cloud → Users → Auth settings → Microsoft) with an Azure app registered for "Accounts in any organizational directory", Tenant ID `organizations`, and the default that leaves unverified addresses out of the token. If check 2 isn't 0, look at those accounts before anything else.
+
+A live test anyone can do: make a personal Microsoft account with a university address (Microsoft verifies it with a code), then use "Sign in with Microsoft" with it. It should be refused, because personal accounts belong to Microsoft's consumer tenant, not the university's.
