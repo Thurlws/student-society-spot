@@ -77,6 +77,17 @@ describe("Audit log sentences", () => {
     ).toBe("2 reports about a message in QuizSoc were closed, and the message stayed");
   });
 
+  it("counts a deleted channel's messages", () => {
+    const deleted = (messages: number) =>
+      describeAuditEntry(
+        entry({ action: "channel.deleted", details: { channel: "lifts", messages } }),
+        names,
+      );
+    expect(deleted(3)).toBe("QuizSoc deleted #lifts and its 3 messages");
+    expect(deleted(1)).toBe("QuizSoc deleted #lifts and its message");
+    expect(deleted(0)).toBe("QuizSoc deleted #lifts");
+  });
+
   it("names the actor when the reader can see them, and their role when not", () => {
     expect(auditActor(entry({}), names)).toBe("Aoife Admin");
     expect(auditActor(entry({ actorId: "hidden", actorRole: "platform_admin" }), names)).toBe(

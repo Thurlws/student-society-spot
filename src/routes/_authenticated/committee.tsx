@@ -23,6 +23,7 @@ import { CommitteeRequestsSummary } from "@/components/support-requests";
 import { EventDialog } from "@/components/event-dialog";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { ReportedMessages } from "@/components/moderation";
+import { CommitteeFees } from "@/components/membership-fee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -182,6 +183,8 @@ function Committee() {
       <ReportedMessages societyId={s.id} />
 
       <CommitteeRequestsSummary societyId={s.id} />
+
+      <CommitteeFees key={s.id} society={s} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border bg-card p-5 shadow-soft">

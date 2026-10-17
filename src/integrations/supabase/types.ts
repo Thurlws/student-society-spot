@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           created_at: string
@@ -387,6 +405,8 @@ export type Database = {
       }
       channels: {
         Row: {
+          committee_only: boolean
+          created_at: string
           description: string
           id: string
           name: string
@@ -394,6 +414,8 @@ export type Database = {
           society_id: string
         }
         Insert: {
+          committee_only?: boolean
+          created_at?: string
           description?: string
           id?: string
           name: string
@@ -401,6 +423,8 @@ export type Database = {
           society_id: string
         }
         Update: {
+          committee_only?: boolean
+          created_at?: string
           description?: string
           id?: string
           name?: string
@@ -1038,6 +1062,7 @@ export type Database = {
           join_url: string | null
           links: Json
           logo_url: string | null
+          membership_fee_cents: number | null
           meets: string
           name: string
           official_url: string | null
@@ -1066,6 +1091,7 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
+          membership_fee_cents?: number | null
           meets?: string
           name: string
           official_url?: string | null
@@ -1094,6 +1120,7 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
+          membership_fee_cents?: number | null
           meets?: string
           name?: string
           official_url?: string | null
@@ -1189,6 +1216,9 @@ export type Database = {
         Row: {
           decided_at: string | null
           decided_by: string | null
+          fee_paid_at: string | null
+          fee_paid_cents: number | null
+          fee_paid_how: string | null
           id: string
           message: string
           requested_at: string
@@ -1199,6 +1229,9 @@ export type Database = {
         Insert: {
           decided_at?: string | null
           decided_by?: string | null
+          fee_paid_at?: string | null
+          fee_paid_cents?: number | null
+          fee_paid_how?: string | null
           id?: string
           message?: string
           requested_at?: string
@@ -1209,6 +1242,9 @@ export type Database = {
         Update: {
           decided_at?: string | null
           decided_by?: string | null
+          fee_paid_at?: string | null
+          fee_paid_cents?: number | null
+          fee_paid_how?: string | null
           id?: string
           message?: string
           requested_at?: string
@@ -1638,6 +1674,31 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
+      calendar_feed_events: {
+        Args: { _token: string }
+        Returns: {
+          cancelled: boolean
+          description: string
+          ends_at: string | null
+          id: string
+          society: string
+          starts_at: string
+          title: string
+          venue: string
+        }[]
+      }
+      create_calendar_feed: { Args: never; Returns: string }
+      create_channel: {
+        Args: {
+          _committee_only?: boolean
+          _description?: string
+          _name: string
+          _society_id: string
+        }
+        Returns: string
+      }
+      delete_calendar_feed: { Args: never; Returns: undefined }
+      delete_channel: { Args: { _channel_id: string }; Returns: undefined }
       delete_message: {
         Args: { _message_id: string; _reason?: string }
         Returns: undefined
@@ -1674,6 +1735,10 @@ export type Database = {
       join_society: { Args: { _society_id: string }; Returns: string }
       leave_society: { Args: { _society_id: string }; Returns: undefined }
       my_access: { Args: never; Returns: Json }
+      pay_membership_fee_demo: {
+        Args: { _society_id: string }
+        Returns: undefined
+      }
       nightly_job_runs: { Args: never; Returns: Json }
       notify_members: {
         Args: {
@@ -1768,6 +1833,19 @@ export type Database = {
       }
       suspend_user: {
         Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
+      set_membership_fee_paid: {
+        Args: { _membership_id: string; _paid: boolean }
+        Returns: undefined
+      }
+      update_channel: {
+        Args: {
+          _channel_id: string
+          _committee_only: boolean
+          _description: string
+          _name: string
+        }
         Returns: undefined
       }
       update_event: {

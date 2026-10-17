@@ -8,10 +8,11 @@ To change a period, change the migration's function (in a new migration), `RETEN
 |---|---|---|---|
 | Account: email, name, course, year, interests, settings, university | Until the person deletes it | It is the account | Settings → Delete my account deletes it at once, with everything that belongs to it (migration 0012) |
 | Sessions of accounts not used for a year | Ended after a year without a sign-in | The next sign-in needs the university mailbox, which proves the person is still a student | Nightly `end_lapsed_sessions` (migration 0023). The account itself stays; see "Open" below |
-| Memberships, committee seats | While the account and the society exist | Needed to run the society | Leaving, being removed, or account deletion |
+| Memberships (with whether the membership fee was paid, and how), committee seats | While the account and the society exist | Needed to run the society | Leaving, being removed, or account deletion |
 | Messages | While the account and the society exist | A society's discussion history | The author or the committee deletes them; account deletion deletes the author's messages |
 | Announcements, events, resources | While the society exists | Society history | Committees delete announcements; events are cancelled, not deleted. An author's deleted account leaves them without a name |
 | Event registrations | A year after the event | Attendance can reveal sensitive information; a year covers questions about an event | Nightly purge |
+| Calendar link (a SHA-256 hash of it, and when it was made) | Until the person turns it off or makes a new one | Calendar apps fetch it without signing in | Turning it off, a new link, or account deletion |
 | Call transcripts | 7 days | Long enough to write and correct the recap | Nightly `purge_old_transcripts` |
 | Call recaps (summary, answers, participant names) | A year | Covers a committee's year | Nightly purge |
 | Who joined a call | 90 days | Only used to decide who may write a recap | Nightly purge |

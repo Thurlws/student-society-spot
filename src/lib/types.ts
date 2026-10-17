@@ -65,6 +65,25 @@ export interface Society {
   contactEmail?: string | undefined;
   links?: SocietyLink[] | undefined;
   extraSections?: { title: string; body: string }[] | undefined;
+  /** Set by the committee (migration 0035); undefined means free. */
+  membershipFeeCents?: number | undefined;
+}
+
+/** A paid membership fee (0035). "demo" went through the demo checkout and took no money. */
+export interface FeePayment {
+  paidAt: string;
+  how: "demo" | "committee";
+  cents?: number | undefined;
+}
+
+/** A member or applicant as their society's committee sees them, with their fee. */
+export interface SocietyMember {
+  membershipId: string;
+  societyId: string;
+  userId: string;
+  name: string;
+  status: "member" | "pending";
+  fee?: FeePayment | undefined;
 }
 
 export type MembershipStatus = "member" | "pending" | "none";
@@ -103,8 +122,12 @@ export interface Announcement {
 export interface DiscussionChannel {
   id: string;
   societyId: string;
+  /** Fixed when the channel is made; "general" is where call recaps go. */
+  slug: string;
   name: string;
   description: string;
+  /** Members read it; only the committee posts (migration 0034). */
+  committeeOnly: boolean;
 }
 
 export interface DiscussionMessage {

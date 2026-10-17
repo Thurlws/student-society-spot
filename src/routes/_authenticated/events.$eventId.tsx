@@ -15,12 +15,12 @@ import { toast } from "sonner";
 import { useData } from "@/lib/api/store";
 import { useState } from "react";
 import { formatDate, daysUntil } from "@/lib/format";
-import { downloadIcs } from "@/lib/ics";
+import { downloadIcs, googleCalendarUrl } from "@/lib/ics";
 import { pageHead } from "@/lib/seo";
 import { SocietyAvatar, accentClasses } from "@/components/society-avatar";
 import { EventCard } from "@/components/cards";
 import { EventDialog } from "@/components/event-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -229,14 +229,32 @@ function EventPage() {
               </p>
             )}
             {availability === "registered" && (
-              <Button
-                variant="ghost"
-                className="mt-2 w-full"
-                onClick={() => downloadIcs(e, s.name)}
-              >
-                <CalendarPlus />
-                Add to calendar (.ics)
-              </Button>
+              <>
+                <a
+                  className={buttonVariants({ variant: "outline", className: "mt-2 w-full" })}
+                  href={googleCalendarUrl(e, s.name)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <CalendarPlus />
+                  Add to Google Calendar
+                </a>
+                <Button
+                  variant="ghost"
+                  className="mt-1 w-full"
+                  onClick={() => downloadIcs(e, s.name)}
+                >
+                  <CalendarPlus />
+                  Add to another calendar (.ics)
+                </Button>
+                <p className="mt-1 text-center text-xs text-muted-foreground">
+                  Or keep all your events in your calendar from{" "}
+                  <Link to="/settings" hash="calendar" className="text-primary underline">
+                    Settings
+                  </Link>
+                  .
+                </p>
+              </>
             )}
           </div>
           {manage && (

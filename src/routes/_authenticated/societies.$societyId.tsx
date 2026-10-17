@@ -14,6 +14,7 @@ import {
   ClipboardList,
   BookOpen,
   PencilLine,
+  Plus,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
@@ -34,6 +35,8 @@ import { cn } from "@/lib/utils";
 import { OfficialInfo } from "@/components/official-info";
 import { AnnouncementDialog } from "@/components/announcement-dialog";
 import { MessageList } from "@/components/message-list";
+import { ChannelDialog } from "@/components/channel-dialog";
+import { FeeStatus } from "@/components/membership-fee";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +48,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { Announcement } from "@/lib/types";
+import type { Announcement, DiscussionChannel } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/societies/$societyId")({
   head: () => pageHead("Society", "A student society on SocConnect."),
@@ -88,6 +91,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
     resources,
     rooms,
     canManage,
+    channelManagement,
   } = useData();
   const s = getSociety(societyId)!;
   const today = todayIso();
@@ -107,8 +111,15 @@ function SocietyPage({ societyId }: { societyId: string }) {
   const nextUp = socEvents.find((e) => !e.cancelled);
   const socChannels = channels.filter((c) => c.societyId === s.id);
   const [picked, setChannel] = useState<string | undefined>();
-  const channel = picked ?? socChannels[0]?.id;
+  // Back to the first channel when the picked one is deleted.
+  const current = socChannels.find((c) => c.id === picked) ?? socChannels[0];
+  const channel = current?.id;
   const [draft, setDraft] = useState("");
+  const manageChannels = canManage(s.id) && channelManagement;
+  const [channelDialog, setChannelDialog] = useState<{
+    open: boolean;
+    channel?: DiscussionChannel;
+  }>({ open: false });
   const socRes = resources.filter((r) => r.societyId === s.id);
   // Member lists stay private; show the committee and you.
   const shownMembers = [
@@ -262,6 +273,7 @@ function SocietyPage({ societyId }: { societyId: string }) {
                   ? "Membership requests are reviewed by the committee."
                   : "Open to all students. You're in as soon as you join."}
               </p>
+              <FeeStatus society={s} />
             </div>
           </div>
         </TabsContent>
@@ -324,7 +336,20 @@ function SocietyPage({ societyId }: { societyId: string }) {
           ) : (
             <div className="grid overflow-hidden rounded-xl border bg-card shadow-soft md:grid-cols-[220px_1fr]">
               <div className="border-b bg-surface p-3 md:border-b-0 md:border-r">
-                <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground">Channels</p>
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <p className="text-xs font-semibold text-muted-foreground">Channels</p>
+                  {manageChannels && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="-my-1 size-7"
+                      aria-label="Add a channel"
+                      onClick={() => setChannelDialog({ open: true })}
+                    >
+                      <Plus />
+                    </Button>
+                  )}
+                </div>
                 {socChannels.map((c) => (
                   <button
                     key={c.id}
@@ -336,22 +361,36 @@ function SocietyPage({ societyId }: { societyId: string }) {
                         : "text-muted-foreground hover:bg-card",
                     )}
                   >
-                    <Hash className="size-3.5" />
+                    {c.committeeOnly ? (
+                      <Megaphone className="size-3.5" aria-label="Committee only" />
+                    ) : (
+                      <Hash className="size-3.5" />
+                    )}
                     {c.name}
                   </button>
                 ))}
               </div>
               <div className="flex h-[460px] flex-col">
-                <div className="border-b px-5 py-3">
-                  <p className="font-semibold">
-                    #{socChannels.find((c) => c.id === channel)?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {socChannels.find((c) => c.id === channel)?.description}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Only members of {s.shortName} can read this channel.
-                  </p>
+                <div className="flex items-start justify-between gap-3 border-b px-5 py-3">
+                  <div>
+                    <p className="font-semibold">#{current?.name}</p>
+                    <p className="text-xs text-muted-foreground">{current?.description}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Only members of {s.shortName} can read this channel.
+                      {current?.committeeOnly && " Only the committee posts here."}
+                    </p>
+                  </div>
+                  {manageChannels && current && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="-mr-2 shrink-0"
+                      aria-label={`Edit #${current.name}`}
+                      onClick={() => setChannelDialog({ open: true, channel: current })}
+                    >
+                      <PencilLine />
+                    </Button>
+                  )}
                 </div>
                 <MessageList
                   channelId={channel}
@@ -359,30 +398,43 @@ function SocietyPage({ societyId }: { societyId: string }) {
                   societyId={s.id}
                   societyName={s.shortName}
                 />
-                <form
-                  className="flex gap-2 border-t p-3"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!channel) return;
-                    const o = await postMessage(channel, draft);
-                    if (o.ok) setDraft("");
-                    else toast.error(o.error);
-                  }}
-                >
-                  <Input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Write a message…"
-                    maxLength={1000}
-                    aria-label="Message"
-                  />
-                  <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()}>
-                    <Send />
-                  </Button>
-                </form>
+                {current?.committeeOnly && !canManage(s.id) ? (
+                  <p className="border-t p-4 text-center text-xs text-muted-foreground">
+                    Only the committee posts in #{current.name}.
+                  </p>
+                ) : (
+                  <form
+                    className="flex gap-2 border-t p-3"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!channel) return;
+                      const o = await postMessage(channel, draft);
+                      if (o.ok) setDraft("");
+                      else toast.error(o.error);
+                    }}
+                  >
+                    <Input
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder="Write a message…"
+                      maxLength={1000}
+                      aria-label="Message"
+                    />
+                    <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim()}>
+                      <Send />
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
           )}
+          <ChannelDialog
+            open={channelDialog.open}
+            onClose={() => setChannelDialog({ ...channelDialog, open: false })}
+            societyId={s.id}
+            channel={channelDialog.channel}
+            onDeleted={() => setChannel(undefined)}
+          />
         </TabsContent>
 
         <TabsContent value="calls" className="mt-6">

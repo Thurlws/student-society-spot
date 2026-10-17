@@ -15,10 +15,8 @@ export async function downloadMyData(uid: string, email: string | undefined) {
       .from("notification_prefs")
       .select("announcements, events, discussions, email")
       .eq("user_id", uid),
-    supabase
-      .from("society_memberships")
-      .select("status, message, requested_at, decided_at, societies(name)")
-      .eq("user_id", uid),
+    // "*" so the membership fee columns come along once migration 0035 is in the database.
+    supabase.from("society_memberships").select("*, societies(name)").eq("user_id", uid),
     supabase.from("society_roles").select("position, societies(name)").eq("user_id", uid),
     supabase
       .from("event_registrations")
@@ -42,6 +40,7 @@ export async function downloadMyData(uid: string, email: string | undefined) {
     supabase.from("support_request_activity").select("kind, text, created_at").eq("actor_id", uid),
     supabase.from("call_participants").select("joined_at, call_rooms(name)").eq("user_id", uid),
     supabase.from("saved_proposals").select("collaboration_proposals(title)").eq("user_id", uid),
+    supabase.from("calendar_feeds").select("created_at").eq("user_id", uid),
   ]);
   const keys = [
     "profile",
@@ -59,6 +58,7 @@ export async function downloadMyData(uid: string, email: string | undefined) {
     "requestActivity",
     "callsJoined",
     "savedProposals",
+    "calendarLink",
   ];
   const data = Object.fromEntries(keys.map((k, i) => [k, parts[i]!.data ?? []]));
   const blob = new Blob(

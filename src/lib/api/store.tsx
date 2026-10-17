@@ -7,13 +7,16 @@ import { todayIso } from "@/lib/format";
 import {
   announcementInput,
   cancelReasonInput,
+  channelInput,
   eventInput,
+  membershipFeeInput,
   firstIssue,
   messageInput,
   reportReasonInput,
   societyEditInput,
   supportRequestInput,
   type AnnouncementInput,
+  type ChannelInput,
   type EventAvailability,
   type EventInput,
   type NotificationPrefs,
@@ -42,8 +45,12 @@ const EMPTY: AppData = {
   events: [],
   registrations: [],
   memberships: {},
+  feesEnabled: false,
+  myFees: {},
+  societyMembers: [],
   announcements: [],
   channels: [],
+  channelManagement: false,
   messages: [],
   messageReports: [],
   resources: [],
@@ -166,6 +173,11 @@ function useDataValue() {
     events: data.events,
     announcements: data.announcements,
     channels: data.channels,
+    channelManagement: data.channelManagement,
+    feesEnabled: data.feesEnabled,
+    /** The fee you've paid to a society, if any. */
+    myFee: (slug: string) => data.myFees[slug],
+    societyMembers: data.societyMembers,
     messages: data.messages,
     messageReports: data.messageReports,
     resources: data.resources,
@@ -198,6 +210,22 @@ function useDataValue() {
       act(() =>
         supabase.rpc("decide_membership", { _membership_id: membershipId, _decision: decision }),
       ),
+    /** Demo checkout (0035): records the fee as paid without taking any money. */
+    payMembershipFeeDemo: (slug: string) =>
+      act(() => supabase.rpc("pay_membership_fee_demo", { _society_id: sid(slug)! })),
+    /** The committee marks a fee paid outside SocConnect, or undoes it. */
+    setMembershipFeePaid: (membershipId: string, paid: boolean) =>
+      act(() =>
+        supabase.rpc("set_membership_fee_paid", { _membership_id: membershipId, _paid: paid }),
+      ),
+    /** Euros as typed ("5", "5.50"), or empty for no fee. */
+    setMembershipFee: async (slug: string, euros: string) => {
+      const p = membershipFeeInput.safeParse(euros);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.from("societies").update({ membership_fee_cents: p.data }).eq("id", sid(slug)!),
+      );
+    },
     registerForEvent: (id: string) =>
       act(() => supabase.rpc("register_for_event", { _event_id: id })),
     cancelRegistration: (id: string) =>
@@ -283,6 +311,32 @@ function useDataValue() {
           .insert({ channel_id: channelId, author_id: user.id, body: p.data }),
       );
     },
+    createChannel: async (slug: string, input: ChannelInput) => {
+      const p = channelInput.safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.rpc("create_channel", {
+          _society_id: sid(slug)!,
+          _name: p.data.name,
+          _description: p.data.description,
+          _committee_only: p.data.committeeOnly,
+        }),
+      );
+    },
+    updateChannel: async (id: string, input: ChannelInput) => {
+      const p = channelInput.safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.rpc("update_channel", {
+          _channel_id: id,
+          _name: p.data.name,
+          _description: p.data.description,
+          _committee_only: p.data.committeeOnly,
+        }),
+      );
+    },
+    /** Its messages go too; their authors are told (migration 0034). */
+    deleteChannel: (id: string) => act(() => supabase.rpc("delete_channel", { _channel_id: id })),
     /** Authors delete their own; the committee and admins can remove any message in their channels. */
     // The reason goes to the author when someone else removes their message (migration 0032).
     deleteMessage: (id: string, reason = "") =>

@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Society } from "@/lib/types";
+import { JoinWithFeeDialog } from "@/components/membership-fee";
 
 const report = async (p: Promise<Outcome>, message: string, success = false) => {
   const o = await p;
@@ -32,7 +33,7 @@ export function JoinButton({
   size?: "sm" | "default";
   full?: boolean;
 }) {
-  const { membership, joinSociety, leaveSociety, cancelRequest } = useData();
+  const { membership, joinSociety, leaveSociety, cancelRequest, feesEnabled } = useData();
   const status = membership(society.id);
   const cls = full ? "w-full" : undefined;
   if (status === "member")
@@ -81,6 +82,17 @@ export function JoinButton({
         Pending, cancel request
       </Button>
     );
+  const label = society.requiresApproval ? "Request to join" : "Join society";
+  // A fee opens the demo checkout first (migration 0035).
+  if (feesEnabled && society.membershipFeeCents)
+    return (
+      <JoinWithFeeDialog society={society}>
+        <Button size={size} className={cls}>
+          <Plus />
+          {label}
+        </Button>
+      </JoinWithFeeDialog>
+    );
   return (
     <Button
       size={size}
@@ -96,7 +108,7 @@ export function JoinButton({
       }
     >
       <Plus />
-      {society.requiresApproval ? "Request to join" : "Join society"}
+      {label}
     </Button>
   );
 }
