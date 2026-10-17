@@ -10,6 +10,7 @@ import { useData } from "@/lib/api/store";
 import { pageHead } from "@/lib/seo";
 import { PageHeader } from "@/components/cards";
 import { ProfileForm } from "@/components/profile-form";
+import { CalendarLink } from "@/components/calendar-link";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +37,7 @@ const SECTIONS = [
   { id: "profile", label: "Profile" },
   { id: "interests", label: "Interests" },
   { id: "notifications", label: "Notifications" },
+  { id: "calendar", label: "Calendar" },
   { id: "account", label: "Your data and account" },
 ] as const;
 
@@ -181,6 +183,13 @@ function SettingsPage() {
                 </div>
               ))}
             </div>
+          </Card>
+          <Card
+            id="calendar"
+            title="Calendar"
+            desc="Your registered events in Google Calendar, Apple Calendar or Outlook, kept up to date."
+          >
+            <CalendarLink />
           </Card>
           <Card
             id="account"
