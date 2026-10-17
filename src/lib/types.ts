@@ -99,6 +99,9 @@ export interface Event {
   date: string; // ISO date YYYY-MM-DD
   start: string; // HH:mm
   end?: string | undefined;
+  /** The same moments as ISO datetimes, for calendar files that must work in any time zone. */
+  startsAt: string;
+  endsAt?: string | undefined;
   venue: string;
   category: string;
   capacity?: number | undefined;
@@ -272,11 +275,8 @@ export interface CallRecap {
   date: string; // ISO datetime
   durationSec: number;
   participants: string[];
-  transcript: TranscriptLine[];
   summary: CallSummary;
   qa: { role: "user" | "assistant"; content: string }[];
   shared: boolean;
-  /** Transcript removed after the retention period; the summary is kept. */
-  transcriptDeleted?: boolean;
   createdBy?: string | undefined;
 }

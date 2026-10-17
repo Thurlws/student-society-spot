@@ -99,6 +99,28 @@ Left as they are: cancellation and change notices follow the "Event updates" set
 | 47 | When AI was skipped (paused, out of credits, over the hourly limit) the plain "Matches your interests in ..." line was shown as "Written by AI" | `explainSocietyFits` | Fixed 2026-10-17: only AI-written sentences are returned as reasons |
 | 48 | A log line and the Sentry issue it raised had different trace ids, so the issue couldn't be traced back to its log line | `monitoring.server.ts` | Fixed 2026-10-17: one trace id for both |
 
+### Found in the audit of 2026-10-17 (branch `claude/audit-fixes`)
+
+Line numbers are from commit `9af30db`.
+
+| # | Finding | Where | Status |
+|---|---|---|---|
+| 49 | Sign-up gives an account every unclaimed invite for its address. If Lovable's Microsoft broker trusts the address any Microsoft organisation reports (unverified, go-live step 9), someone can sign in as an invited address before its owner and take a platform admin, university admin or committee seat, not just a student account | `0031_display_names.sql:15`, `welcome.tsx:206` | Fixed in code 2026-10-17 (0040), Microsoft sign-in kept: a Microsoft identity is accepted only from the tenant that owns its domain. The owner still runs the two checks in [go-live.md](go-live.md#microsoft-sign-in) |
+| 50 | A call's captions take the speaker's name from the message, so anyone in the call (a guest too) can put words in someone else's mouth, and the AI recap lists them as decisions | `live-call.tsx:109` | Fixed 2026-10-17: the name comes from the sender's LiveKit token, and lines are cut at 2,000 characters, the most a recap accepts |
+| 51 | Everyone who leaves a call with captions writes their own recap: a 10-person call makes 10 recaps, 10 AI calls, and uses one of each person's 10 recaps an hour | `call-experience.tsx:322`, `calls.functions.ts:37` | Fixed 2026-10-17 (`calls.server.ts`): the first person to leave writes it, saved before the AI starts, and anyone leaving in the next ten minutes gets the same one and is added to its readers (`call-recaps.test.ts`) |
+| 52 | The app loads the newest 500 messages across all your channels and the newest 200 announcements across all your societies, so a quiet channel or society looks empty once a busy one has more | `fetch.ts:120-126` | Fixed in code 2026-10-17 (0039): `recent_messages` (100 per channel) and `recent_announcements` (50 per society, pinned first), with the old query as a fallback until 0039 is in production |
+| 53 | A member can set a message's `created_at` (2099 keeps it last in the channel forever); 0019 closed this for announcements only | 0001 `messages`, 0034 insert policy | Fixed in code 2026-10-17 (0038): signed-in users insert only `channel_id`, `author_id` and `body`, as 0019 did for announcements |
+| 54 | Someone removed from a society can still write recaps for its rooms for 90 days: `summarizeCall` reads the room past RLS and only asks whether they ever joined it | `calls.functions.ts:48-66` | Fixed 2026-10-17: the room is read through RLS, so only current members and the committee get past it |
+| 55 | The 60 s reload fetches every recap's full transcript (up to 600 lines each, the last 7 days' worth), though only the recap page shows it | `fetch.ts:154` | Fixed 2026-10-17: the reload leaves it out, and the recap page reads it when it opens (`loadTranscript`), with loading and retry states |
+| 56 | A downloaded `.ics` uses floating times, so a device not set to Dublin time puts the event at the wrong hour | `ics.ts:36-60` | Fixed 2026-10-17: UTC, like the feed (`ics.test.ts` checks a summer event) |
+| 57 | Error reports send the page's path unscrubbed, so a crash on `/api/calendar/<key>` or `/join/<code>` puts that secret in the error tracker | `monitoring.server.ts:91`, `start.ts:15`, `report-error.ts` | Fixed 2026-10-17: `scrub` replaces both with `[token]`, so server reports, browser reports and log lines all lose them (`monitoring.test.ts`) |
+| 58 | Nothing tests the call server functions (who gets a token, who can write a recap), where 51 and 54 were | `calls.functions.ts`, `livekit.functions.ts` | Fixed 2026-10-17 for recaps: `call-recaps.test.ts` covers who may write one, one per call, and the AI failing. Tokens are still untested beyond `livekit-token.test.ts` |
+| 59 | Two questions about a recap at the same moment: the second write of the Q&A list wipes the first | `calls.functions.ts:146-180` | Open |
+| 60 | Assigning a member request looks the committee member up by display name, so two committee members with the same name can't both be picked | `fetch.ts:192`, `store.tsx:391` | Open |
+| 61 | `dev/supabase/apply-*.sql` (2,576 lines) repeat migrations production may already have | `dev/supabase/` | Open: delete once `check-migrations.sql` shows production is up to date |
+
+Found while fixing: a call with more than 600 caption lines (about an hour of talk) couldn't save a recap at all; the server refused the transcript. Fixed 2026-10-17: up to 2,000 lines, and the browser sends the last 2,000 of a longer call.
+
 ## Phases
 
 Effort in working days for one developer who knows the code: XS up to half a day, S 1-2, M 3-5, L 1-2 weeks, XL more.

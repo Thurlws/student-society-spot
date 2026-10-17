@@ -1539,14 +1539,17 @@ export type Database = {
       university_domains: {
         Row: {
           domain: string
+          microsoft_tenant_id: string | null
           university_id: string
         }
         Insert: {
           domain: string
+          microsoft_tenant_id?: string | null
           university_id: string
         }
         Update: {
           domain?: string
+          microsoft_tenant_id?: string | null
           university_id?: string
         }
         Relationships: [
@@ -1838,6 +1841,26 @@ export type Database = {
       remove_member: {
         Args: { _membership_id: string; _reason?: string }
         Returns: undefined
+      }
+      recent_announcements: {
+        Args: { _per_society?: number; _university_id?: string }
+        Returns: Database["public"]["Tables"]["announcements"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "announcements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      recent_messages: {
+        Args: { _per_channel?: number }
+        Returns: Database["public"]["Tables"]["messages"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       set_membership_fee_paid: {
         Args: { _membership_id: string; _paid: boolean }

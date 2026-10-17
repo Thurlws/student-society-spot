@@ -100,6 +100,8 @@ export function describeAuditEntry(e: AuditEntry, names: AuditNames) {
       return `@${text(d["domain"])} can now sign in`;
     case "domain.removed":
       return `@${text(d["domain"])} can no longer sign in`;
+    case "domain.microsoft_sign_in":
+      return `Microsoft sign-in was turned ${d["on"] ? "on" : "off"} for @${text(d["domain"])}`;
     case "message.removed":
       return `A message in ${society} #${text(d["channel"])} was removed${d["reported"] ? " after a report" : ""}`;
     case "channel.deleted": {
