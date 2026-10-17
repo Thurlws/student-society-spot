@@ -18,6 +18,19 @@ export interface NotificationPrefs {
 
 export type EventAvailability = "open" | "registered" | "full" | "past" | "cancelled";
 
+/** The positions an admin picks from when adding someone to a society's committee. */
+export const committeePositions = [
+  "President",
+  "Chairperson",
+  "Vice-President",
+  "Vice-Chairperson",
+  "Secretary",
+  "Treasurer",
+  "Public Relations Officer",
+  "Events Officer",
+  "Committee member",
+] as const;
+
 export const eventCategories = [
   "Workshop",
   "Social",
