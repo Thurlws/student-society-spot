@@ -57,7 +57,15 @@ export type ErrorContext = {
   level?: "error" | "warning";
   /** The server function it came from, as a tag to filter and group by. */
   fn?: string;
+  /** The trace id of the log line it came from, so Sentry shows the two together. */
+  traceId?: string;
 };
+
+/** A random id of `bytes` bytes in hex: 16 for trace ids, 8 for span ids. */
+const randomId = (bytes: number) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
 
 /** One error as a Sentry envelope: a header line, an item header line and the event. */
 export function buildEnvelope(
@@ -81,6 +89,9 @@ export function buildEnvelope(
       ...(context.fn ? { fn: context.fn } : {}),
     },
     ...(context.route ? { transaction: scrub(context.route.split("?")[0]!) } : {}),
+    ...(context.traceId
+      ? { contexts: { trace: { trace_id: context.traceId, span_id: randomId(8) } } }
+      : {}),
     exception: {
       values: [
         {
@@ -176,6 +187,7 @@ export function logEntry(
   detail: string | undefined,
   env: string,
   now = Date.now(),
+  traceId = randomId(16),
 ): LogEntry {
   sequence = now === lastMs ? sequence + 1 : 0;
   lastMs = now;
@@ -192,7 +204,7 @@ export function logEntry(
   if (detail) attributes["error"] = attribute(detail.slice(0, 500));
   return {
     timestamp: now / 1000,
-    trace_id: crypto.randomUUID().replace(/-/g, ""),
+    trace_id: traceId,
     level,
     body: scrub(detail ? `${event}: ${detail.slice(0, 500)}` : event),
     attributes,
@@ -255,8 +267,11 @@ export function log(
   if (level === "error") console.error(line);
   else if (level === "warn") console.warn(line);
   else console.log(line);
+  // The log line and the issue it raises share a trace id; otherwise each got its own and
+  // Sentry couldn't connect them.
+  const traceId = randomId(16);
   if (process.env["SENTRY_DSN"] && queue.length < MAX_QUEUED)
-    queue.push(logEntry(level, event, fields, detail, environment()));
+    queue.push(logEntry(level, event, fields, detail, environment(), Date.now(), traceId));
   if (level === "info") return;
   const reported = new Error(detail ? `${event}: ${detail}` : event);
   reported.name = event;
@@ -266,6 +281,7 @@ export function log(
     source: "server",
     area: typeof fields["area"] === "string" ? fields["area"] : (event.split(".")[0] ?? event),
     level: level === "warn" ? "warning" : "error",
+    traceId,
     ...(typeof fields["fn"] === "string" ? { fn: fields["fn"] } : {}),
   });
 }
