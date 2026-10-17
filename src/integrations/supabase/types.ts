@@ -1539,14 +1539,17 @@ export type Database = {
       university_domains: {
         Row: {
           domain: string
+          microsoft_tenant_id: string | null
           university_id: string
         }
         Insert: {
           domain: string
+          microsoft_tenant_id?: string | null
           university_id: string
         }
         Update: {
           domain?: string
+          microsoft_tenant_id?: string | null
           university_id?: string
         }
         Relationships: [

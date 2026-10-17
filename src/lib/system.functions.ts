@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -31,7 +32,7 @@ export type SystemStatus = {
 async function requirePlatformAdmin(supabase: SupabaseClient) {
   const { data } = await supabase.rpc("my_access");
   if (!(data as { is_admin?: boolean } | null)?.is_admin)
-    throw new Error("Only platform admins can see the system status.");
+    throw new Error("Only platform admins can do this.");
 }
 
 /** /admin → System: is each part of SocConnect set up and working? Platform admins only. */
@@ -83,4 +84,37 @@ export const sendTestAlert = createServerFn({ method: "POST" })
       area: "test",
     });
     return { sent: true };
+  });
+
+/**
+ * /admin → Universities: turns Microsoft sign-in on or off for one email domain (migration 0040).
+ * Microsoft says which organisation verified the domain, and only that one's accounts are let in.
+ */
+export const setMicrosoftSignIn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({ domain: z.string().regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/), on: z.boolean() }),
+  )
+  .handler(async ({ data, context }) => {
+    await requirePlatformAdmin(context.supabase);
+    let tenant: string | null = null;
+    if (data.on) {
+      const r = await fetch(
+        `https://login.microsoftonline.com/${data.domain}/v2.0/.well-known/openid-configuration`,
+        { signal: AbortSignal.timeout(5000) },
+      ).catch(() => null);
+      if (!r || r.status >= 500)
+        throw new Error("Couldn't reach Microsoft. Try again in a minute.");
+      const issuer = r.ok ? ((await r.json()) as { issuer?: string }).issuer : undefined;
+      tenant = issuer?.match(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/)?.[0] ?? null;
+      if (!tenant) throw new Error(`@${data.domain} doesn't use Microsoft accounts.`);
+    }
+    const { data: rows, error } = await context.supabase
+      .from("university_domains")
+      .update({ microsoft_tenant_id: tenant })
+      .eq("domain", data.domain)
+      .select("domain");
+    if (error) throw new Error(error.message);
+    if (!rows?.length) throw new Error(`@${data.domain} isn't one of the university's domains.`);
+    return { on: tenant !== null };
   });
