@@ -610,13 +610,27 @@ export async function loadLive(uid: string): Promise<LiveData> {
 }
 export type LiveData = { messages: DiscussionMessage[]; notifications: Notification[] };
 
-/** A recap's transcript, read when its page opens. Null once it's been deleted (after 7 days). */
-export async function loadTranscript(recapId: string) {
+/**
+ * What the recap page reads for itself when it opens: the transcript (null once deleted, after 7
+ * days), and the summary, which the AI replaces a few seconds after the recap is saved.
+ */
+export async function loadRecap(recapId: string) {
   const { data, error } = await supabase
     .from("call_recaps")
-    .select("transcript")
+    .select("transcript, summary, created_at")
     .eq("id", recapId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data?.transcript ?? null) as unknown as TranscriptLine[] | null;
+  if (!data) return null;
+  return {
+    transcript: data.transcript as unknown as TranscriptLine[] | null,
+    summary: data.summary as unknown as CallSummary,
+    createdAt: data.created_at,
+  };
 }
+
+/** A recap saved in the last minute that still has the basic summary: the AI is writing its own. */
+export const recapStillWriting = (
+  r: { summary: CallSummary; createdAt: string } | null | undefined,
+  now = Date.now(),
+) => !!r && r.summary.source === "fallback" && now - Date.parse(r.createdAt) < 60_000;
