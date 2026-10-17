@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 import { pageAs, people, societies } from "./support";
 
 test("a university admin suspends a student, who sees why, then lifts it", async ({ browser }) => {
+  // A rebundle can stall the dev server for about 40 seconds (see below).
+  test.slow();
   const admin = await pageAs(browser, people.uniadmin);
   await admin.goto("/admin", { waitUntil: "networkidle" });
   await admin.getByRole("tab", { name: "People" }).click();
@@ -27,12 +29,23 @@ test("a university admin suspends a student, who sees why, then lifts it", async
   await expect(student.getByText("Spamming the events channel")).toBeVisible();
   await expect(student.getByRole("link", { name: "Discover societies" })).toHaveCount(0);
 
-  await section.getByRole("button", { name: "Lift suspension" }).first().click();
-  await admin.getByRole("alertdialog").getByRole("button", { name: "Lift suspension" }).click();
-  await expect(admin.getByText(`${people.student.name}'s suspension is lifted`)).toBeVisible();
-
-  await student.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
-  await expect(student.getByRole("heading", { name: societies.open.name })).toBeVisible();
+  // The dev server sometimes rebundles its dependencies at this point in the run and reloads
+  // every open page, dialog and toast included (CI, 2026-10-17). So lift until the student gets
+  // their society back, the outcome that matters, rather than waiting on the toast.
+  await expect(async () => {
+    const lift = section.getByRole("button", { name: "Lift suspension" });
+    if (await lift.count()) {
+      await lift.first().click({ timeout: 5000 });
+      await admin
+        .getByRole("alertdialog")
+        .getByRole("button", { name: "Lift suspension" })
+        .click({ timeout: 5000 });
+    }
+    await student.goto(`/societies/${societies.open.slug}`, { waitUntil: "networkidle" });
+    await expect(student.getByRole("heading", { name: societies.open.name })).toBeVisible({
+      timeout: 5000,
+    });
+  }).toPass({ timeout: 90_000 });
 
   await admin.getByRole("tab", { name: "Activity" }).click();
   const activity = admin.locator("section", {
