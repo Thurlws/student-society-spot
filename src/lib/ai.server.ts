@@ -53,20 +53,40 @@ function keepError() {
   return { kept, onError: ({ error }: { error: unknown }) => void (kept.error ??= error) };
 }
 
-export async function aiText(instructions: string, messages: ModelMessage[]) {
-  const { kept, onError } = keepError();
+// For a sentence or two the model needn't reason first, which takes seconds per call.
+const quickOpts = { openai: { forceReasoning: true, reasoningEffort: "none", store: false } };
+
+export async function aiText(
+  instructions: string,
+  messages: ModelMessage[],
+  { quick = false }: { quick?: boolean } = {},
+) {
+  const run = async (providerOptions: typeof opts | typeof quickOpts) => {
+    const { kept, onError } = keepError();
+    try {
+      const result = streamText({
+        model: provider().responses(MODEL),
+        instructions,
+        messages,
+        maxRetries: 0,
+        providerOptions,
+        onError,
+      });
+      return await result.text;
+    } catch (e) {
+      throw friendly(kept.error ?? e);
+    }
+  };
+  if (!quick) return run(opts);
   try {
-    const result = streamText({
-      model: provider().responses(MODEL),
-      instructions,
-      messages,
-      maxRetries: 0,
-      providerOptions: opts,
-      onError,
-    });
-    return await result.text;
+    return await run(quickOpts);
   } catch (e) {
-    throw friendly(kept.error ?? e);
+    // Not every model takes reasoning "none". If the gateway refuses it, say so (a tracker
+    // issue) and answer with the usual settings rather than not at all.
+    if (!(e instanceof AiError) || e.status !== 400) throw e;
+    const { log } = await import("./monitoring.server");
+    log("warn", "ai.quick_refused", { area: "ai" }, e);
+    return run(opts);
   }
 }
 

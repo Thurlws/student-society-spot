@@ -52,61 +52,67 @@ export const explainSocietyFits = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const top = (ranked ?? []).filter((r) => r.score > 0).slice(0, 3);
     const reasons: Record<string, string> = {};
-    let notice: string | null = null;
-    for (const r of top) {
-      const { data: s } = await context.supabase
-        .from("societies")
-        .select("name,description")
-        .eq("id", r.society_id)
-        .single();
-      if (!s) continue;
-      const contextHash = JSON.stringify([s.description, r.matched_interests]);
-      const { data: cached } = await context.supabase
+    if (!top.length) return { reasons, notice: null };
+    const ids = top.map((r) => r.society_id);
+    // One read each for the societies and the cache, and the AI calls side by side: one society
+    // after another, three uncached ones took about 7 seconds.
+    const [{ data: societies }, { data: cache }] = await Promise.all([
+      context.supabase.from("societies").select("id,name,description").in("id", ids),
+      context.supabase
         .from("society_fit_cache")
-        .select("reason,context_hash,created_at")
+        .select("society_id,reason,context_hash,created_at")
         .eq("user_id", context.userId)
-        .eq("society_id", r.society_id)
-        .maybeSingle();
-      if (
-        cached &&
-        cached.context_hash === contextHash &&
-        Date.parse(cached.created_at) > Date.now() - 86400000
-      ) {
-        reasons[r.slug] = cached.reason;
-        continue;
-      }
-      reasons[r.slug] = `Matches your interests in ${r.matched_interests.join(", ")}.`;
-      if (notice) continue;
-      try {
-        const admin = await gate(context.userId, "society_fit");
-        const { aiText } = await import("./ai.server");
-        const reason = (
-          await aiText(
-            `${instructions} Write exactly one sentence explaining why the matched interests fit this society.`,
-            [
-              {
-                role: "user",
-                content: JSON.stringify({ society: s, matchedInterests: r.matched_interests }),
-              },
-            ],
+        .in("society_id", ids),
+    ]);
+    const notices = await Promise.all(
+      top.map(async (r) => {
+        const found = societies?.find((x) => x.id === r.society_id);
+        if (!found) return null;
+        const s = { name: found.name, description: found.description };
+        const contextHash = JSON.stringify([s.description, r.matched_interests]);
+        const cached = cache?.find((c) => c.society_id === r.society_id);
+        if (
+          cached &&
+          cached.context_hash === contextHash &&
+          Date.parse(cached.created_at) > Date.now() - 86400000
+        ) {
+          reasons[r.slug] = cached.reason;
+          return null;
+        }
+        reasons[r.slug] = `Matches your interests in ${r.matched_interests.join(", ")}.`;
+        try {
+          const admin = await gate(context.userId, "society_fit");
+          const { aiText } = await import("./ai.server");
+          const reason = (
+            await aiText(
+              `${instructions} Write exactly one sentence explaining why the matched interests fit this society.`,
+              [
+                {
+                  role: "user",
+                  content: JSON.stringify({ society: s, matchedInterests: r.matched_interests }),
+                },
+              ],
+              { quick: true },
+            )
           )
-        )
-          .trim()
-          .slice(0, 1000);
-        if (!reason) throw new Error("AI returned no explanation.");
-        reasons[r.slug] = reason;
-        await admin.from("society_fit_cache").upsert({
-          user_id: context.userId,
-          society_id: r.society_id,
-          reason,
-          context_hash: contextHash,
-          created_at: new Date().toISOString(),
-        });
-      } catch (e) {
-        notice = await safeError(e);
-      }
-    }
-    return { reasons, notice };
+            .trim()
+            .slice(0, 1000);
+          if (!reason) throw new Error("AI returned no explanation.");
+          reasons[r.slug] = reason;
+          await admin.from("society_fit_cache").upsert({
+            user_id: context.userId,
+            society_id: r.society_id,
+            reason,
+            context_hash: contextHash,
+            created_at: new Date().toISOString(),
+          });
+          return null;
+        } catch (e) {
+          return safeError(e);
+        }
+      }),
+    );
+    return { reasons, notice: notices.find((n) => n) ?? null };
   });
 
 export const askSocConnect = createServerFn({ method: "POST" })
