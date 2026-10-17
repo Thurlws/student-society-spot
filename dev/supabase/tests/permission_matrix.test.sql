@@ -47,6 +47,8 @@ insert into public.societies (id, slug, name, short_name, requires_approval, sta
 -- Channels and rooms are made by triggers; give them names we can use.
 update public.channels c set id = md5(s.tag || ' ' || c.slug)::uuid
   from (values (md5('A')::uuid, 'A'), (md5('B')::uuid, 'B'), (md5('Z')::uuid, 'Z')) s(id, tag) where c.society_id = s.id;
+-- A's #events is committee-only (0034): members read it, only the committee posts.
+update public.channels set committee_only = true where id = md5('A events')::uuid;
 update public.call_rooms r set id = md5(s.tag || ' ' || r.slug)::uuid
   from (values (md5('A')::uuid, 'A'), (md5('B')::uuid, 'B'), (md5('Z')::uuid, 'Z')) s(id, tag) where r.society_id = s.id;
 
@@ -234,6 +236,7 @@ insert into matrix (label, kind, sql, expected) values
 ('announcements: delete A''s', 'rows', $$delete from public.announcements where id = md5('announcement A')::uuid$$, '{0,0,0,0,1,0,0,0,0}'),
 ('channels: add', 'rows', $$insert into public.channels (society_id, slug, name) values (md5('A')::uuid, 'new', 'new')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('messages: post in A', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A general')::uuid, auth.uid(), 'Hi')$$, '{denied,denied,denied,1,1,denied,denied,denied,denied}'),
+('messages: post in A''s committee-only channel', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A events')::uuid, auth.uid(), 'Hi')$$, '{denied,denied,denied,denied,1,denied,denied,denied,denied}'),
 ('messages: post in A as someone else', 'rows', $$insert into public.messages (channel_id, author_id, body) values (md5('A general')::uuid, md5('bystander')::uuid, 'Hi')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('messages: edit', 'rows', $$update public.messages set body = 'Edited' where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
 ('messages: delete directly', 'rows', $$delete from public.messages where id = md5('message A')::uuid$$, '{0,0,0,0,0,0,0,0,0}'),
@@ -301,6 +304,10 @@ insert into matrix (label, kind, sql, expected) values
 ('assign_support_request(A''s request)', 'call', $$select public.assign_support_request(md5('request A')::uuid, md5('committee')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('set_support_request_status(A''s request)', 'call', $$select public.set_support_request_status(md5('request A')::uuid, 'in_progress', '')$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('comment_on_support_request(A''s request)', 'call', $$select public.comment_on_support_request(md5('request A')::uuid, 'Any update?')$$, '{denied,refused,refused,ok,ok,refused,refused,refused,refused}'),
+('create_channel(A)', 'call', $$select public.create_channel(md5('A')::uuid, 'Kit & Lifts', 'Who brings what')$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
+('update_channel(A''s #events)', 'call', $$select public.update_channel(md5('A events')::uuid, 'notices', 'From the committee', true)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
+('delete_channel(A''s #events)', 'call', $$select public.delete_channel(md5('A events')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
+('delete_channel(A''s #general)', 'call', $$select public.delete_channel(md5('A general')::uuid)$$, '{denied,refused,refused,refused,refused,refused,refused,refused,refused}'),
 ('share_recap(A''s private recap)', 'call', $$select public.share_recap(md5('recap A private')::uuid)$$, '{denied,refused,refused,refused,ok,refused,refused,refused,refused}'),
 ('report_message(B''s message)', 'call', $$select public.report_message(md5('message B')::uuid, 'Spam')$$, '{denied,refused,refused,ok,refused,refused,refused,refused,refused}'),
 ('delete_message(A''s message)', 'call', $$select public.delete_message(md5('message A')::uuid)$$, '{denied,refused,refused,ok,ok,refused,ok,refused,ok}'),
@@ -343,10 +350,10 @@ select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.o
 select set_eq($$select p.proname::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')$$,
   array['assign_support_request', 'cancel_event', 'cancel_membership_request', 'cancel_registration', 'comment_on_support_request',
-        'create_event', 'decide_membership', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
+        'create_channel', 'create_event', 'decide_membership', 'delete_channel', 'delete_message', 'dismiss_message_reports', 'email_domain_allowed', 'event_attendee_counts', 'join_society',
         'find_people', 'import_societies', 'leave_society', 'my_access', 'recommend_societies', 'register_for_event', 'reinstate_user', 'report_message',
         'schedule_meeting', 'set_support_request_status', 'share_recap', 'suspend_user',
-        'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_event'],
+        'society_member_count', 'society_member_counts', 'society_members', 'submit_support_request', 'update_channel', 'update_event'],
   'signed-in users can call only these owner-rights functions; a new one must be added here and to the matrix');
 select is_empty($$select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and not (p.proconfig @> array['search_path=public'] or p.proconfig @> array['search_path="public"'])$$,

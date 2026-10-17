@@ -50,6 +50,28 @@ export const messageInput = z
   .min(1, "Write a message first.")
   .max(1000, "Messages can be up to 1,000 characters.");
 
+/** Mirrors private.channel_name (0034): lower case letters, numbers and dashes. */
+export const channelName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+export const channelInput = z.object({
+  name: z
+    .string()
+    .transform(channelName)
+    .pipe(
+      z
+        .string()
+        .min(1, "Give the channel a name with letters or numbers.")
+        .max(30, "Keep the channel name to 30 characters."),
+    ),
+  description: z.string().trim().max(200, "Keep the description to 200 characters."),
+  committeeOnly: z.boolean(),
+});
+export type ChannelInput = z.input<typeof channelInput>;
+
 export const societyEditInput = z.object({
   tagline: z.string().trim().min(3, "Add a tagline.").max(140),
   description: z.string().trim().min(10, "Add a description of at least 10 characters.").max(2000),

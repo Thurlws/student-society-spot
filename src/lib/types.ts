@@ -103,8 +103,12 @@ export interface Announcement {
 export interface DiscussionChannel {
   id: string;
   societyId: string;
+  /** Fixed when the channel is made; "general" is where call recaps go. */
+  slug: string;
   name: string;
   description: string;
+  /** Members read it; only the committee posts (migration 0034). */
+  committeeOnly: boolean;
 }
 
 export interface DiscussionMessage {
