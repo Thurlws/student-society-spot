@@ -51,6 +51,8 @@ export const explainSocietyFits = createServerFn({ method: "POST" })
     const { data: ranked, error } = await context.supabase.rpc("recommend_societies");
     if (error) throw new Error(error.message);
     const top = (ranked ?? []).filter((r) => r.score > 0).slice(0, 3);
+    // Only AI-written sentences go in reasons: the pages label whatever is here "Written by AI"
+    // and show their own plain line, or none, for the rest.
     const reasons: Record<string, string> = {};
     if (!top.length) return { reasons, notice: null };
     const ids = top.map((r) => r.society_id);
@@ -79,7 +81,6 @@ export const explainSocietyFits = createServerFn({ method: "POST" })
           reasons[r.slug] = cached.reason;
           return null;
         }
-        reasons[r.slug] = `Matches your interests in ${r.matched_interests.join(", ")}.`;
         try {
           const admin = await gate(context.userId, "society_fit");
           const { aiText } = await import("./ai.server");
