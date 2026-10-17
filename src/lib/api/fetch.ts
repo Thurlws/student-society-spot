@@ -169,7 +169,14 @@ export async function loadAppData(
       .from("call_rooms")
       .select("*, profiles!call_rooms_host_id_fkey(display_name)")
       .order("starts_at", { nullsFirst: true }),
-    supabase.from("call_recaps").select("*").order("created_at", { ascending: false }).limit(100),
+    // Everything but the transcript, which only the recap page shows (loadTranscript).
+    supabase
+      .from("call_recaps")
+      .select(
+        "id, room_id, society_id, title, started_at, duration_sec, participants, summary, qa, shared, created_by",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100),
     supabase.rpc("recommend_societies"),
     supabase
       .from("message_reports")
@@ -584,12 +591,21 @@ export async function loadAppData(
         date: r.started_at,
         durationSec: r.duration_sec,
         participants: r.participants,
-        transcript: (r.transcript ?? []) as unknown as TranscriptLine[],
-        transcriptDeleted: r.transcript === null,
         summary: r.summary as unknown as CallSummary,
         qa: (r.qa ?? []) as unknown as CallRecap["qa"],
         shared: r.shared,
         createdBy: r.created_by ?? undefined,
       })),
   };
+}
+
+/** A recap's transcript, read when its page opens. Null once it's been deleted (after 7 days). */
+export async function loadTranscript(recapId: string) {
+  const { data, error } = await supabase
+    .from("call_recaps")
+    .select("transcript")
+    .eq("id", recapId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.transcript ?? null) as unknown as TranscriptLine[] | null;
 }

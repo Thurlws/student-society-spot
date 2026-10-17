@@ -272,11 +272,8 @@ export interface CallRecap {
   date: string; // ISO datetime
   durationSec: number;
   participants: string[];
-  transcript: TranscriptLine[];
   summary: CallSummary;
   qa: { role: "user" | "assistant"; content: string }[];
   shared: boolean;
-  /** Transcript removed after the retention period; the summary is kept. */
-  transcriptDeleted?: boolean;
   createdBy?: string | undefined;
 }
