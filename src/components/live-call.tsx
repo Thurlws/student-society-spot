@@ -102,12 +102,12 @@ export function LiveCallBridge({
 
   const { send } = useDataChannel(TRANSCRIPT_TOPIC, (msg) => {
     try {
-      const line = JSON.parse(new TextDecoder().decode(msg.payload)) as {
-        speaker?: string;
-        text?: string;
-      };
-      const speaker = line.speaker || msg.from?.name || "Someone";
-      if (line.text) onLine.current(speaker, line.text);
+      const line = JSON.parse(new TextDecoder().decode(msg.payload)) as { text?: unknown };
+      // The name the server put in the sender's token, never one the message claims.
+      const speaker = msg.from?.name || "Someone";
+      // Recaps refuse longer lines (summarizeCall), so one long message can't block everyone's.
+      if (typeof line.text === "string" && line.text)
+        onLine.current(speaker, line.text.slice(0, 2000));
     } catch {
       /* ignore malformed messages */
     }

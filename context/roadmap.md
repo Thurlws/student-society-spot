@@ -106,7 +106,7 @@ Line numbers are from commit `9af30db`.
 | # | Finding | Where | Status |
 |---|---|---|---|
 | 49 | Sign-up gives an account every unclaimed invite for its address. If Lovable's Microsoft broker trusts the address any Microsoft organisation reports (unverified, go-live step 9), someone can sign in as an invited address before its owner and take a platform admin, university admin or committee seat, not just a student account | `0031_display_names.sql:15`, `welcome.tsx:206` | Open |
-| 50 | A call's captions take the speaker's name from the message, so anyone in the call (a guest too) can put words in someone else's mouth, and the AI recap lists them as decisions | `live-call.tsx:109` | Open |
+| 50 | A call's captions take the speaker's name from the message, so anyone in the call (a guest too) can put words in someone else's mouth, and the AI recap lists them as decisions | `live-call.tsx:109` | Fixed 2026-10-17: the name comes from the sender's LiveKit token, and lines are cut at 2,000 characters, the most a recap accepts |
 | 51 | Everyone who leaves a call with captions writes their own recap: a 10-person call makes 10 recaps, 10 AI calls, and uses one of each person's 10 recaps an hour | `call-experience.tsx:322`, `calls.functions.ts:37` | Open |
 | 52 | The app loads the newest 500 messages across all your channels and the newest 200 announcements across all your societies, so a quiet channel or society looks empty once a busy one has more | `fetch.ts:120-126` | Open |
 | 53 | A member can set a message's `created_at` (2099 keeps it last in the channel forever); 0019 closed this for announcements only | 0001 `messages`, 0034 insert policy | Open |
