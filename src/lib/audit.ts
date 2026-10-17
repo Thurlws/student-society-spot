@@ -102,6 +102,10 @@ export function describeAuditEntry(e: AuditEntry, names: AuditNames) {
       return `@${text(d["domain"])} can no longer sign in`;
     case "message.removed":
       return `A message in ${society} #${text(d["channel"])} was removed${d["reported"] ? " after a report" : ""}`;
+    case "channel.deleted": {
+      const n = Number(d["messages"]) || 0;
+      return `${society} deleted #${text(d["channel"])}${n ? ` and its ${n === 1 ? "message" : `${n} messages`}` : ""}`;
+    }
     case "reports.dismissed": {
       const n = Number(d["reports"]) || 1;
       return `${n === 1 ? "A report" : `${n} reports`} about a message in ${society} ${n === 1 ? "was" : "were"} closed, and the message stayed`;

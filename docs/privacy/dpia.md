@@ -32,7 +32,7 @@ Expected scale for one pilot: 500 to 3,000 active students, 70 to 200 societies.
 | Study | Course and year (free text, or the university's course list) | The person |
 | Preferences | Interests, notification settings | The person |
 | University | Which university the account belongs to (from the email domain), when they last signed in, suspension and reason | Automatic, admins |
-| Society activity | Memberships and join requests, committee positions, event registrations, messages, member requests to committees, reports about messages, saved proposals | The person, committees |
+| Society activity | Memberships and join requests (with whether the membership fee was paid, and whether through the demo checkout or marked by the committee; no card or bank details), committee positions, event registrations, messages, member requests to committees, reports about messages, saved proposals; a calendar link's hash and when it was made. Whoever has the link, and the calendar app it's added to (Google Calendar, for example), sees the events the person registered for | The person, committees |
 | **Special category, by inference** | Membership of societies about religion, ethnicity, sexuality, health or disability | The person's choice to join |
 | Calls | Who joined, display name in the call; only for people who turn captions on: 7-second audio clips, the transcript, an AI summary and answers | The person |
 | AI use | Questions asked, when AI features are used | The person |

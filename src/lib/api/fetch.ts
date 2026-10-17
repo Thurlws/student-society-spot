@@ -9,6 +9,7 @@ import type {
   DiscussionChannel,
   DiscussionMessage,
   Event,
+  FeePayment,
   MembershipRequest,
   MessageReport,
   Notification,
@@ -17,6 +18,7 @@ import type {
   Society,
   SocietyAccent,
   SocietyLink,
+  SocietyMember,
   SupportRequest,
 } from "@/lib/types";
 import type { NotificationPrefs } from "@/lib/validation";
@@ -32,8 +34,16 @@ export type AppData = {
   events: Event[];
   registrations: string[];
   memberships: Record<string, "member" | "pending">;
+  /** Migration 0035 is in the database, so societies can charge a membership fee. */
+  feesEnabled: boolean;
+  /** The fees you've paid, by society slug. */
+  myFees: Record<string, FeePayment>;
+  /** Members and applicants of the societies you're on the committee of. */
+  societyMembers: SocietyMember[];
   announcements: Announcement[];
   channels: DiscussionChannel[];
+  /** Migration 0034 is in the database, so committees can manage channels. */
+  channelManagement: boolean;
   messages: DiscussionMessage[];
   messageReports: MessageReport[];
   resources: (Resource & { url: string })[];
@@ -97,7 +107,8 @@ export async function loadAppData(
     societyQuery.order("name"),
     supabase.from("society_tags").select("society_id, interests(name)"),
     supabase.from("society_roles").select("society_id, user_id, position, profiles(display_name)"),
-    supabase.from("society_memberships").select("society_id, status").eq("user_id", uid),
+    // "*" so the fee columns come along once 0035 is in the database, and nothing breaks before.
+    supabase.from("society_memberships").select("*").eq("user_id", uid),
     supabase.rpc("society_member_counts"),
     supabase.from("events").select("*").order("starts_at"),
     supabase.rpc("event_attendee_counts"),
@@ -206,7 +217,21 @@ export async function loadAppData(
     extraSections: Array.isArray(s.extra_sections)
       ? (s.extra_sections as unknown as { title: string; body: string }[])
       : [],
+    membershipFeeCents: s.membership_fee_cents ?? undefined,
   }));
+  const feesEnabled = socRows.some((s) => "membership_fee_cents" in s);
+  const feeOf = (m: {
+    fee_paid_at?: string | null;
+    fee_paid_how?: string | null;
+    fee_paid_cents?: number | null;
+  }): FeePayment | undefined =>
+    m.fee_paid_at
+      ? {
+          paidAt: m.fee_paid_at,
+          how: m.fee_paid_how === "committee" ? "committee" : "demo",
+          cents: m.fee_paid_cents ?? undefined,
+        }
+      : undefined;
 
   const attendees = new Map(must(att).map((a) => [a.event_id, a.attendees]));
   const events: Event[] = must(ev)
@@ -233,30 +258,64 @@ export async function loadAppData(
     });
 
   const memberships: AppData["memberships"] = {};
+  const myFees: AppData["myFees"] = {};
   for (const m of must(mem))
-    if ((m.status === "member" || m.status === "pending") && slugOf[m.society_id])
+    if ((m.status === "member" || m.status === "pending") && slugOf[m.society_id]) {
       memberships[slugOf[m.society_id]!] = m.status;
+      const fee = feeOf(m);
+      if (fee) myFees[slugOf[m.society_id]!] = fee;
+    }
 
   const name = (p: { display_name: string } | null | undefined) => p?.display_name || "Someone";
   const channelRows = must(ch);
+  // #general first, then in the order they were made (0034 adds created_at and committee_only;
+  // until then neither is there).
+  const channelManagement = channelRows.some((c) => "committee_only" in c);
   const channels: DiscussionChannel[] = channelRows
     .filter((c) => slugOf[c.society_id])
+    .sort(
+      (x, y) =>
+        Number(y.slug === "general") - Number(x.slug === "general") ||
+        (x.created_at ?? "").localeCompare(y.created_at ?? "") ||
+        x.name.localeCompare(y.name),
+    )
     .map((c) => ({
       id: c.id,
       societyId: slugOf[c.society_id]!,
+      slug: c.slug,
       name: c.name,
       description: c.description,
+      committeeOnly: c.committee_only ?? false,
     }));
 
   // Membership requests: only committee members can read other people's rows, via society_members().
   const requests: MembershipRequest[] = [];
   const resolvedRequests: ResolvedRequest[] = [];
+  const societyMembers: SocietyMember[] = [];
+  // Fees paid at the committee's societies; the committee can read those membership rows.
+  const committeeFees = new Map<string, FeePayment>();
+  if (feesEnabled && committeeSocietyIds.length)
+    for (const m of must(
+      await supabase.from("society_memberships").select("*").in("society_id", committeeSocietyIds),
+    )) {
+      const fee = feeOf(m);
+      if (fee) committeeFees.set(m.id, fee);
+    }
   await Promise.all(
     committeeSocietyIds.map(async (sid) => {
       const rows = must(await supabase.rpc("society_members", { _society_id: sid }));
       const slug = slugOf[sid];
       if (!slug) return;
       for (const r of rows) {
+        if (r.status === "member" || r.status === "pending")
+          societyMembers.push({
+            membershipId: r.membership_id,
+            societyId: slug,
+            userId: r.user_id,
+            name: r.display_name || "Student",
+            status: r.status,
+            fee: committeeFees.get(r.membership_id),
+          });
         const base = {
           id: r.membership_id,
           societyId: slug,
@@ -335,10 +394,14 @@ export async function loadAppData(
     committeeIds,
     events,
     memberships,
+    feesEnabled,
+    myFees,
+    societyMembers: societyMembers.sort((a, b) => a.name.localeCompare(b.name)),
     requests,
     resolvedRequests,
     supportRequests,
     channels,
+    channelManagement,
     recommendations: must(recommendationRes).filter((r) => slugOf[r.society_id]),
     registrations: must(regs).map((r) => r.event_id),
     announcements: (
