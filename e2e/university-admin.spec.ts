@@ -21,7 +21,8 @@ test("a university admin creates a society and invites its committee", async ({ 
   });
   await society.getByRole("button", { name: "Committee" }).click();
   await society.getByLabel("Committee member email").fill("e2e-newchair@mytudublin.ie");
-  await society.getByLabel("Position").fill("President");
+  await society.getByLabel("Position").click();
+  await admin.getByRole("option", { name: "President", exact: true }).click();
   await society.getByRole("button", { name: "Add", exact: true }).click();
   await expect(
     society.getByText("e2e-newchair@mytudublin.ie, President, waiting for first sign-in"),

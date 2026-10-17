@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type University } from "@/lib/auth";
 import { useData } from "@/lib/api/store";
+import { committeePositions } from "@/lib/validation";
 import type { Society } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
@@ -524,7 +525,7 @@ function Committee({
   const { session } = useAuth();
   const qc = useQueryClient();
   const [email, setEmail] = useState("");
-  const [position, setPosition] = useState("");
+  const [position, setPosition] = useState<string>("Committee member");
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
 
@@ -536,7 +537,7 @@ function Committee({
       email: addr,
       society_id: society.id,
       role: "committee",
-      position: position.trim() || "Committee member",
+      position,
       invited_by: session?.user.id ?? null,
     });
     setBusy(false);
@@ -546,7 +547,7 @@ function Committee({
       );
     toast.success(`${addr} added to ${society.short_name}'s committee`);
     setEmail("");
-    setPosition("");
+    setPosition("Committee member");
     void refresh();
   };
 
@@ -604,13 +605,18 @@ function Committee({
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Input
-          aria-label="Position"
-          placeholder="Position, e.g. President"
-          value={position}
-          onChange={(e) => setPosition(e.target.value)}
-          maxLength={60}
-        />
+        <Select value={position} onValueChange={setPosition}>
+          <SelectTrigger aria-label="Position" className="sm:w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {committeePositions.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="submit" variant="outline" disabled={busy}>
           {busy ? <Loader2 className="animate-spin" /> : <UserPlus />}Add
         </Button>
