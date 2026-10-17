@@ -53,8 +53,9 @@ function keepError() {
   return { kept, onError: ({ error }: { error: unknown }) => void (kept.error ??= error) };
 }
 
-// For a sentence or two the model needn't reason first, which takes seconds per call.
-const quickOpts = { openai: { forceReasoning: true, reasoningEffort: "none", store: false } };
+// For a sentence or two: the least reasoning the model takes ("none" is refused by
+// gpt-6-astra, which made every quick call fail once and run again), and no summary of it.
+const quickOpts = { openai: { forceReasoning: true, reasoningEffort: "low", store: false } };
 
 export async function aiText(
   instructions: string,
@@ -77,17 +78,7 @@ export async function aiText(
       throw friendly(kept.error ?? e);
     }
   };
-  if (!quick) return run(opts);
-  try {
-    return await run(quickOpts);
-  } catch (e) {
-    // Not every model takes reasoning "none". If the gateway refuses it, say so (a tracker
-    // issue) and answer with the usual settings rather than not at all.
-    if (!(e instanceof AiError) || e.status !== 400) throw e;
-    const { log } = await import("./monitoring.server");
-    log("warn", "ai.quick_refused", { area: "ai" }, e);
-    return run(opts);
-  }
+  return run(quick ? quickOpts : opts);
 }
 
 export async function aiObject<T>(instructions: string, prompt: string, schema: z.ZodType<T>) {
