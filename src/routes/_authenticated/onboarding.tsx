@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Waypoints } from "lucide-react";
+import { toast } from "sonner";
 import { pageHead } from "@/lib/seo";
 import { useData } from "@/lib/api/store";
 import { useAuth } from "@/lib/auth";
@@ -44,7 +45,11 @@ function Onboarding() {
               <button
                 key={i}
                 type="button"
-                onClick={() => void toggleInterest(i)}
+                aria-pressed={on}
+                onClick={async () => {
+                  const o = await toggleInterest(i);
+                  if (!o.ok) toast.error(o.error);
+                }}
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                   on

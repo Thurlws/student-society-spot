@@ -1,8 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { initialsOf, useAuth } from "@/lib/auth";
 import { loadAppData, loadLive, type AppData } from "@/lib/api/fetch";
+import { withTaps } from "@/lib/interests";
 import { todayIso } from "@/lib/format";
 import {
   announcementInput,
@@ -56,6 +65,7 @@ const EMPTY: AppData = {
   resources: [],
   prefs: { announcements: true, events: true, discussions: false, email: false },
   allInterests: [],
+  interestIds: {},
   requests: [],
   resolvedRequests: [],
   supportRequests: [],
@@ -128,6 +138,13 @@ function useDataValue() {
   const messages = live.data?.messages ?? [];
   const loaded = (!!q.data || !!q.error) && (!!live.data || !!live.error);
 
+  // Interests change on the tap, before the database answers (it took three round trips): each
+  // tap flips what you see, and the saves run one after another, so the last tap wins.
+  const [interestTaps, setInterestTaps] = useState<Record<string, boolean>>({});
+  const interestSaves = useRef<Promise<unknown>>(Promise.resolve());
+  const interestTapCount = useRef(0);
+  const interests = withTaps(auth.interests, interestTaps);
+
   const committeeSlugs = auth.access.committee.map((c) => c.slug);
   const name = auth.profile?.display_name.trim() || "You";
   const user: User = {
@@ -136,7 +153,7 @@ function useDataValue() {
     initials: initialsOf(name),
     course: auth.profile?.course ?? "",
     year: auth.profile?.year ?? "",
-    interests: auth.interests,
+    interests,
     role: committeeSlugs.length ? "committee" : "student",
     committeeSocietyIds: committeeSlugs,
   };
@@ -212,7 +229,7 @@ function useDataValue() {
     proposals: data.proposals,
     savedProposals: data.savedProposals,
     prefs: data.prefs,
-    interests: auth.interests,
+    interests,
     joinedSocieties,
     getSociety,
     getEvent,
@@ -449,26 +466,41 @@ function useDataValue() {
           ? supabase.from("saved_proposals").delete().eq("user_id", user.id).eq("proposal_id", id)
           : supabase.from("saved_proposals").insert({ user_id: user.id, proposal_id: id }),
       ),
-    toggleInterest: async (i: string) => {
-      if (!uidAuth) return;
-      const { data: row } = await supabase
-        .from("interests")
-        .select("id")
-        .eq("name", i)
-        .maybeSingle();
-      if (!row) return;
-      if (auth.interests.includes(i))
-        await supabase
-          .from("profile_interests")
-          .delete()
-          .eq("profile_id", uidAuth)
-          .eq("interest_id", row.id);
-      else
-        await supabase
-          .from("profile_interests")
-          .insert({ profile_id: uidAuth, interest_id: row.id });
-      // Recommendations follow interests, and the rest of the data only reloads every 10 minutes.
-      await Promise.all([auth.refresh(), refresh()]);
+    /** Flips an interest at once; resolves when it's saved, with an error if it couldn't be. */
+    toggleInterest: (i: string): Promise<Outcome> => {
+      const id = data.interestIds[i];
+      if (!uidAuth || !id) return Promise.resolve(fail("Still loading. Try again in a moment."));
+      const on = !interests.includes(i);
+      setInterestTaps((t) => ({ ...t, [i]: on }));
+      const tap = ++interestTapCount.current;
+      const save = interestSaves.current.then(async () => {
+        const { error } = on
+          ? await supabase
+              .from("profile_interests")
+              .insert({ profile_id: uidAuth, interest_id: id })
+          : await supabase
+              .from("profile_interests")
+              .delete()
+              .eq("profile_id", uidAuth)
+              .eq("interest_id", id);
+        // 23505: already saved, which is what this tap wanted.
+        if (error && error.code !== "23505") throw error;
+      });
+      interestSaves.current = save.catch(() => undefined);
+      return save.then(
+        async () => {
+          if (tap !== interestTapCount.current) return { ok: true } as Outcome;
+          // The last tap of a run: read back what's saved, and the recommendations that follow it.
+          await Promise.all([auth.refresh(), refresh()]);
+          if (tap === interestTapCount.current) setInterestTaps({});
+          return { ok: true } as Outcome;
+        },
+        async (e: unknown) => {
+          await auth.refresh();
+          setInterestTaps(({ [i]: _, ...rest }) => rest);
+          return fail(`Couldn't save ${i}. ${errText(e)}`);
+        },
+      );
     },
     setPref: (k: keyof NotificationPrefs, v: boolean) =>
       act(() =>
