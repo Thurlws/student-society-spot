@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { initialsOf, useAuth } from "@/lib/auth";
-import { loadAppData, type AppData } from "@/lib/api/fetch";
+import { loadAppData, loadLive, type AppData } from "@/lib/api/fetch";
 import { todayIso } from "@/lib/format";
 import {
   announcementInput,
@@ -33,9 +33,10 @@ import type {
 } from "@/lib/types";
 
 /**
- * The app's data layer. Reads come from the database through one TanStack Query
- * (refreshed every 60s in visible tabs and on focus until realtime lands in Phase 5); every write is a
- * database function or an RLS-checked insert, so the browser is never trusted.
+ * The app's data layer. Reads come from the database through two TanStack Queries: chat and
+ * notifications every 60 s in visible tabs, everything else every 10 minutes or when a
+ * notification arrives. Every write is a database function or an RLS-checked insert, so the
+ * browser is never trusted.
  */
 const EMPTY: AppData = {
   societies: [],
@@ -51,10 +52,8 @@ const EMPTY: AppData = {
   announcements: [],
   channels: [],
   channelManagement: false,
-  messages: [],
   messageReports: [],
   resources: [],
-  notifications: [],
   prefs: { announcements: true, events: true, discussions: false, email: false },
   allInterests: [],
   requests: [],
@@ -99,12 +98,35 @@ function useDataValue() {
     queryKey: key,
     queryFn: () => loadAppData(uidAuth!, committeeUuids, universityId),
     enabled: !!uidAuth,
-    // shortcut: polling reloads everything for each visible tab; move messages and notifications to realtime before a large pilot.
+    refetchInterval: 600_000,
+    refetchOnWindowFocus: true,
+    // Switching back to the tab reloads it only if the last load is a minute old.
+    staleTime: 60_000,
+  });
+  // shortcut: chat and notifications are polled every 60 s per visible tab; move them to realtime if a minute's delay bothers people.
+  const live = useQuery({
+    queryKey: ["app-data", "live", uidAuth],
+    queryFn: () => loadLive(uidAuth!),
+    enabled: !!uidAuth,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
+  // Other people's changes that concern you (requests, events, announcements, reports, removals)
+  // come with a notification, so a new one reloads everything else at once rather than in 10 min.
+  const newestNote = live.data ? (live.data.notifications[0]?.id ?? "none") : undefined;
+  const seenNote = useRef(newestNote);
+  useEffect(() => {
+    if (
+      seenNote.current !== undefined &&
+      newestNote !== undefined &&
+      newestNote !== seenNote.current
+    )
+      void qc.invalidateQueries({ queryKey: ["app-data", uidAuth] });
+    seenNote.current = newestNote;
+  }, [newestNote, qc, uidAuth]);
   const data = q.data ?? EMPTY;
-  const loaded = !!q.data || !!q.error;
+  const messages = live.data?.messages ?? [];
+  const loaded = (!!q.data || !!q.error) && (!!live.data || !!live.error);
 
   const committeeSlugs = auth.access.committee.map((c) => c.slug);
   const name = auth.profile?.display_name.trim() || "You";
@@ -156,12 +178,12 @@ function useDataValue() {
   const rooms = data.rooms.filter((r) => r.kind === "room");
   const meetings = data.rooms.filter((r) => r.kind === "meeting");
 
-  const notifications = data.notifications;
+  const notifications = live.data?.notifications ?? [];
   const joinedSocieties = data.societies.filter((s) => membership(s.id) === "member");
 
   return {
     loaded,
-    error: q.error ? errText(q.error) : null,
+    error: q.error || live.error ? errText(q.error ?? live.error) : null,
     user,
     role: user.role,
     // Platform and university admins alike: this data only holds the user's own university.
@@ -178,7 +200,7 @@ function useDataValue() {
     /** The fee you've paid to a society, if any. */
     myFee: (slug: string) => data.myFees[slug],
     societyMembers: data.societyMembers,
-    messages: data.messages,
+    messages,
     messageReports: data.messageReports,
     resources: data.resources,
     allInterests: data.allInterests,
@@ -445,7 +467,8 @@ function useDataValue() {
         await supabase
           .from("profile_interests")
           .insert({ profile_id: uidAuth, interest_id: row.id });
-      await auth.refresh();
+      // Recommendations follow interests, and the rest of the data only reloads every 10 minutes.
+      await Promise.all([auth.refresh(), refresh()]);
     },
     setPref: (k: keyof NotificationPrefs, v: boolean) =>
       act(() =>

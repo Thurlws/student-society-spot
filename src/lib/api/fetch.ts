@@ -44,10 +44,8 @@ export type AppData = {
   channels: DiscussionChannel[];
   /** Migration 0034 is in the database, so committees can manage channels. */
   channelManagement: boolean;
-  messages: DiscussionMessage[];
   messageReports: MessageReport[];
   resources: (Resource & { url: string })[];
-  notifications: Notification[];
   prefs: NotificationPrefs;
   allInterests: string[];
   requests: MembershipRequest[];
@@ -94,9 +92,7 @@ export async function loadAppData(
     regs,
     ann,
     ch,
-    msg,
     res,
-    notes,
     prefs,
     ints,
     sr,
@@ -129,26 +125,7 @@ export async function loadAppData(
           : r,
       ),
     supabase.from("channels").select("*"),
-    supabase
-      .rpc("recent_messages")
-      .select("*, profiles(display_name)")
-      .order("created_at", { ascending: false })
-      .then((r) =>
-        r.error?.code === "PGRST202"
-          ? supabase
-              .from("messages")
-              .select("*, profiles(display_name)")
-              .order("created_at", { ascending: false })
-              .limit(500)
-          : r,
-      ),
     supabase.from("resources").select("*"),
-    supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false })
-      .limit(100),
     supabase.from("notification_prefs").select("*").eq("user_id", uid).maybeSingle(),
     supabase.from("interests").select("name").order("name"),
     supabase
@@ -466,25 +443,6 @@ export async function loadAppData(
         pinned: a.pinned,
         editedAt: a.edited_at ?? undefined,
       })),
-    messages: (
-      must(msg) as {
-        id: string;
-        channel_id: string;
-        author_id: string;
-        body: string;
-        created_at: string;
-        profiles: { display_name: string } | null;
-      }[]
-    )
-      .map((m) => ({
-        id: m.id,
-        channelId: m.channel_id,
-        author: name(m.profiles),
-        authorId: m.author_id,
-        body: m.body,
-        createdAt: m.created_at,
-      }))
-      .reverse(),
     // Empty until migration 0016 is in production.
     messageReports: (
       mustOrMissing(reportRes) as unknown as {
@@ -523,14 +481,6 @@ export async function loadAppData(
         description: r.description,
         url: r.url,
       })),
-    notifications: must(notes).map((n) => ({
-      id: n.id,
-      title: n.title,
-      body: n.body,
-      createdAt: n.created_at,
-      read: !!n.read_at,
-      link: (n.link as Notification["link"]) ?? undefined,
-    })),
     prefs: p
       ? {
           announcements: p.announcements,
@@ -601,13 +551,86 @@ export async function loadAppData(
   };
 }
 
-/** A recap's transcript, read when its page opens. Null once it's been deleted (after 7 days). */
-export async function loadTranscript(recapId: string) {
+/**
+ * Chat and notifications, which change by the minute. Reloaded every 60 s; everything in
+ * loadAppData every 10 minutes, or as soon as a notification arrives (store.tsx).
+ */
+export async function loadLive(uid: string): Promise<LiveData> {
+  const [msg, notes] = await Promise.all([
+    supabase
+      .rpc("recent_messages")
+      .select("*, profiles(display_name)")
+      .order("created_at", { ascending: false })
+      .then((r) =>
+        r.error?.code === "PGRST202"
+          ? supabase
+              .from("messages")
+              .select("*, profiles(display_name)")
+              .order("created_at", { ascending: false })
+              .limit(500)
+          : r,
+      ),
+    supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+  const name = (p: { display_name: string } | null | undefined) => p?.display_name || "Someone";
+  return {
+    messages: (
+      must(msg) as {
+        id: string;
+        channel_id: string;
+        author_id: string;
+        body: string;
+        created_at: string;
+        profiles: { display_name: string } | null;
+      }[]
+    )
+      .map((m) => ({
+        id: m.id,
+        channelId: m.channel_id,
+        author: name(m.profiles),
+        authorId: m.author_id,
+        body: m.body,
+        createdAt: m.created_at,
+      }))
+      .reverse(),
+    notifications: must(notes).map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      createdAt: n.created_at,
+      read: !!n.read_at,
+      link: (n.link as Notification["link"]) ?? undefined,
+    })),
+  };
+}
+export type LiveData = { messages: DiscussionMessage[]; notifications: Notification[] };
+
+/**
+ * What the recap page reads for itself when it opens: the transcript (null once deleted, after 7
+ * days), and the summary, which the AI replaces a few seconds after the recap is saved.
+ */
+export async function loadRecap(recapId: string) {
   const { data, error } = await supabase
     .from("call_recaps")
-    .select("transcript")
+    .select("transcript, summary, created_at")
     .eq("id", recapId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data?.transcript ?? null) as unknown as TranscriptLine[] | null;
+  if (!data) return null;
+  return {
+    transcript: data.transcript as unknown as TranscriptLine[] | null,
+    summary: data.summary as unknown as CallSummary,
+    createdAt: data.created_at,
+  };
 }
+
+/** A recap saved in the last minute that still has the basic summary: the AI is writing its own. */
+export const recapStillWriting = (
+  r: { summary: CallSummary; createdAt: string } | null | undefined,
+  now = Date.now(),
+) => !!r && r.summary.source === "fallback" && now - Date.parse(r.createdAt) < 60_000;
