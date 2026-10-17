@@ -34,6 +34,8 @@ export type AppData = {
   memberships: Record<string, "member" | "pending">;
   announcements: Announcement[];
   channels: DiscussionChannel[];
+  /** Migration 0034 is in the database, so committees can manage channels. */
+  channelManagement: boolean;
   messages: DiscussionMessage[];
   messageReports: MessageReport[];
   resources: (Resource & { url: string })[];
@@ -239,13 +241,24 @@ export async function loadAppData(
 
   const name = (p: { display_name: string } | null | undefined) => p?.display_name || "Someone";
   const channelRows = must(ch);
+  // #general first, then in the order they were made (0034 adds created_at and committee_only;
+  // until then neither is there).
+  const channelManagement = channelRows.some((c) => "committee_only" in c);
   const channels: DiscussionChannel[] = channelRows
     .filter((c) => slugOf[c.society_id])
+    .sort(
+      (x, y) =>
+        Number(y.slug === "general") - Number(x.slug === "general") ||
+        (x.created_at ?? "").localeCompare(y.created_at ?? "") ||
+        x.name.localeCompare(y.name),
+    )
     .map((c) => ({
       id: c.id,
       societyId: slugOf[c.society_id]!,
+      slug: c.slug,
       name: c.name,
       description: c.description,
+      committeeOnly: c.committee_only ?? false,
     }));
 
   // Membership requests: only committee members can read other people's rows, via society_members().
@@ -339,6 +352,7 @@ export async function loadAppData(
     resolvedRequests,
     supportRequests,
     channels,
+    channelManagement,
     recommendations: must(recommendationRes).filter((r) => slugOf[r.society_id]),
     registrations: must(regs).map((r) => r.event_id),
     announcements: (

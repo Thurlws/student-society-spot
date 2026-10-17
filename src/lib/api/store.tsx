@@ -7,6 +7,7 @@ import { todayIso } from "@/lib/format";
 import {
   announcementInput,
   cancelReasonInput,
+  channelInput,
   eventInput,
   firstIssue,
   messageInput,
@@ -14,6 +15,7 @@ import {
   societyEditInput,
   supportRequestInput,
   type AnnouncementInput,
+  type ChannelInput,
   type EventAvailability,
   type EventInput,
   type NotificationPrefs,
@@ -44,6 +46,7 @@ const EMPTY: AppData = {
   memberships: {},
   announcements: [],
   channels: [],
+  channelManagement: false,
   messages: [],
   messageReports: [],
   resources: [],
@@ -166,6 +169,7 @@ function useDataValue() {
     events: data.events,
     announcements: data.announcements,
     channels: data.channels,
+    channelManagement: data.channelManagement,
     messages: data.messages,
     messageReports: data.messageReports,
     resources: data.resources,
@@ -283,6 +287,32 @@ function useDataValue() {
           .insert({ channel_id: channelId, author_id: user.id, body: p.data }),
       );
     },
+    createChannel: async (slug: string, input: ChannelInput) => {
+      const p = channelInput.safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.rpc("create_channel", {
+          _society_id: sid(slug)!,
+          _name: p.data.name,
+          _description: p.data.description,
+          _committee_only: p.data.committeeOnly,
+        }),
+      );
+    },
+    updateChannel: async (id: string, input: ChannelInput) => {
+      const p = channelInput.safeParse(input);
+      if (!p.success) return fail(firstIssue(p.error));
+      return act(() =>
+        supabase.rpc("update_channel", {
+          _channel_id: id,
+          _name: p.data.name,
+          _description: p.data.description,
+          _committee_only: p.data.committeeOnly,
+        }),
+      );
+    },
+    /** Its messages go too; their authors are told (migration 0034). */
+    deleteChannel: (id: string) => act(() => supabase.rpc("delete_channel", { _channel_id: id })),
     /** Authors delete their own; the committee and admins can remove any message in their channels. */
     // The reason goes to the author when someone else removes their message (migration 0032).
     deleteMessage: (id: string, reason = "") =>

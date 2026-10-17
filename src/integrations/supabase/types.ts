@@ -387,6 +387,8 @@ export type Database = {
       }
       channels: {
         Row: {
+          committee_only: boolean
+          created_at: string
           description: string
           id: string
           name: string
@@ -394,6 +396,8 @@ export type Database = {
           society_id: string
         }
         Insert: {
+          committee_only?: boolean
+          created_at?: string
           description?: string
           id?: string
           name: string
@@ -401,6 +405,8 @@ export type Database = {
           society_id: string
         }
         Update: {
+          committee_only?: boolean
+          created_at?: string
           description?: string
           id?: string
           name?: string
@@ -1638,6 +1644,16 @@ export type Database = {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
       }
+      create_channel: {
+        Args: {
+          _committee_only?: boolean
+          _description?: string
+          _name: string
+          _society_id: string
+        }
+        Returns: string
+      }
+      delete_channel: { Args: { _channel_id: string }; Returns: undefined }
       delete_message: {
         Args: { _message_id: string; _reason?: string }
         Returns: undefined
@@ -1768,6 +1784,15 @@ export type Database = {
       }
       suspend_user: {
         Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
+      update_channel: {
+        Args: {
+          _channel_id: string
+          _committee_only: boolean
+          _description: string
+          _name: string
+        }
         Returns: undefined
       }
       update_event: {
