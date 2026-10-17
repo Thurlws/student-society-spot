@@ -92,6 +92,10 @@ function Committee() {
       </SelectContent>
     </Select>
   );
+  // Until the data arrives, a loading line rather than the card below with its own picker: the
+  // real page brings a new picker, which would close one that was already open.
+  if (!found && !d.loaded)
+    return <div className="py-20 text-center text-sm text-muted-foreground">Loading…</div>;
   if (!found) {
     const seat = seats.find((c) => c.slug === slug)!;
     return (

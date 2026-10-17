@@ -1835,6 +1835,10 @@ export type Database = {
         Args: { _reason: string; _user_id: string }
         Returns: undefined
       }
+      remove_member: {
+        Args: { _membership_id: string; _reason?: string }
+        Returns: undefined
+      }
       set_membership_fee_paid: {
         Args: { _membership_id: string; _paid: boolean }
         Returns: undefined

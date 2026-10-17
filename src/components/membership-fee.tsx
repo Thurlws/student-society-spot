@@ -183,6 +183,15 @@ export function FeeStatus({ society }: { society: Society }) {
   );
 }
 
+/** Whether a member paid the fee, as the committee sees it. A demo payment says so. */
+export function FeeBadge({ fee }: { fee: FeePayment | undefined }) {
+  return (
+    <Badge variant={fee ? (fee.how === "demo" ? "warning" : "success") : "outline"}>
+      {fee ? (fee.how === "demo" ? "Paid (demo)" : "Paid") : "Unpaid"}
+    </Badge>
+  );
+}
+
 const euros = (cents: number | undefined) =>
   cents ? (cents / 100).toFixed(2).replace(/\.00$/, "") : "";
 
@@ -250,11 +259,7 @@ export function CommitteeFees({ society }: { society: Society }) {
                     )}
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
-                    <Badge
-                      variant={m.fee ? (m.fee.how === "demo" ? "warning" : "success") : "outline"}
-                    >
-                      {m.fee ? (m.fee.how === "demo" ? "Paid (demo)" : "Paid") : "Unpaid"}
-                    </Badge>
+                    <FeeBadge fee={m.fee} />
                     <Button
                       size="sm"
                       variant="ghost"
