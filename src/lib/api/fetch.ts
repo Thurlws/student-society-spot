@@ -113,17 +113,35 @@ export async function loadAppData(
     supabase.from("events").select("*").order("starts_at"),
     supabase.rpc("event_attendee_counts"),
     supabase.from("event_registrations").select("event_id").eq("user_id", uid),
+    // The newest of each society and each channel (0039). Until that's in the database, the
+    // newest across everything, as before, so the app keeps working when the code goes first.
     supabase
-      .from("announcements")
+      .rpc("recent_announcements", universityId ? { _university_id: universityId } : {})
       .select("*, profiles(display_name)")
       .order("created_at", { ascending: false })
-      .limit(200),
+      .then((r) =>
+        r.error?.code === "PGRST202"
+          ? supabase
+              .from("announcements")
+              .select("*, profiles(display_name)")
+              .order("created_at", { ascending: false })
+              .limit(200)
+          : r,
+      ),
     supabase.from("channels").select("*"),
     supabase
-      .from("messages")
+      .rpc("recent_messages")
       .select("*, profiles(display_name)")
       .order("created_at", { ascending: false })
-      .limit(500),
+      .then((r) =>
+        r.error?.code === "PGRST202"
+          ? supabase
+              .from("messages")
+              .select("*, profiles(display_name)")
+              .order("created_at", { ascending: false })
+              .limit(500)
+          : r,
+      ),
     supabase.from("resources").select("*"),
     supabase
       .from("notifications")

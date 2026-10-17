@@ -338,6 +338,8 @@ insert into matrix (label, kind, sql, expected) values
 ('delete_calendar_feed()', 'call', $$select public.delete_calendar_feed()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
 ('calendar_feed_events(a link)', 'count', $$select 1 from public.calendar_feed_events('matrix')$$, '{denied,denied,denied,denied,denied,denied,denied,denied,denied}'),
 ('my_access()', 'call', $$select public.my_access()$$, '{denied,ok,ok,ok,ok,ok,ok,ok,ok}'),
+('recent_messages()', 'count', $$select 1 from public.recent_messages() where id in (md5('message A')::uuid, md5('message B')::uuid)$$, '{denied,0,0,2,1,1,0,0,0}'),
+('recent_announcements()', 'count', $$select 1 from public.recent_announcements() where society_id in @societies$$, '{denied,1,1,1,1,1,1,0,1}'),
 ('recommend_societies()', 'count', $$select 1 from public.recommend_societies() where society_id in @societies$$, '{denied,2,1,0,1,1,2,0,2}'),
 ('event_attendee_counts()', 'count', $$select 1 from public.event_attendee_counts() where event_id in @events$$, '{denied,2,2,2,2,2,2,0,2}'),
 ('society_member_counts()', 'count', $$select 1 from public.society_member_counts() where society_id in @societies$$, '{denied,2,2,2,2,2,2,0,2}'),
