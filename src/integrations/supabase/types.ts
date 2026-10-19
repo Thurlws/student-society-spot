@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      calendar_feeds: {
-        Row: {
-          created_at: string
-          token_hash: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          token_hash: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          token_hash?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       ai_usage: {
         Row: {
           created_at: string
@@ -151,6 +133,32 @@ export type Database = {
           university_id?: string | null
         }
         Relationships: []
+      }
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       call_invites: {
         Row: {
@@ -1062,8 +1070,8 @@ export type Database = {
           join_url: string | null
           links: Json
           logo_url: string | null
-          membership_fee_cents: number | null
           meets: string
+          membership_fee_cents: number | null
           name: string
           official_url: string | null
           requires_approval: boolean
@@ -1091,8 +1099,8 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
-          membership_fee_cents?: number | null
           meets?: string
+          membership_fee_cents?: number | null
           name: string
           official_url?: string | null
           requires_approval?: boolean
@@ -1120,8 +1128,8 @@ export type Database = {
           join_url?: string | null
           links?: Json
           logo_url?: string | null
-          membership_fee_cents?: number | null
           meets?: string
+          membership_fee_cents?: number | null
           name?: string
           official_url?: string | null
           requires_approval?: boolean
@@ -1642,6 +1650,19 @@ export type Database = {
         Args: { _assignee: string; _id: string }
         Returns: undefined
       }
+      calendar_feed_events: {
+        Args: { _token: string }
+        Returns: {
+          cancelled: boolean
+          description: string
+          ends_at: string
+          id: string
+          society: string
+          starts_at: string
+          title: string
+          venue: string
+        }[]
+      }
       cancel_event: {
         Args: { _event_id: string; _reason: string }
         Returns: undefined
@@ -1658,6 +1679,16 @@ export type Database = {
       comment_on_support_request: {
         Args: { _id: string; _text: string }
         Returns: undefined
+      }
+      create_calendar_feed: { Args: never; Returns: string }
+      create_channel: {
+        Args: {
+          _committee_only?: boolean
+          _description?: string
+          _name: string
+          _society_id: string
+        }
+        Returns: string
       }
       create_event: {
         Args: {
@@ -1676,29 +1707,6 @@ export type Database = {
       decide_membership: {
         Args: { _decision: string; _membership_id: string }
         Returns: undefined
-      }
-      calendar_feed_events: {
-        Args: { _token: string }
-        Returns: {
-          cancelled: boolean
-          description: string
-          ends_at: string | null
-          id: string
-          society: string
-          starts_at: string
-          title: string
-          venue: string
-        }[]
-      }
-      create_calendar_feed: { Args: never; Returns: string }
-      create_channel: {
-        Args: {
-          _committee_only?: boolean
-          _description?: string
-          _name: string
-          _society_id: string
-        }
-        Returns: string
       }
       delete_calendar_feed: { Args: never; Returns: undefined }
       delete_channel: { Args: { _channel_id: string }; Returns: undefined }
@@ -1738,10 +1746,6 @@ export type Database = {
       join_society: { Args: { _society_id: string }; Returns: string }
       leave_society: { Args: { _society_id: string }; Returns: undefined }
       my_access: { Args: never; Returns: Json }
-      pay_membership_fee_demo: {
-        Args: { _society_id: string }
-        Returns: undefined
-      }
       nightly_job_runs: { Args: never; Returns: Json }
       notify_members: {
         Args: {
@@ -1766,8 +1770,47 @@ export type Database = {
         }
         Returns: undefined
       }
+      pay_membership_fee_demo: {
+        Args: { _society_id: string }
+        Returns: undefined
+      }
       purge_expired_data: { Args: never; Returns: Json }
       purge_old_transcripts: { Args: never; Returns: number }
+      recent_announcements: {
+        Args: { _per_society?: number; _university_id?: string }
+        Returns: {
+          author_id: string | null
+          body: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          pinned: boolean
+          society_id: string
+          title: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "announcements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      recent_messages: {
+        Args: { _per_channel?: number }
+        Returns: {
+          author_id: string
+          body: string
+          channel_id: string
+          created_at: string
+          id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       recommend_societies: {
         Args: never
         Returns: {
@@ -1779,6 +1822,10 @@ export type Database = {
       }
       register_for_event: { Args: { _event_id: string }; Returns: undefined }
       reinstate_user: { Args: { _user_id: string }; Returns: undefined }
+      remove_member: {
+        Args: { _membership_id: string; _reason?: string }
+        Returns: undefined
+      }
       report_message: {
         Args: { _message_id: string; _reason: string }
         Returns: undefined
@@ -1796,6 +1843,10 @@ export type Database = {
           _start: string
         }
         Returns: string
+      }
+      set_membership_fee_paid: {
+        Args: { _membership_id: string; _paid: boolean }
+        Returns: undefined
       }
       set_support_request_status: {
         Args: { _id: string; _resolution: string; _to: string }
@@ -1836,34 +1887,6 @@ export type Database = {
       }
       suspend_user: {
         Args: { _reason: string; _user_id: string }
-        Returns: undefined
-      }
-      remove_member: {
-        Args: { _membership_id: string; _reason?: string }
-        Returns: undefined
-      }
-      recent_announcements: {
-        Args: { _per_society?: number; _university_id?: string }
-        Returns: Database["public"]["Tables"]["announcements"]["Row"][]
-        SetofOptions: {
-          from: "*"
-          to: "announcements"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      recent_messages: {
-        Args: { _per_channel?: number }
-        Returns: Database["public"]["Tables"]["messages"]["Row"][]
-        SetofOptions: {
-          from: "*"
-          to: "messages"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      set_membership_fee_paid: {
-        Args: { _membership_id: string; _paid: boolean }
         Returns: undefined
       }
       update_channel: {
